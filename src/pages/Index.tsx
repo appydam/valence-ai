@@ -1,13 +1,53 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { AgentStatusCard } from "@/components/AgentStatusCard";
+import { ActivityItem } from "@/components/ActivityItem";
+import { StatCard } from "@/components/StatCard";
+import { mockAgents, mockActivity, mockTasks } from "@/data/mock";
+import { Loader, CheckCircle, Clock, Users } from "lucide-react";
 
 const Index = () => {
+  const stats = {
+    inProgress: mockTasks.filter(t => t.status === "in_progress").length,
+    completedToday: mockTasks.filter(t => t.status === "done").length,
+    pendingReview: mockTasks.filter(t => t.status === "in_review").length,
+    activeAgents: mockAgents.filter(a => a.status === "online" || a.status === "working").length,
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Activity Feed</h1>
+          <p className="text-sm text-muted-foreground mt-1">Real-time squad monitoring</p>
+        </div>
+
+        {/* Agent Status Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {mockAgents.map(agent => (
+            <AgentStatusCard key={agent.id} agent={agent} />
+          ))}
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard label="In Progress" value={stats.inProgress} icon={Loader} />
+          <StatCard label="Completed Today" value={stats.completedToday} icon={CheckCircle} />
+          <StatCard label="Pending Review" value={stats.pendingReview} icon={Clock} />
+          <StatCard label="Active Agents" value={stats.activeAgents} icon={Users} />
+        </div>
+
+        {/* Activity Stream */}
+        <div>
+          <h2 className="text-sm font-semibold text-foreground mb-4">Recent Activity</h2>
+          <div className="space-y-0">
+            {mockActivity.map(entry => (
+              <ActivityItem key={entry.id} entry={entry} />
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 
