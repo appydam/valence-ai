@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Activity, LayoutGrid, Users, Terminal, Settings, ChevronLeft, ChevronRight, Zap } from "lucide-react";
+import { Activity, LayoutGrid, Users, Terminal, FileText, ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { title: "Activity Feed", path: "/", icon: Activity },
   { title: "Mission Board", path: "/board", icon: LayoutGrid },
+  { title: "Documents", path: "/documents", icon: FileText },
   { title: "Agents", path: "/agents", icon: Users },
   { title: "Command Center", path: "/command", icon: Terminal },
 ];
@@ -64,6 +66,9 @@ export function AppSidebar() {
           <div className="w-2 h-2 rounded-full bg-status-online animate-pulse-glow" />
           {!collapsed && <span className="text-xs text-muted-foreground">Connected</span>}
         </div>
+
+        {/* Notifications */}
+        <NotificationBell collapsed={collapsed} />
 
         {/* Collapse toggle */}
         <button

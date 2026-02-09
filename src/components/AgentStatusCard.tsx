@@ -1,5 +1,5 @@
-import { Agent, AGENT_CONFIG, AgentStatus } from "@/types/mission";
-import { getRelativeTime } from "@/data/mock";
+import { AGENT_CONFIG, AgentStatus, AgentName } from "@/types/mission";
+import { getRelativeTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
 const statusLabels: Record<AgentStatus, string> = {
@@ -9,7 +9,14 @@ const statusLabels: Record<AgentStatus, string> = {
   offline: "Offline",
 };
 
-export function AgentStatusCard({ agent }: { agent: Agent }) {
+interface AgentData {
+  name: AgentName;
+  emoji: string;
+  status: AgentStatus;
+  lastHeartbeat: number;
+}
+
+export function AgentStatusCard({ agent }: { agent: AgentData }) {
   const config = AGENT_CONFIG[agent.name];
   const isActive = agent.status === "online" || agent.status === "working";
 

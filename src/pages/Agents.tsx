@@ -1,10 +1,16 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { mockAgents, mockActivity, mockTasks, getRelativeTime } from "@/data/mock";
 import { StatusBadge } from "@/components/AgentStatusCard";
 import { AGENT_CONFIG, AgentName } from "@/types/mission";
-import { Link } from "react-router-dom";
+import { getRelativeTime } from "@/lib/time";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 const AgentsPage = () => {
+  const agents = useQuery(api.agents.list) ?? [];
+  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const activity = useQuery(api.activityFns.list, {}) ?? [];
+  const usageData = useQuery(api.usage.listAll) ?? [];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -14,15 +20,16 @@ const AgentsPage = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mockAgents.map(agent => {
+          {agents.map(agent => {
             const config = AGENT_CONFIG[agent.name];
-            const agentTasks = mockTasks.filter(t => t.assignee === agent.name);
+            const agentTasks = tasks.filter(t => t.assignee === agent.name);
             const activeTasks = agentTasks.filter(t => t.status !== "done" && t.status !== "cancelled");
-            const recentActivity = mockActivity.filter(a => a.agentName === agent.name).slice(0, 4);
+            const recentActivity = activity.filter(a => a.agentName === agent.name).slice(0, 4);
+            const agentUsage = usageData.find(u => u.agentName === agent.name);
             const isActive = agent.status === "online" || agent.status === "working";
 
             return (
-              <div key={agent.id} className="p-5 rounded-xl border bg-card hover:bg-surface-hover transition-all"
+              <div key={agent._id} className="p-5 rounded-xl border bg-card hover:bg-surface-hover transition-all"
                 style={{ borderColor: `hsl(var(--agent-${config.color}) / 0.15)` }}>
                 <div className="flex items-start gap-4">
                   <div className="flex items-center justify-center w-16 h-16 rounded-2xl text-4xl shrink-0"
@@ -43,7 +50,7 @@ const AgentsPage = () => {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="grid grid-cols-4 gap-3 mt-4">
                   <div className="p-2 rounded-lg bg-secondary text-center">
                     <p className="text-lg font-bold text-foreground">{agent.tasksCompleted}</p>
                     <p className="text-[10px] text-muted-foreground">Completed</p>
@@ -56,14 +63,35 @@ const AgentsPage = () => {
                     <p className="text-xs font-medium text-foreground mt-1">{getRelativeTime(agent.lastHeartbeat)}</p>
                     <p className="text-[10px] text-muted-foreground">Last Seen</p>
                   </div>
+                  <div className="p-2 rounded-lg bg-secondary text-center">
+                    <p className="text-lg font-bold text-foreground">{agentUsage ? `$${agentUsage.totalCost.toFixed(2)}` : "—"}</p>
+                    <p className="text-[10px] text-muted-foreground">Cost</p>
+                  </div>
                 </div>
+
+                {/* Model breakdown */}
+                {agentUsage && agentUsage.modelBreakdowns.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Cost by Model</p>
+                    {agentUsage.modelBreakdowns.map((m, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: `hsl(var(--agent-${config.color}))` }} />
+                        <span className="truncate">{m.model}</span>
+                        <span className="ml-auto shrink-0 font-medium text-foreground">${m.cost.toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {agentUsage.reportedAt && (
+                      <p className="text-[10px] text-muted-foreground mt-1">Last reported {getRelativeTime(agentUsage.reportedAt)}</p>
+                    )}
+                  </div>
+                )}
 
                 {/* Recent activity */}
                 {recentActivity.length > 0 && (
                   <div className="mt-4 space-y-1.5">
                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Recent Activity</p>
                     {recentActivity.map(a => (
-                      <div key={a.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div key={a._id} className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: `hsl(var(--agent-${config.color}))` }} />
                         <span className="truncate">{a.action}: {a.details}</span>
                         <span className="ml-auto shrink-0 text-[10px]">{getRelativeTime(a.timestamp)}</span>

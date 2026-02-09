@@ -2,15 +2,20 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { AgentStatusCard } from "@/components/AgentStatusCard";
 import { ActivityItem } from "@/components/ActivityItem";
 import { StatCard } from "@/components/StatCard";
-import { mockAgents, mockActivity, mockTasks } from "@/data/mock";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { Loader, CheckCircle, Clock, Users } from "lucide-react";
 
 const Index = () => {
+  const agents = useQuery(api.agents.list) ?? [];
+  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const activity = useQuery(api.activityFns.list, { limit: 20 }) ?? [];
+
   const stats = {
-    inProgress: mockTasks.filter(t => t.status === "in_progress").length,
-    completedToday: mockTasks.filter(t => t.status === "done").length,
-    pendingReview: mockTasks.filter(t => t.status === "in_review").length,
-    activeAgents: mockAgents.filter(a => a.status === "online" || a.status === "working").length,
+    inProgress: tasks.filter(t => t.status === "in_progress").length,
+    completedToday: tasks.filter(t => t.status === "done").length,
+    pendingReview: tasks.filter(t => t.status === "in_review").length,
+    activeAgents: agents.filter(a => a.status === "online" || a.status === "working").length,
   };
 
   return (
@@ -24,8 +29,8 @@ const Index = () => {
 
         {/* Agent Status Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {mockAgents.map(agent => (
-            <AgentStatusCard key={agent.id} agent={agent} />
+          {agents.map(agent => (
+            <AgentStatusCard key={agent._id} agent={agent} />
           ))}
         </div>
 
@@ -41,8 +46,8 @@ const Index = () => {
         <div>
           <h2 className="text-sm font-semibold text-foreground mb-4">Recent Activity</h2>
           <div className="space-y-0">
-            {mockActivity.map(entry => (
-              <ActivityItem key={entry.id} entry={entry} />
+            {activity.map(entry => (
+              <ActivityItem key={entry._id} entry={entry} />
             ))}
           </div>
         </div>

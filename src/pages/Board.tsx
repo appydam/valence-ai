@@ -3,8 +3,10 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { NewTaskModal } from "@/components/NewTaskModal";
-import { mockTasks } from "@/data/mock";
-import { Task, TaskStatus, AgentName, TaskPriority } from "@/types/mission";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
+import { TaskStatus, AgentName, TaskPriority } from "@/types/mission";
 import { Plus } from "lucide-react";
 
 const columns: { key: TaskStatus; label: string }[] = [
@@ -16,37 +18,23 @@ const columns: { key: TaskStatus; label: string }[] = [
 ];
 
 const Board = () => {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const createTask = useMutation(api.tasks.create);
+
+  const [selectedTaskId, setSelectedTaskId] = useState<Id<"tasks"> | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
 
-  const handleUpdate = (taskId: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates, updatedAt: Date.now() } : t));
-    if (selectedTask?.id === taskId) {
-      setSelectedTask(prev => prev ? { ...prev, ...updates } : null);
-    }
-  };
+  const selectedTask = tasks.find(t => t._id === selectedTaskId) ?? null;
 
-  const handleDelete = (taskId: string) => {
-    setTasks(prev => prev.filter(t => t.id !== taskId));
-    setSelectedTask(null);
-  };
-
-  const handleCreate = (data: { title: string; description: string; priority: TaskPriority; assignee?: AgentName; tags: string[] }) => {
-    const newTask: Task = {
-      id: `t${Date.now()}`,
+  const handleCreate = async (data: { title: string; description: string; priority: TaskPriority; assignee?: AgentName; tags: string[] }) => {
+    await createTask({
       title: data.title,
       description: data.description,
-      status: data.assignee ? "assigned" : "inbox",
       priority: data.priority,
       assignee: data.assignee,
       creator: "Human",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
       tags: data.tags,
-      deliverables: [],
-    };
-    setTasks(prev => [...prev, newTask]);
+    });
   };
 
   return (
@@ -75,7 +63,7 @@ const Board = () => {
                 </div>
                 <div className="space-y-2">
                   {colTasks.map(task => (
-                    <TaskCard key={task.id} task={task} onClick={() => setSelectedTask(task)} />
+                    <TaskCard key={task._id} task={task} onClick={() => setSelectedTaskId(task._id)} />
                   ))}
                   {colTasks.length === 0 && (
                     <div className="p-6 rounded-lg border border-dashed border-border text-center">
@@ -93,9 +81,7 @@ const Board = () => {
       {selectedTask && (
         <TaskDetailPanel
           task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onUpdate={(updates) => handleUpdate(selectedTask.id, updates)}
-          onDelete={() => handleDelete(selectedTask.id)}
+          onClose={() => setSelectedTaskId(null)}
         />
       )}
 

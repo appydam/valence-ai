@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Board from "./pages/Board";
 import AgentsPage from "./pages/Agents";
 import CommandCenter from "./pages/Command";
+import Documents from "./pages/Documents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/board" element={<Board />} />
           <Route path="/agents" element={<AgentsPage />} />
           <Route path="/command" element={<CommandCenter />} />
+          <Route path="/documents" element={<Documents />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

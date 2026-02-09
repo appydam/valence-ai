@@ -1,11 +1,19 @@
-import { Task, AGENT_CONFIG, AgentName } from "@/types/mission";
-import { getRelativeTime } from "@/data/mock";
+import { AGENT_CONFIG, AgentName, TaskPriority } from "@/types/mission";
+import { getRelativeTime } from "@/lib/time";
 import { MessageSquare } from "lucide-react";
-import { mockComments } from "@/data/mock";
 
-export function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
+interface TaskData {
+  _id: string;
+  title: string;
+  status: string;
+  priority: TaskPriority;
+  assignee?: AgentName;
+  tags: string[];
+  updatedAt: number;
+}
+
+export function TaskCard({ task, onClick, commentCount = 0 }: { task: TaskData; onClick: () => void; commentCount?: number }) {
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
-  const commentCount = mockComments.filter(c => c.taskId === task.id).length;
 
   return (
     <button

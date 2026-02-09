@@ -1,7 +1,16 @@
-import { ActivityEntry, AGENT_CONFIG } from "@/types/mission";
-import { getRelativeTime } from "@/data/mock";
+import { AGENT_CONFIG, AgentName } from "@/types/mission";
+import { getRelativeTime } from "@/lib/time";
 
-export function ActivityItem({ entry }: { entry: ActivityEntry }) {
+interface ActivityData {
+  _id: string;
+  timestamp: number;
+  agentName: AgentName;
+  action: string;
+  details: string;
+  taskId?: string;
+}
+
+export function ActivityItem({ entry }: { entry: ActivityData }) {
   const config = AGENT_CONFIG[entry.agentName];
 
   return (

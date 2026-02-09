@@ -1,38 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AgentName, AGENT_CONFIG } from "@/types/mission";
-import { Send, Wifi, WifiOff } from "lucide-react";
+import { getRelativeTime } from "@/lib/time";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Send, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface ChatMessage {
-  id: string;
-  from: "human" | AgentName;
-  content: string;
-  timestamp: number;
-}
-
-const initialMessages: Record<AgentName, ChatMessage[]> = {
-  Kaze: [
-    { id: "m1", from: "Kaze", content: "Squad status: all systems nominal. Scout is finishing the AI startup research, Forge is on the CI/CD pipeline. Ghost is standing by.", timestamp: Date.now() - 300000 },
-    { id: "m2", from: "human", content: "Good. Let's prioritize the ProductHunt scraper after the pipeline is done.", timestamp: Date.now() - 240000 },
-    { id: "m3", from: "Kaze", content: "Understood. I'll queue it as next priority for Forge. Estimated start: 2 hours.", timestamp: Date.now() - 180000 },
-  ],
-  Scout: [
-    { id: "m4", from: "Scout", content: "I've identified 7 out of 10 agentic AI startups so far. Some interesting patterns in the funding data.", timestamp: Date.now() - 600000 },
-  ],
-  Forge: [
-    { id: "m5", from: "Forge", content: "Pipeline config is about 60% done. Hit a snag with the container registry auth — working through it now.", timestamp: Date.now() - 900000 },
-  ],
-  Ghost: [
-    { id: "m6", from: "Ghost", content: "Standing by for content tasks. I have a draft outline ready for the OpenClaw thread whenever you're ready to review.", timestamp: Date.now() - 1800000 },
-  ],
-};
 
 const CommandCenter = () => {
   const [selectedAgent, setSelectedAgent] = useState<AgentName>("Kaze");
-  const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const messages = useQuery(api.messages.listByConversation, { agentName: selectedAgent }) ?? [];
+  const sendMessage = useMutation(api.messages.send);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -40,37 +21,17 @@ const CommandCenter = () => {
     }
   }, [selectedAgent, messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
-    const newMsg: ChatMessage = {
-      id: `m${Date.now()}`,
+    await sendMessage({
       from: "human",
+      to: selectedAgent,
       content: input.trim(),
-      timestamp: Date.now(),
-    };
-    setMessages(prev => ({
-      ...prev,
-      [selectedAgent]: [...(prev[selectedAgent] || []), newMsg],
-    }));
+    });
     setInput("");
-
-    // Simulate agent response
-    setTimeout(() => {
-      const response: ChatMessage = {
-        id: `m${Date.now() + 1}`,
-        from: selectedAgent,
-        content: "Acknowledged. I'll process this and get back to you shortly.",
-        timestamp: Date.now(),
-      };
-      setMessages(prev => ({
-        ...prev,
-        [selectedAgent]: [...(prev[selectedAgent] || []), response],
-      }));
-    }, 1500);
   };
 
   const agentConfig = AGENT_CONFIG[selectedAgent];
-  const currentMessages = messages[selectedAgent] || [];
 
   return (
     <DashboardLayout>
@@ -108,11 +69,11 @@ const CommandCenter = () => {
 
         {/* Chat area */}
         <div ref={scrollRef} className="flex-1 overflow-auto rounded-xl border border-border bg-card p-4 space-y-3">
-          {currentMessages.map(msg => {
+          {messages.map(msg => {
             const isHuman = msg.from === "human";
             const msgConfig = !isHuman ? AGENT_CONFIG[msg.from as AgentName] : null;
             return (
-              <div key={msg.id} className={cn("flex", isHuman ? "justify-end" : "justify-start")}>
+              <div key={msg._id} className={cn("flex", isHuman ? "justify-end" : "justify-start")}>
                 <div className={cn(
                   "max-w-[70%] px-4 py-2.5 rounded-2xl text-sm",
                   isHuman ? "bg-secondary text-foreground rounded-br-md" : "rounded-bl-md"
@@ -126,10 +87,16 @@ const CommandCenter = () => {
                     </span>
                   )}
                   <p className="text-foreground/90">{msg.content}</p>
+                  <span className="text-[10px] text-muted-foreground mt-1 block text-right">{getRelativeTime(msg.timestamp)}</span>
                 </div>
               </div>
             );
           })}
+          {messages.length === 0 && (
+            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+              No messages yet. Start a conversation with {selectedAgent}.
+            </div>
+          )}
         </div>
 
         {/* Input */}
@@ -149,8 +116,8 @@ const CommandCenter = () => {
             </button>
           </div>
           <div className="flex items-center gap-1.5 px-1">
-            <WifiOff className="w-3 h-3 text-muted-foreground" />
-            <span className="text-[10px] text-muted-foreground">Not connected — UI shell mode. Wire up OpenClaw Gateway to enable live communication.</span>
+            <Wifi className="w-3 h-3 text-status-online" />
+            <span className="text-[10px] text-muted-foreground">Connected to Mission Control via Convex</span>
           </div>
         </div>
       </div>

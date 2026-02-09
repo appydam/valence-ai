@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { Task, AGENT_CONFIG, AgentName, TaskStatus, TaskPriority } from "@/types/mission";
-import { getRelativeTime, getCommentsByTask } from "@/data/mock";
+import { AGENT_CONFIG, AgentName, TaskStatus, TaskPriority } from "@/types/mission";
+import { getRelativeTime } from "@/lib/time";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 import { X, Check, Inbox, Trash2, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,30 +11,67 @@ const statusOptions: TaskStatus[] = ["inbox", "assigned", "in_progress", "in_rev
 const priorityOptions: TaskPriority[] = ["low", "medium", "high", "urgent"];
 const agentOptions: (AgentName | "Unassigned")[] = ["Kaze", "Scout", "Forge", "Ghost", "Unassigned"];
 
-interface TaskDetailPanelProps {
-  task: Task;
-  onClose: () => void;
-  onUpdate: (updates: Partial<Task>) => void;
-  onDelete: () => void;
+interface TaskData {
+  _id: Id<"tasks">;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignee?: AgentName;
+  creator: string;
+  createdAt: number;
+  updatedAt: number;
+  completedAt?: number;
+  tags: string[];
+  deliverables: { name: string; type: string; content: string }[];
 }
 
-export function TaskDetailPanel({ task, onClose, onUpdate, onDelete }: TaskDetailPanelProps) {
-  const comments = getCommentsByTask(task.id);
+interface TaskDetailPanelProps {
+  task: TaskData;
+  onClose: () => void;
+}
+
+export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
+  const comments = useQuery(api.comments.listByTask, { taskId: task._id }) ?? [];
   const [newComment, setNewComment] = useState("");
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
+
+  const updateTask = useMutation(api.tasks.update);
+  const deleteTask = useMutation(api.tasks.remove);
+  const addComment = useMutation(api.comments.create);
+
+  const handleUpdate = (updates: Partial<{ status: TaskStatus; priority: TaskPriority; assignee: AgentName | undefined }>) => {
+    updateTask({ id: task._id, ...updates });
+  };
+
+  const handleDelete = () => {
+    deleteTask({ id: task._id });
+    onClose();
+  };
+
+  const handleSendComment = async () => {
+    if (!newComment.trim()) return;
+    await addComment({
+      taskId: task._id,
+      author: "Human",
+      content: newComment.trim(),
+      mentions: [],
+    });
+    setNewComment("");
+  };
 
   return (
     <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-card border-l border-border z-50 animate-slide-in-right overflow-auto">
       {/* Header */}
       <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
-          <button onClick={() => onUpdate({ status: "done" })} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-status-online/10 text-status-online hover:bg-status-online/20 transition-colors">
+          <button onClick={() => handleUpdate({ status: "done" })} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-status-online/10 text-status-online hover:bg-status-online/20 transition-colors">
             <Check className="w-3 h-3" /> Done
           </button>
-          <button onClick={() => onUpdate({ status: "inbox" })} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-secondary text-muted-foreground hover:bg-surface-hover transition-colors">
+          <button onClick={() => handleUpdate({ status: "inbox" })} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-secondary text-muted-foreground hover:bg-surface-hover transition-colors">
             <Inbox className="w-3 h-3" /> Inbox
           </button>
-          <button onClick={onDelete} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
+          <button onClick={handleDelete} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
             <Trash2 className="w-3 h-3" /> Delete
           </button>
         </div>
@@ -47,19 +87,19 @@ export function TaskDetailPanel({ task, onClose, onUpdate, onDelete }: TaskDetai
         {/* Meta */}
         <div className="grid grid-cols-2 gap-3">
           <MetaField label="Status">
-            <select value={task.status} onChange={e => onUpdate({ status: e.target.value as TaskStatus })}
+            <select value={task.status} onChange={e => handleUpdate({ status: e.target.value as TaskStatus })}
               className="bg-secondary rounded px-2 py-1 text-xs text-foreground border-0 outline-none">
               {statusOptions.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
             </select>
           </MetaField>
           <MetaField label="Priority">
-            <select value={task.priority} onChange={e => onUpdate({ priority: e.target.value as TaskPriority })}
+            <select value={task.priority} onChange={e => handleUpdate({ priority: e.target.value as TaskPriority })}
               className="bg-secondary rounded px-2 py-1 text-xs text-foreground border-0 outline-none">
               {priorityOptions.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
           </MetaField>
           <MetaField label="Assignee">
-            <select value={task.assignee || "Unassigned"} onChange={e => onUpdate({ assignee: e.target.value === "Unassigned" ? undefined : e.target.value as AgentName })}
+            <select value={task.assignee || "Unassigned"} onChange={e => handleUpdate({ assignee: e.target.value === "Unassigned" ? undefined : e.target.value as AgentName })}
               className="bg-secondary rounded px-2 py-1 text-xs text-foreground border-0 outline-none">
               {agentOptions.map(a => <option key={a} value={a}>{a === "Unassigned" ? a : `${AGENT_CONFIG[a as AgentName].emoji} ${a}`}</option>)}
             </select>
@@ -111,7 +151,7 @@ export function TaskDetailPanel({ task, onClose, onUpdate, onDelete }: TaskDetai
               const isAgent = Object.keys(AGENT_CONFIG).includes(c.author);
               const authorConfig = isAgent ? AGENT_CONFIG[c.author as AgentName] : null;
               return (
-                <div key={c.id} className="p-3 rounded-lg bg-secondary">
+                <div key={c._id} className="p-3 rounded-lg bg-secondary">
                   <div className="flex items-center gap-2 mb-1">
                     {authorConfig && <span className="text-sm">{authorConfig.emoji}</span>}
                     <span className="text-xs font-medium" style={authorConfig ? { color: `hsl(var(--agent-${authorConfig.color}))` } : {}}>
@@ -130,10 +170,11 @@ export function TaskDetailPanel({ task, onClose, onUpdate, onDelete }: TaskDetai
             <input
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSendComment()}
               placeholder="Add a comment as Human..."
               className="flex-1 bg-secondary rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground border-0 outline-none focus:ring-1 focus:ring-primary"
             />
-            <button className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/80 transition-colors">
+            <button onClick={handleSendComment} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/80 transition-colors">
               Send
             </button>
           </div>
