@@ -78,6 +78,9 @@ export default defineSchema({
       })
     ),
     missionId: v.optional(v.id("missions")),
+    // Task dependencies for parallel work orchestration
+    dependsOn: v.optional(v.array(v.id("tasks"))), // Tasks that must complete before this one can start
+    blocks: v.optional(v.array(v.id("tasks"))),    // Tasks that this one blocks (auto-computed)
   })
     .index("by_status", ["status"])
     .index("by_assignee", ["assignee"])
