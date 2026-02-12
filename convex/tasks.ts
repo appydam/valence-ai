@@ -55,10 +55,34 @@ export const create = mutation({
     ),
     creator: v.string(),
     tags: v.array(v.string()),
+    missionId: v.optional(v.id("missions")),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const id = await ctx.db.insert("tasks", {
+    let missionId: any = args.missionId || undefined;
+
+    if (missionId) {
+      // Link to existing mission — bump its task count
+      const mission = await ctx.db.get(missionId);
+      if (mission) {
+        await ctx.db.patch(missionId, {
+          taskCount: mission.taskCount + 1,
+        });
+      }
+    } else if (args.creator === "Human") {
+      // Auto-create a new mission board for Human-created tasks
+      missionId = await ctx.db.insert("missions", {
+        title: args.title,
+        description: args.description,
+        status: "active",
+        createdBy: args.creator,
+        createdAt: now,
+        taskCount: 1,
+        completedTaskCount: 0,
+      });
+    }
+
+    const taskId = await ctx.db.insert("tasks", {
       title: args.title,
       description: args.description,
       status: args.assignee ? "assigned" : "inbox",
@@ -69,8 +93,23 @@ export const create = mutation({
       updatedAt: now,
       tags: args.tags,
       deliverables: [],
+      ...(missionId ? { missionId } : {}),
     });
-    return id;
+    return { taskId, missionId };
+  },
+});
+
+export const listByMission = query({
+  args: { missionId: v.optional(v.id("missions")) },
+  handler: async (ctx, args) => {
+    if (args.missionId) {
+      return await ctx.db
+        .query("tasks")
+        .withIndex("by_mission", (q) => q.eq("missionId", args.missionId))
+        .collect();
+    }
+    // Return all tasks if no missionId
+    return await ctx.db.query("tasks").collect();
   },
 });
 

@@ -130,6 +130,30 @@ export const countUnread = query({
   },
 });
 
+// Combined query: returns total unread count and per-agent unread notifications in one call
+export const getAllUnread = query({
+  args: {},
+  handler: async (ctx) => {
+    const agents = ["Kaze", "Scout", "Forge", "Ghost"] as const;
+    const result: Record<string, any[]> = {};
+    let totalUnread = 0;
+
+    for (const agent of agents) {
+      const unread = await ctx.db
+        .query("notifications")
+        .withIndex("by_recipient", (q) =>
+          q.eq("recipientAgent", agent).eq("read", false)
+        )
+        .order("desc")
+        .take(5);
+      result[agent] = unread;
+      totalUnread += unread.length;
+    }
+
+    return { totalUnread, byAgent: result };
+  },
+});
+
 export const markRead = mutation({
   args: { id: v.id("notifications") },
   handler: async (ctx, args) => {

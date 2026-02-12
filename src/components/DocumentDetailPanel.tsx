@@ -1,5 +1,6 @@
 import { AGENT_CONFIG, AgentName } from "@/types/mission";
 import { getRelativeTime } from "@/lib/time";
+import { MarkdownContent } from "@/components/MarkdownContent";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -50,7 +51,7 @@ export function DocumentDetailPanel({ document: doc, onClose }: DocumentDetailPa
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-card border-l border-border z-50 animate-slide-in-right overflow-auto">
+    <div className="fixed inset-y-0 right-0 w-full max-w-2xl bg-card border-l border-border z-50 animate-slide-in-right overflow-auto">
       {/* Header */}
       <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
@@ -112,7 +113,7 @@ export function DocumentDetailPanel({ document: doc, onClose }: DocumentDetailPa
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-2 block">Content</label>
           <div className="p-4 rounded-lg bg-secondary">
-            <pre className="text-sm text-foreground/80 whitespace-pre-wrap font-sans leading-relaxed">{doc.content}</pre>
+            <MarkdownContent content={doc.content} />
           </div>
         </div>
       </div>

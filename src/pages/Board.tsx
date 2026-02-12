@@ -3,11 +3,13 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { NewTaskModal } from "@/components/NewTaskModal";
+import { NewMissionModal } from "@/components/NewMissionModal";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { TaskStatus, AgentName, TaskPriority } from "@/types/mission";
-import { Plus } from "lucide-react";
+import { Plus, List, FolderPlus } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const columns: { key: TaskStatus; label: string }[] = [
   { key: "inbox", label: "Inbox" },
@@ -18,23 +20,36 @@ const columns: { key: TaskStatus; label: string }[] = [
 ];
 
 const Board = () => {
-  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const [selectedMissionId, setSelectedMissionId] = useState<Id<"missions"> | null>(null);
+  const missions = useQuery(api.missions.list, {}) ?? [];
+
+  // Default to most recent mission (first in desc-ordered list)
+  const missionIdToUse = selectedMissionId || missions[0]?._id || undefined;
+  const tasks = useQuery(api.tasks.listByMission, { missionId: missionIdToUse }) ?? [];
+
   const createTask = useMutation(api.tasks.create);
 
   const [selectedTaskId, setSelectedTaskId] = useState<Id<"tasks"> | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
+  const [showNewMission, setShowNewMission] = useState(false);
 
   const selectedTask = tasks.find(t => t._id === selectedTaskId) ?? null;
 
-  const handleCreate = async (data: { title: string; description: string; priority: TaskPriority; assignee?: AgentName; tags: string[] }) => {
-    await createTask({
+  const handleCreate = async (data: { title: string; description: string; priority: TaskPriority; assignee?: AgentName; tags: string[]; missionId?: string }) => {
+    const result = await createTask({
       title: data.title,
       description: data.description,
       priority: data.priority,
       assignee: data.assignee,
       creator: "Human",
       tags: data.tags,
+      ...(data.missionId ? { missionId: data.missionId as Id<"missions"> } : {}),
     });
+    // Auto-select the mission board (newly created or existing)
+    const targetMission = data.missionId || result?.missionId;
+    if (targetMission) {
+      setSelectedMissionId(targetMission as Id<"missions">);
+    }
   };
 
   return (
@@ -45,11 +60,43 @@ const Board = () => {
             <h1 className="text-2xl font-bold text-foreground">Mission Board</h1>
             <p className="text-sm text-muted-foreground mt-1">Track and manage squad tasks</p>
           </div>
-          <button onClick={() => setShowNewTask(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors">
-            <Plus className="w-4 h-4" /> New Task
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowNewMission(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-surface-hover transition-colors text-foreground">
+              <FolderPlus className="w-4 h-4" /> New Mission
+            </button>
+            <button onClick={() => setShowNewTask(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors">
+              <Plus className="w-4 h-4" /> New Task
+            </button>
+          </div>
         </div>
+
+        {/* Mission Selector */}
+        {missions.length > 0 && (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border">
+            <label className="text-sm font-medium text-foreground">Mission:</label>
+            <select
+              value={selectedMissionId || missions[0]?._id || ""}
+              onChange={(e) => setSelectedMissionId(e.target.value ? e.target.value as Id<"missions"> : null)}
+              className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="">All Tasks</option>
+              {missions.map((m) => (
+                <option key={m._id} value={m._id}>
+                  {m.title} ({m.status})
+                </option>
+              ))}
+            </select>
+            <Link
+              to="/missions"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-surface-hover transition-colors text-muted-foreground"
+            >
+              <List className="w-4 h-4" />
+              View All Missions
+            </Link>
+          </div>
+        )}
 
         {/* Kanban */}
         <div className="flex gap-3 overflow-x-auto pb-4">
@@ -87,7 +134,18 @@ const Board = () => {
 
       {/* New task modal */}
       {showNewTask && (
-        <NewTaskModal onClose={() => setShowNewTask(false)} onCreate={handleCreate} />
+        <NewTaskModal onClose={() => setShowNewTask(false)} onCreate={handleCreate} missions={missions} />
+      )}
+
+      {/* New mission modal */}
+      {showNewMission && (
+        <NewMissionModal
+          onClose={() => setShowNewMission(false)}
+          onCreate={(missionId) => {
+            setSelectedMissionId(missionId);
+            setShowNewMission(false);
+          }}
+        />
       )}
     </DashboardLayout>
   );

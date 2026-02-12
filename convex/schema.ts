@@ -44,6 +44,21 @@ export default defineSchema({
     color: v.string(),
   }).index("by_name", ["name"]),
 
+  missions: defineTable({
+    title: v.string(),
+    description: v.string(),
+    status: v.union(
+      v.literal("active"),
+      v.literal("completed"),
+      v.literal("archived")
+    ),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    taskCount: v.number(),
+    completedTaskCount: v.number(),
+  }).index("by_status", ["status"]),
+
   tasks: defineTable({
     title: v.string(),
     description: v.string(),
@@ -62,9 +77,11 @@ export default defineSchema({
         content: v.string(),
       })
     ),
+    missionId: v.optional(v.id("missions")),
   })
     .index("by_status", ["status"])
-    .index("by_assignee", ["assignee"]),
+    .index("by_assignee", ["assignee"])
+    .index("by_mission", ["missionId"]),
 
   comments: defineTable({
     taskId: v.id("tasks"),
@@ -125,7 +142,8 @@ export default defineSchema({
   })
     .index("by_author", ["author"])
     .index("by_type", ["type"])
-    .index("by_created", ["createdAt"]),
+    .index("by_created", ["createdAt"])
+    .index("by_task", ["taskId"]),
 
   usage: defineTable({
     agentName: agentNameValidator,
@@ -144,4 +162,30 @@ export default defineSchema({
   })
     .index("by_agent", ["agentName"])
     .index("by_agent_time", ["agentName", "reportedAt"]),
+
+  agentConfigs: defineTable({
+    agentName: agentNameValidator,
+    model: v.string(),
+    skills: v.array(v.string()),
+    sessionMaxTurns: v.number(),
+    sessionTimeout: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.string(),
+  }).index("by_agent", ["agentName"]),
+
+  sshConfig: defineTable({
+    host: v.string(),
+    port: v.number(),
+    username: v.string(),
+    privateKey: v.string(), // Encrypted in production
+    updatedAt: v.number(),
+  }),
+
+  soulFiles: defineTable({
+    agentName: agentNameValidator,
+    content: v.string(),
+    updatedAt: v.number(),
+    syncedToServer: v.boolean(),
+    lastSyncedAt: v.optional(v.number()),
+  }).index("by_agent", ["agentName"]),
 });

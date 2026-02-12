@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { AGENT_CONFIG, AgentName, TaskStatus, TaskPriority } from "@/types/mission";
 import { getRelativeTime } from "@/lib/time";
+import { MarkdownContent } from "@/components/MarkdownContent";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { X, Check, Inbox, Trash2, MessageSquare } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { X, Check, Inbox, Trash2, MessageSquare, FileText, Package, ChevronDown, ChevronRight } from "lucide-react";
 
 const statusOptions: TaskStatus[] = ["inbox", "assigned", "in_progress", "in_review", "done", "cancelled"];
 const priorityOptions: TaskPriority[] = ["low", "medium", "high", "urgent"];
@@ -33,7 +33,10 @@ interface TaskDetailPanelProps {
 
 export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
   const comments = useQuery(api.comments.listByTask, { taskId: task._id }) ?? [];
+  const linkedDocs = useQuery(api.documents.listByTask, { taskId: task._id }) ?? [];
   const [newComment, setNewComment] = useState("");
+  const [expandedDeliverable, setExpandedDeliverable] = useState<number | null>(task.deliverables.length > 0 ? 0 : null);
+  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
 
   const updateTask = useMutation(api.tasks.update);
@@ -60,8 +63,11 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
     setNewComment("");
   };
 
+  const hasOutcome = task.deliverables.length > 0 || linkedDocs.length > 0;
+  const isDone = task.status === "done";
+
   return (
-    <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-card border-l border-border z-50 animate-slide-in-right overflow-auto">
+    <div className="fixed inset-y-0 right-0 w-full max-w-2xl bg-card border-l border-border z-50 animate-slide-in-right overflow-auto">
       {/* Header */}
       <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
@@ -81,8 +87,100 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Title */}
-        <h2 className="text-lg font-semibold text-foreground">{task.title}</h2>
+        {/* Title + status badge */}
+        <div>
+          <div className="flex items-start gap-2">
+            {agentConfig && (
+              <span className="text-2xl shrink-0 mt-0.5">{agentConfig.emoji}</span>
+            )}
+            <h2 className="text-lg font-semibold text-foreground">{task.title}</h2>
+          </div>
+          {isDone && task.completedAt && (
+            <p className="text-xs text-status-online mt-1.5 flex items-center gap-1">
+              <Check className="w-3 h-3" /> Completed {getRelativeTime(task.completedAt)}
+            </p>
+          )}
+        </div>
+
+        {/* ============ OUTCOME SECTION — shown first for done tasks ============ */}
+        {hasOutcome && (
+          <div className="rounded-xl border-2 border-primary/20 bg-primary/[0.03] overflow-hidden">
+            <div className="px-4 py-3 border-b border-primary/10 flex items-center gap-2">
+              <Package className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">Outcome</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
+                {task.deliverables.length + linkedDocs.length} item{task.deliverables.length + linkedDocs.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+
+            <div className="divide-y divide-border/50">
+              {/* Deliverables */}
+              {task.deliverables.map((d, i) => (
+                <div key={i}>
+                  <button
+                    onClick={() => setExpandedDeliverable(expandedDeliverable === i ? null : i)}
+                    className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-primary/[0.03] transition-colors"
+                  >
+                    {expandedDeliverable === i ? (
+                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    )}
+                    <Package className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-sm font-medium text-foreground truncate">{d.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground shrink-0">{d.type}</span>
+                  </button>
+                  {expandedDeliverable === i && (
+                    <div className="px-4 pb-4 pt-0">
+                      <div className="rounded-lg bg-card border border-border p-4">
+                        <MarkdownContent content={d.content} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Linked Documents */}
+              {linkedDocs.map(doc => {
+                const isAgent = Object.keys(AGENT_CONFIG).includes(doc.author);
+                const docAgentConfig = isAgent ? AGENT_CONFIG[doc.author as AgentName] : null;
+                return (
+                  <div key={doc._id}>
+                    <button
+                      onClick={() => setExpandedDoc(expandedDoc === doc._id ? null : doc._id)}
+                      className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-primary/[0.03] transition-colors"
+                    >
+                      {expandedDoc === doc._id ? (
+                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      ) : (
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      )}
+                      <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      <span className="text-sm font-medium text-foreground truncate">{doc.title}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground shrink-0">{doc.type}</span>
+                      {docAgentConfig && <span className="text-xs shrink-0">{docAgentConfig.emoji}</span>}
+                    </button>
+                    {expandedDoc === doc._id && (
+                      <div className="px-4 pb-4 pt-0">
+                        <div className="rounded-lg bg-card border border-border p-4">
+                          <MarkdownContent content={doc.content} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* No outcome placeholder for done tasks */}
+        {!hasOutcome && isDone && (
+          <div className="rounded-xl border border-dashed border-border p-4 text-center">
+            <Package className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">No deliverables or documents attached</p>
+          </div>
+        )}
 
         {/* Meta */}
         <div className="grid grid-cols-2 gap-3">
@@ -116,28 +214,14 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
         </div>
 
         {/* Tags */}
-        <div>
-          <label className="text-xs text-muted-foreground font-medium mb-2 block">Tags</label>
-          <div className="flex flex-wrap gap-1.5">
-            {task.tags.map(tag => (
-              <span key={tag} className="px-2 py-1 rounded-md text-xs bg-secondary text-muted-foreground">{tag}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Deliverables */}
-        {task.deliverables.length > 0 && (
+        {task.tags.length > 0 && (
           <div>
-            <label className="text-xs text-muted-foreground font-medium mb-2 block">Deliverables</label>
-            {task.deliverables.map((d, i) => (
-              <div key={i} className="p-3 rounded-lg bg-secondary mb-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium text-foreground">{d.name}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{d.type}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{d.content}</p>
-              </div>
-            ))}
+            <label className="text-xs text-muted-foreground font-medium mb-2 block">Tags</label>
+            <div className="flex flex-wrap gap-1.5">
+              {task.tags.map(tag => (
+                <span key={tag} className="px-2 py-1 rounded-md text-xs bg-secondary text-muted-foreground">{tag}</span>
+              ))}
+            </div>
           </div>
         )}
 
@@ -159,7 +243,7 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
                     </span>
                     <span className="text-[10px] text-muted-foreground ml-auto">{getRelativeTime(c.createdAt)}</span>
                   </div>
-                  <p className="text-xs text-foreground/80">{c.content}</p>
+                  <MarkdownContent content={c.content} />
                 </div>
               );
             })}

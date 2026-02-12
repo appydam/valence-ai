@@ -32,12 +32,15 @@ http.route({
       currentTaskId: body.currentTaskId,
     });
 
-    // Return assigned tasks for the agent
+    // Return assigned tasks and config for the agent
     const tasks = await ctx.runQuery(api.tasks.list, {
       assignee: body.agentName,
     });
+    const agentConfig = await ctx.runQuery(api.agentConfigs.getByAgent, {
+      agentName: body.agentName,
+    });
     return new Response(
-      JSON.stringify({ ok: true, ...result, assignedTasks: tasks }),
+      JSON.stringify({ ok: true, ...result, assignedTasks: tasks, config: agentConfig }),
       { status: 200, headers: corsHeaders() }
     );
   }),
@@ -65,7 +68,7 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json();
-    const id = await ctx.runMutation(api.tasks.create, {
+    const result = await ctx.runMutation(api.tasks.create, {
       title: body.title,
       description: body.description || "",
       priority: body.priority || "medium",
@@ -73,7 +76,7 @@ http.route({
       creator: body.creator || "Agent",
       tags: body.tags || [],
     });
-    return new Response(JSON.stringify({ id }), {
+    return new Response(JSON.stringify({ id: result.taskId, missionId: result.missionId }), {
       status: 201,
       headers: corsHeaders(),
     });
@@ -390,6 +393,255 @@ http.route({
   }),
 });
 
+// GET /api/agents/config
+http.route({
+  path: "/api/agents/config",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const agentName = url.searchParams.get("agentName");
+    if (agentName) {
+      const config = await ctx.runQuery(api.agentConfigs.getByAgent, {
+        agentName: agentName as any,
+      });
+      return new Response(JSON.stringify(config), {
+        status: 200,
+        headers: corsHeaders(),
+      });
+    }
+    const all = await ctx.runQuery(api.agentConfigs.list, {});
+    return new Response(JSON.stringify(all), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// POST /api/agents/config
+http.route({
+  path: "/api/agents/config",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    await ctx.runMutation(api.agentConfigs.update, body);
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// GET /api/ssh/config
+http.route({
+  path: "/api/ssh/config",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const config = await ctx.runQuery(api.sshConfig.get, {});
+    return new Response(JSON.stringify(config), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// POST /api/ssh/config
+http.route({
+  path: "/api/ssh/config",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    await ctx.runMutation(api.sshConfig.save, body);
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// GET /api/ssh/config-full (returns config WITH private key for SSH operations)
+http.route({
+  path: "/api/ssh/config-full",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const config = await ctx.runQuery(api.sshConfig.getForSSH, {});
+    return new Response(JSON.stringify(config), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// POST /api/ssh/test
+http.route({
+  path: "/api/ssh/test",
+  method: "POST",
+  handler: httpAction(async (ctx) => {
+    try {
+      const config = await ctx.runQuery(api.sshConfig.getForSSH, {});
+      if (!config) {
+        return new Response(
+          JSON.stringify({ ok: false, message: "No SSH config found. Please save your credentials first." }),
+          { status: 400, headers: corsHeaders() }
+        );
+      }
+
+      // Validate config fields
+      if (!config.host || !config.username || !config.privateKey) {
+        return new Response(
+          JSON.stringify({ ok: false, message: "Incomplete SSH configuration. Please fill all fields." }),
+          { status: 400, headers: corsHeaders() }
+        );
+      }
+
+      // For now, just validate that config exists
+      // TODO: Implement actual SSH connection test via external service
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          message: `SSH config saved for ${config.username}@${config.host}:${config.port}. Connection test coming soon - the one-click restart will validate it.`
+        }),
+        { status: 200, headers: corsHeaders() }
+      );
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ ok: false, message: error.message }),
+        { status: 500, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
+// POST /api/ssh/restart-openclaw
+http.route({
+  path: "/api/ssh/restart-openclaw",
+  method: "POST",
+  handler: httpAction(async (ctx) => {
+    try {
+      const config = await ctx.runQuery(api.sshConfig.getForSSH, {});
+      if (!config) {
+        return new Response(
+          JSON.stringify({ ok: false, error: "No SSH config found. Configure SSH in Settings first." }),
+          { status: 400, headers: corsHeaders() }
+        );
+      }
+
+      // Generate SSH command for user to run
+      const sshCommand = `ssh -i ~/.ssh/key.pem ${config.username}@${config.host} "openclaw gateway restart"`;
+
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: `SSH automation requires a separate service. For now, please run this command in your terminal:\n\n${sshCommand}`,
+          command: sshCommand
+        }),
+        { status: 200, headers: corsHeaders() }
+      );
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ ok: false, error: error.message }),
+        { status: 500, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
+// POST /api/soul/save
+http.route({
+  path: "/api/soul/save",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    await ctx.runMutation(api.soulFiles.save, {
+      agentName: body.agentName,
+      content: body.content,
+    });
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// GET /api/soul
+http.route({
+  path: "/api/soul",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const agentName = url.searchParams.get("agentName");
+    if (!agentName) {
+      return new Response(JSON.stringify({ error: "agentName is required" }), {
+        status: 400,
+        headers: corsHeaders(),
+      });
+    }
+    const soul = await ctx.runQuery(api.soulFiles.get, {
+      agentName: agentName as any,
+    });
+    return new Response(JSON.stringify(soul), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// POST /api/soul/sync
+http.route({
+  path: "/api/soul/sync",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+
+    try {
+      const config = await ctx.runQuery(api.sshConfig.getForSSH, {});
+      if (!config) {
+        return new Response(
+          JSON.stringify({ ok: false, error: "No SSH config found. Configure SSH in Settings first." }),
+          { status: 400, headers: corsHeaders() }
+        );
+      }
+
+      const soul = await ctx.runQuery(api.soulFiles.get, {
+        agentName: body.agentName as any,
+      });
+
+      if (!soul) {
+        return new Response(
+          JSON.stringify({ ok: false, error: "No SOUL file found for this agent" }),
+          { status: 404, headers: corsHeaders() }
+        );
+      }
+
+      // Generate commands for user to run
+      const agentId = body.agentName.toLowerCase();
+      const soulPath = agentId === "kaze"
+        ? "~/.openclaw/workspace/SOUL.md"
+        : `~/.openclaw/workspace/agents/${agentId}/SOUL.md`;
+
+      const commands = agentId === "kaze"
+        ? `cat > ${soulPath} << 'EOFMARKER'\n${soul.content}\nEOFMARKER`
+        : `mkdir -p ~/.openclaw/workspace/agents/${agentId} && cat > ${soulPath} << 'EOFMARKER'\n${soul.content}\nEOFMARKER`;
+
+      const sshCommand = `ssh -i ~/.ssh/key.pem ${config.username}@${config.host} "${commands}"`;
+
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: `SSH automation requires a separate service. For now, please run this command in your terminal:\n\n${sshCommand}\n\nOr use the Download button and manually upload the file.`,
+          command: sshCommand,
+          path: soulPath
+        }),
+        { status: 200, headers: corsHeaders() }
+      );
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ ok: false, error: error.message }),
+        { status: 500, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
 // CORS preflight handlers
 http.route({ path: "/api/heartbeat", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/tasks", method: "OPTIONS", handler: optionsHandler() });
@@ -404,5 +656,12 @@ http.route({ path: "/api/notifications/read-all", method: "OPTIONS", handler: op
 http.route({ path: "/api/documents", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/documents/update", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/usage", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/agents/config", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/ssh/config", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/ssh/test", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/ssh/restart-openclaw", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/soul/save", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/soul", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/soul/sync", method: "OPTIONS", handler: optionsHandler() });
 
 export default http;

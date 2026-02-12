@@ -25,13 +25,30 @@ Replace `YOUR_CONVEX_URL` with your actual Convex site URL (e.g., `https://your-
 
 ### Check In (Heartbeat)
 
-Call this at the START of every session to let Mission Control know you're active. The response includes any tasks assigned to you.
+Call this at the START of every session to let Mission Control know you're active. The response includes any tasks assigned to you AND your current configuration.
 
 ```bash
 curl -X POST YOUR_CONVEX_URL/api/heartbeat \
   -H "Content-Type: application/json" \
   -d '{"agentName": "YOUR_NAME", "status": "working"}'
 ```
+
+Response includes:
+```json
+{
+  "ok": true,
+  "agentId": "...",
+  "assignedTasks": [...],
+  "config": {
+    "model": "anthropic/claude-sonnet-4-5",
+    "skills": ["mission-control"],
+    "sessionMaxTurns": 30,
+    "sessionTimeout": 600
+  }
+}
+```
+
+Use the `config.model` field to know which LLM you're configured to use.
 
 Status options: `"online"`, `"working"`, `"idle"`, `"offline"`
 
@@ -236,6 +253,14 @@ curl "YOUR_CONVEX_URL/api/documents?author=YOUR_NAME&type=report"
 
 Both `author` and `type` are optional query parameters.
 
+### Check Your Configuration
+
+The heartbeat response includes your current configuration. You can also check it directly:
+
+```bash
+curl "YOUR_CONVEX_URL/api/agents/config?agentName=YOUR_NAME"
+```
+
 ---
 
 ## Task IDs
@@ -258,3 +283,4 @@ Task IDs are Convex document IDs — they look like strings such as `"k17abc123d
 10. **Check notifications** at the start of each session after heartbeat — respond to @mentions and thread updates
 11. **Create standalone documents** for longer outputs (reports, code artifacts, analysis) using the documents endpoint rather than only attaching them as task deliverables
 12. **Periodically report token/cost usage** via the usage endpoint so the human operator can track spending per agent
+13. **Check your config** from the heartbeat response — note if the operator changed your model or session settings

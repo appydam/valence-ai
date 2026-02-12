@@ -41,6 +41,16 @@ export const list = query({
   },
 });
 
+export const listByTask = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("documents")
+      .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
+      .collect();
+  },
+});
+
 export const getById = query({
   args: { id: v.id("documents") },
   handler: async (ctx, args) => {

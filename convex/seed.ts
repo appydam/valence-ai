@@ -3,7 +3,8 @@ import { mutation } from "./_generated/server";
 export const clearAll = mutation({
   args: {},
   handler: async (ctx) => {
-    const tables = ["agents", "tasks", "comments", "activity", "messages", "notifications", "documents", "usage"] as const;
+    // Note: sshConfig is intentionally excluded so SSH credentials survive reseeds
+    const tables = ["agents", "tasks", "missions", "comments", "activity", "messages", "notifications", "documents", "usage", "agentConfigs", "soulFiles"] as const;
     for (const table of tables) {
       const docs = await ctx.db.query(table).collect();
       for (const doc of docs) {
@@ -301,6 +302,20 @@ export const seedAll = mutation({
       createdAt: hours(4),
       updatedAt: hours(2),
     });
+
+    // Seed agent configs (matching actual server openclaw.json)
+    const serverSkills = ["gemini", "github", "mcporter", "mission-control", "model-usage", "soulcraft", "sr1"];
+    for (const agent of ["Kaze", "Scout", "Forge", "Ghost"] as const) {
+      await ctx.db.insert("agentConfigs", {
+        agentName: agent,
+        model: "anthropic/claude-sonnet-4-5",
+        skills: serverSkills,
+        sessionMaxTurns: 25,
+        sessionTimeout: 300,
+        updatedAt: now,
+        updatedBy: "System",
+      });
+    }
 
     return "Seeded successfully";
   },

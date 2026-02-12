@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Activity, LayoutGrid, Users, Terminal, FileText, ChevronLeft, ChevronRight, Zap } from "lucide-react";
+import { Activity, LayoutGrid, Users, Terminal, FileText, Settings, ChevronLeft, ChevronRight, Zap, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
 
@@ -9,7 +9,9 @@ const navItems = [
   { title: "Mission Board", path: "/board", icon: LayoutGrid },
   { title: "Documents", path: "/documents", icon: FileText },
   { title: "Agents", path: "/agents", icon: Users },
+  { title: "Tools", path: "/tools", icon: Wrench },
   { title: "Command Center", path: "/command", icon: Terminal },
+  { title: "Settings", path: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {

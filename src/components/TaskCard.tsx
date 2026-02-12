@@ -1,6 +1,6 @@
 import { AGENT_CONFIG, AgentName, TaskPriority } from "@/types/mission";
 import { getRelativeTime } from "@/lib/time";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Package } from "lucide-react";
 
 interface TaskData {
   _id: string;
@@ -10,10 +10,12 @@ interface TaskData {
   assignee?: AgentName;
   tags: string[];
   updatedAt: number;
+  deliverables: { name: string; type: string; content: string }[];
 }
 
 export function TaskCard({ task, onClick, commentCount = 0 }: { task: TaskData; onClick: () => void; commentCount?: number }) {
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
+  const hasDeliverables = task.deliverables.length > 0;
 
   return (
     <button
@@ -32,6 +34,14 @@ export function TaskCard({ task, onClick, commentCount = 0 }: { task: TaskData; 
           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: `hsl(var(--priority-${task.priority}))` }} />
           {task.priority}
         </span>
+
+        {/* Outcome badge */}
+        {hasDeliverables && (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/15 text-primary">
+            <Package className="w-3 h-3" />
+            {task.deliverables.length}
+          </span>
+        )}
 
         {/* Tags */}
         {task.tags.slice(0, 2).map(tag => (

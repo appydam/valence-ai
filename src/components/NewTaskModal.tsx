@@ -2,20 +2,28 @@ import { useState } from "react";
 import { AgentName, AGENT_CONFIG, TaskPriority } from "@/types/mission";
 import { X } from "lucide-react";
 
+interface Mission {
+  _id: string;
+  title: string;
+  status: string;
+}
+
 interface NewTaskModalProps {
   onClose: () => void;
-  onCreate: (data: { title: string; description: string; priority: TaskPriority; assignee?: AgentName; tags: string[] }) => void;
+  onCreate: (data: { title: string; description: string; priority: TaskPriority; assignee?: AgentName; tags: string[]; missionId?: string }) => void;
+  missions?: Mission[];
 }
 
 const priorityOptions: TaskPriority[] = ["low", "medium", "high", "urgent"];
 const agentOptions: (AgentName | "")[] = ["", "Kaze", "Scout", "Forge", "Ghost"];
 
-export function NewTaskModal({ onClose, onCreate }: NewTaskModalProps) {
+export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [assignee, setAssignee] = useState<AgentName | "">("");
   const [tagsInput, setTagsInput] = useState("");
+  const [selectedMissionId, setSelectedMissionId] = useState<string>("");
 
   const handleCreate = () => {
     if (!title.trim()) return;
@@ -25,6 +33,7 @@ export function NewTaskModal({ onClose, onCreate }: NewTaskModalProps) {
       priority,
       assignee: assignee || undefined,
       tags: tagsInput.split(",").map(t => t.trim()).filter(Boolean),
+      missionId: selectedMissionId || undefined,
     });
     onClose();
   };
@@ -69,6 +78,21 @@ export function NewTaskModal({ onClose, onCreate }: NewTaskModalProps) {
               </select>
             </div>
           </div>
+          {missions && missions.length > 0 && (
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">Mission</label>
+              <select
+                value={selectedMissionId}
+                onChange={e => setSelectedMissionId(e.target.value)}
+                className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground border-0 outline-none"
+              >
+                <option value="">Auto-create new mission</option>
+                {missions.filter(m => m.status === "active").map(m => (
+                  <option key={m._id} value={m._id}>{m.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="text-xs text-muted-foreground font-medium mb-1 block">Tags (comma-separated)</label>
             <input value={tagsInput} onChange={e => setTagsInput(e.target.value)} placeholder="research, ai, code..."
