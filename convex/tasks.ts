@@ -56,6 +56,7 @@ export const create = mutation({
     creator: v.string(),
     tags: v.array(v.string()),
     missionId: v.optional(v.id("missions")),
+    dependsOn: v.optional(v.array(v.id("tasks"))), // NEW: task dependencies
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -94,7 +95,22 @@ export const create = mutation({
       tags: args.tags,
       deliverables: [],
       ...(missionId ? { missionId } : {}),
+      ...(args.dependsOn ? { dependsOn: args.dependsOn } : {}),
     });
+
+    // Update blocking relationship for dependencies
+    if (args.dependsOn) {
+      for (const depId of args.dependsOn) {
+        const depTask = await ctx.db.get(depId);
+        if (depTask) {
+          const existingBlocks = depTask.blocks || [];
+          await ctx.db.patch(depId, {
+            blocks: [...existingBlocks, taskId],
+          });
+        }
+      }
+    }
+
     return { taskId, missionId };
   },
 });
