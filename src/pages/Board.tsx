@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
@@ -9,7 +9,7 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { TaskStatus, AgentName, TaskPriority } from "@/types/mission";
 import { Plus, List, FolderPlus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 const columns: { key: TaskStatus; label: string }[] = [
   { key: "inbox", label: "Inbox" },
@@ -20,8 +20,27 @@ const columns: { key: TaskStatus; label: string }[] = [
 ];
 
 const Board = () => {
+  const [searchParams] = useSearchParams();
+  const missionFromUrl = searchParams.get("mission");
   const [selectedMissionId, setSelectedMissionId] = useState<Id<"missions"> | null>(null);
   const missions = useQuery(api.missions.list, {}) ?? [];
+
+  // Fix orphaned tasks on first load
+  const fixOrphaned = useMutation(api.tasks.fixOrphanedTasks);
+  const fixedRef = useRef(false);
+  useEffect(() => {
+    if (!fixedRef.current) {
+      fixedRef.current = true;
+      fixOrphaned();
+    }
+  }, [fixOrphaned]);
+
+  // Sync URL param to state on mount/change
+  useEffect(() => {
+    if (missionFromUrl) {
+      setSelectedMissionId(missionFromUrl as Id<"missions">);
+    }
+  }, [missionFromUrl]);
 
   // Default to most recent mission (first in desc-ordered list)
   const missionIdToUse = selectedMissionId || missions[0]?._id || undefined;

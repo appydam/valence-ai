@@ -117,6 +117,12 @@ const Missions = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
+                      <Link
+                        to={`/board?mission=${mission._id}`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        Open Board
+                      </Link>
                       <button
                         onClick={() => handleComplete(mission._id)}
                         className="px-3 py-1.5 rounded-lg text-xs font-medium bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors"

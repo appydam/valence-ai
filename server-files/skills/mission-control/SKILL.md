@@ -15,9 +15,7 @@ You are part of a squad of 4 AI agents coordinated through Mission Control. Use 
 
 ## API Base URL
 
-All requests go to: `YOUR_CONVEX_URL`
-
-Replace `YOUR_CONVEX_URL` with your actual Convex site URL (e.g., `https://your-deployment.convex.site`).
+All requests go to: `https://beloved-squirrel-599.convex.site`
 
 ---
 
@@ -28,7 +26,7 @@ Replace `YOUR_CONVEX_URL` with your actual Convex site URL (e.g., `https://your-
 Call this at the START of every session to let Mission Control know you're active. The response includes any tasks assigned to you AND your current configuration.
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/heartbeat \
+curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
   -H "Content-Type: application/json" \
   -d '{"agentName": "YOUR_NAME", "status": "working"}'
 ```
@@ -55,24 +53,24 @@ Status options: `"online"`, `"working"`, `"idle"`, `"offline"`
 ### List Your Tasks
 
 ```bash
-curl "YOUR_CONVEX_URL/api/tasks?assignee=YOUR_NAME"
+curl "https://beloved-squirrel-599.convex.site/api/tasks?assignee=YOUR_NAME"
 ```
 
 ### List Tasks by Status
 
 ```bash
-curl "YOUR_CONVEX_URL/api/tasks?status=inbox"
+curl "https://beloved-squirrel-599.convex.site/api/tasks?status=inbox"
 ```
 
 You can combine filters:
 ```bash
-curl "YOUR_CONVEX_URL/api/tasks?assignee=YOUR_NAME&status=assigned"
+curl "https://beloved-squirrel-599.convex.site/api/tasks?assignee=YOUR_NAME&status=assigned"
 ```
 
 ### Create a Task
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/tasks \
+curl -X POST https://beloved-squirrel-599.convex.site/api/tasks \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Task title",
@@ -80,17 +78,23 @@ curl -X POST YOUR_CONVEX_URL/api/tasks \
     "priority": "medium",
     "creator": "YOUR_NAME",
     "assignee": "Scout",
-    "tags": ["research", "ai"]
+    "tags": ["research", "ai"],
+    "missionId": "MISSION_ID",
+    "dependsOn": ["TASK_ID_1", "TASK_ID_2"]
   }'
 ```
 
 Priority options: `"low"`, `"medium"`, `"high"`, `"urgent"`
 Assignee options: `"Kaze"`, `"Scout"`, `"Forge"`, `"Ghost"` (or omit for inbox)
 
+Optional fields:
+- `missionId` — Link this task to an existing mission board. If omitted, the task is auto-linked to the most recent active mission.
+- `dependsOn` — Array of task IDs that must be completed before this task can start. Creates a blocking relationship (the dependency task's `blocks` field is updated automatically).
+
 ### Claim a Task (Assign to Yourself)
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/tasks/claim \
+curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/claim \
   -H "Content-Type: application/json" \
   -d '{"id": "TASK_ID", "agentName": "YOUR_NAME"}'
 ```
@@ -100,29 +104,35 @@ This sets the task to `"in_progress"` and assigns it to you.
 ### Update Task Status or Fields
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/tasks/update \
+curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/update \
   -H "Content-Type: application/json" \
   -d '{"id": "TASK_ID", "status": "in_review"}'
 ```
 
 You can update multiple fields at once:
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/tasks/update \
+curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/update \
   -H "Content-Type: application/json" \
   -d '{
     "id": "TASK_ID",
     "status": "in_review",
     "priority": "high",
-    "assignee": "Kaze"
+    "assignee": "Kaze",
+    "missionId": "MISSION_ID"
   }'
 ```
 
 Status options: `"inbox"`, `"assigned"`, `"in_progress"`, `"in_review"`, `"done"`, `"cancelled"`
 
+When you mark a task as `"done"`:
+- Your agent status automatically updates (tasks completed count increments, status set to idle if no other active tasks)
+- The mission's completed task count is incremented
+- A `completedAt` timestamp is recorded
+
 ### Add Deliverable to Task
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/tasks/deliverable \
+curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/deliverable \
   -H "Content-Type: application/json" \
   -d '{
     "taskId": "TASK_ID",
@@ -137,7 +147,7 @@ curl -X POST YOUR_CONVEX_URL/api/tasks/deliverable \
 Use comments to communicate with other agents or the human operator.
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/comments \
+curl -X POST https://beloved-squirrel-599.convex.site/api/comments \
   -H "Content-Type: application/json" \
   -d '{
     "taskId": "TASK_ID",
@@ -152,7 +162,7 @@ Use `mentions` to @notify another agent.
 ### Log Activity
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/activity \
+curl -X POST https://beloved-squirrel-599.convex.site/api/activity \
   -H "Content-Type: application/json" \
   -d '{
     "agentName": "YOUR_NAME",
@@ -167,7 +177,7 @@ The `taskId` field is optional — omit it for general activity like heartbeats.
 ### View Activity Log
 
 ```bash
-curl "YOUR_CONVEX_URL/api/activity?agentName=YOUR_NAME&limit=10"
+curl "https://beloved-squirrel-599.convex.site/api/activity?agentName=YOUR_NAME&limit=10"
 ```
 
 Both `agentName` and `limit` are optional query parameters.
@@ -177,13 +187,13 @@ Both `agentName` and `limit` are optional query parameters.
 Check for @mentions and thread updates directed at you.
 
 ```bash
-curl "YOUR_CONVEX_URL/api/notifications?agentName=YOUR_NAME&unreadOnly=true"
+curl "https://beloved-squirrel-599.convex.site/api/notifications?agentName=YOUR_NAME&unreadOnly=true"
 ```
 
 ### Mark Notification as Read
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/notifications/read \
+curl -X POST https://beloved-squirrel-599.convex.site/api/notifications/read \
   -H "Content-Type: application/json" \
   -d '{"id": "NOTIFICATION_ID"}'
 ```
@@ -191,7 +201,7 @@ curl -X POST YOUR_CONVEX_URL/api/notifications/read \
 ### Mark All Notifications Read
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/notifications/read-all \
+curl -X POST https://beloved-squirrel-599.convex.site/api/notifications/read-all \
   -H "Content-Type: application/json" \
   -d '{"agentName": "YOUR_NAME"}'
 ```
@@ -201,7 +211,7 @@ curl -X POST YOUR_CONVEX_URL/api/notifications/read-all \
 After checking usage via the model-usage skill, report it to Mission Control:
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/usage \
+curl -X POST https://beloved-squirrel-599.convex.site/api/usage \
   -H "Content-Type: application/json" \
   -d '{
     "agentName": "YOUR_NAME",
@@ -220,7 +230,7 @@ The `totalInputTokens`, `totalOutputTokens`, and per-model token fields are opti
 ### View Usage
 
 ```bash
-curl "YOUR_CONVEX_URL/api/usage?agentName=YOUR_NAME"
+curl "https://beloved-squirrel-599.convex.site/api/usage?agentName=YOUR_NAME"
 ```
 
 Omit `agentName` to see usage for all agents.
@@ -230,7 +240,7 @@ Omit `agentName` to see usage for all agents.
 For longer outputs (research reports, code artifacts, analysis) that should be browsable independently of tasks.
 
 ```bash
-curl -X POST YOUR_CONVEX_URL/api/documents \
+curl -X POST https://beloved-squirrel-599.convex.site/api/documents \
   -H "Content-Type: application/json" \
   -d '{
     "title": "AI Startups Research Report — Jan 2026",
@@ -248,7 +258,7 @@ The `taskId` field is optional — use it to link the document to a related task
 ### List Documents
 
 ```bash
-curl "YOUR_CONVEX_URL/api/documents?author=YOUR_NAME&type=report"
+curl "https://beloved-squirrel-599.convex.site/api/documents?author=YOUR_NAME&type=report"
 ```
 
 Both `author` and `type` are optional query parameters.
@@ -258,7 +268,7 @@ Both `author` and `type` are optional query parameters.
 The heartbeat response includes your current configuration. You can also check it directly:
 
 ```bash
-curl "YOUR_CONVEX_URL/api/agents/config?agentName=YOUR_NAME"
+curl "https://beloved-squirrel-599.convex.site/api/agents/config?agentName=YOUR_NAME"
 ```
 
 ---
@@ -269,14 +279,33 @@ Task IDs are Convex document IDs — they look like strings such as `"k17abc123d
 
 ---
 
+## CRITICAL RULE: Work Only Counts If It's in Mission Control
+
+**If you didn't post it to Mission Control, it didn't happen.** The human operator monitors progress through the Mission Control dashboard. Work that only exists in your terminal output or session memory is invisible and worthless.
+
+Every session MUST include these API calls — no exceptions:
+1. **Heartbeat** at the start (status: working)
+2. **Claim or update task** to `in_progress` before doing any work
+3. **Add deliverable** with your actual output (not just a summary — the full report/code/draft)
+4. **Post a comment** with a summary and @mention Kaze
+5. **Log activity** describing what you did
+6. **Update task status** to `in_review` when done
+7. **Heartbeat** at the end (status: idle)
+
+**Budget your session turns:** Reserve the LAST 3-4 turns of every session for posting results to Mission Control. Do NOT spend all turns on research/work and run out before posting. If you're running low on turns, STOP working and POST what you have immediately.
+
+**Minimum viable session:** If you can only do one thing, make it posting results. A short deliverable posted to Mission Control is infinitely more valuable than a long analysis that stays in your terminal.
+
+---
+
 ## Workflow Protocol
 
 1. **On wake up:** Send heartbeat with status `"working"`, check for assigned tasks in the response
-2. **If assigned tasks exist:** Work on the highest priority one first
+2. **If assigned tasks exist:** Claim the highest priority one (sets status to `in_progress`)
 3. **If no assigned tasks:** Check inbox (`?status=inbox`), claim something relevant to your role
 4. **If inbox is empty:** Create tasks based on your standing priorities
-5. **While working:** Update task status to `"in_progress"` and log activity
-6. **When done:** Add deliverables, post a summary comment, set status to `"in_review"`
+5. **While working:** Log activity periodically so progress is visible
+6. **When done (or running low on turns):** Add deliverables with FULL content, post a summary comment, set status to `"in_review"`
 7. **@mention Kaze** in comments if you need a decision or if something is blocked
 8. **@mention other agents** if you need their expertise on a task
 9. **Before signing off:** Send heartbeat with status `"idle"`

@@ -1,13 +1,23 @@
+import { useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AgentStatusCard } from "@/components/AgentStatusCard";
 import { ActivityItem } from "@/components/ActivityItem";
 import { StatCard } from "@/components/StatCard";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Loader, CheckCircle, Clock, Users } from "lucide-react";
 
 const Index = () => {
   const agents = useQuery(api.agents.list) ?? [];
+  const seedAgents = useMutation(api.agents.seed);
+  const seeded = useRef(false);
+
+  useEffect(() => {
+    if (!seeded.current) {
+      seeded.current = true;
+      seedAgents();
+    }
+  }, [seedAgents]);
   const tasks = useQuery(api.tasks.list, {}) ?? [];
   const activity = useQuery(api.activityFns.list, { limit: 20 }) ?? [];
 

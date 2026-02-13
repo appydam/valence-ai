@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Activity, LayoutGrid, Users, Terminal, FileText, Settings, ChevronLeft, ChevronRight, Zap, Wrench } from "lucide-react";
+import { Activity, LayoutGrid, Users, Terminal, FileText, Settings, ChevronLeft, ChevronRight, Wrench, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { title: "Activity Feed", path: "/", icon: Activity },
   { title: "Mission Board", path: "/board", icon: LayoutGrid },
+  { title: "Missions", path: "/missions", icon: FolderOpen },
   { title: "Documents", path: "/documents", icon: FileText },
   { title: "Agents", path: "/agents", icon: Users },
   { title: "Tools", path: "/tools", icon: Wrench },
@@ -25,8 +26,8 @@ export function AppSidebar() {
     )}>
       {/* Logo */}
       <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/20">
-          <Zap className="w-4 h-4 text-primary" />
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
+          <img src="/logo.svg" alt="Mission Control" className="w-8 h-8" />
         </div>
         {!collapsed && (
           <div>

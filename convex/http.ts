@@ -75,6 +75,8 @@ http.route({
       assignee: body.assignee,
       creator: body.creator || "Agent",
       tags: body.tags || [],
+      ...(body.missionId ? { missionId: body.missionId as Id<"missions"> } : {}),
+      ...(body.dependsOn ? { dependsOn: body.dependsOn } : {}),
     });
     return new Response(JSON.stringify({ id: result.taskId, missionId: result.missionId }), {
       status: 201,
@@ -108,6 +110,8 @@ http.route({
     if (body.tags !== undefined) updateArgs.tags = body.tags;
     if (body.deliverables !== undefined)
       updateArgs.deliverables = body.deliverables;
+    if (body.missionId !== undefined)
+      updateArgs.missionId = body.missionId as Id<"missions">;
 
     await ctx.runMutation(api.tasks.update, updateArgs as any);
     return new Response(JSON.stringify({ ok: true }), {

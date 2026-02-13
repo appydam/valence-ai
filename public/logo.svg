@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#0f172a" stroke="url(#ring)" stroke-width="8"/>
+  <!-- Outer reticle ring -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="url(#ring)" stroke-width="3" stroke-dasharray="20 10" opacity="0.4"/>
+  <!-- Inner reticle ring -->
+  <circle cx="256" cy="256" r="100" fill="none" stroke="url(#ring)" stroke-width="2" opacity="0.3"/>
+  <!-- Crosshair lines -->
+  <line x1="256" y1="56" x2="256" y2="156" stroke="url(#glow)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <line x1="256" y1="356" x2="256" y2="456" stroke="url(#glow)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <line x1="56" y1="256" x2="156" y2="256" stroke="url(#glow)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <line x1="356" y1="256" x2="456" y2="256" stroke="url(#glow)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <!-- Corner brackets (top-left) -->
+  <path d="M130 170 L130 130 L170 130" fill="none" stroke="url(#glow)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Corner brackets (top-right) -->
+  <path d="M342 130 L382 130 L382 170" fill="none" stroke="url(#glow)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Corner brackets (bottom-left) -->
+  <path d="M130 342 L130 382 L170 382" fill="none" stroke="url(#glow)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Corner brackets (bottom-right) -->
+  <path d="M342 382 L382 382 L382 342" fill="none" stroke="url(#glow)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Center diamond/core -->
+  <path d="M256 216 L296 256 L256 296 L216 256 Z" fill="url(#glow)" opacity="0.9"/>
+  <!-- Center dot -->
+  <circle cx="256" cy="256" r="8" fill="#ffffff" opacity="0.95"/>
+  <!-- Orbital dots (representing agents) -->
+  <circle cx="256" cy="136" r="10" fill="#3b82f6" opacity="0.8"/>
+  <circle cx="376" cy="256" r="10" fill="#10b981" opacity="0.8"/>
+  <circle cx="256" cy="376" r="10" fill="#f59e0b" opacity="0.8"/>
+  <circle cx="136" cy="256" r="10" fill="#ef4444" opacity="0.8"/>
+  <!-- MC text -->
+  <text x="256" y="268" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="800" fill="white" letter-spacing="4" opacity="0.0">MC</text>
+</svg>

@@ -56,6 +56,8 @@ const Tools = () => {
     setLoading(false);
   };
 
+  const [skillInfo, setSkillInfo] = useState<{ name: string; info: string } | null>(null);
+
   const installSkill = async (skillName: string) => {
     setInstalling(skillName);
     try {
@@ -73,7 +75,11 @@ const Tools = () => {
         alert(`${skillName} installed successfully! Refreshing list...`);
         loadTools();
       } else {
-        alert(`Installation failed: ${data.error}`);
+        // Show skill info so user knows what's needed
+        setSkillInfo({
+          name: skillName,
+          info: data.info || data.error || "This skill requires manual setup on your server.",
+        });
       }
     } catch (error: any) {
       alert(`Error: ${error.message}`);
@@ -261,25 +267,53 @@ const Tools = () => {
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
                       {skill.source}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        installSkill(skill.name);
-                      }}
-                      disabled={installing === skill.name}
-                      className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/80 transition-colors disabled:opacity-50"
-                    >
-                      {installing === skill.name ? (
-                        <RefreshCw className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <Download className="w-3 h-3" />
-                      )}
-                      {installing === skill.name ? "Installing..." : "Install"}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          installSkill(skill.name);
+                        }}
+                        disabled={installing === skill.name}
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/80 transition-colors disabled:opacity-50"
+                      >
+                        {installing === skill.name ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Download className="w-3 h-3" />
+                        )}
+                        {installing === skill.name ? "Installing..." : "Install"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Skill Info Panel */}
+        {skillInfo && (
+          <div className="rounded-lg border border-orange-500/30 bg-orange-500/5 p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-orange-500 shrink-0" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  {skillInfo.name} requires manual setup
+                </h3>
+              </div>
+              <button
+                onClick={() => setSkillInfo(null)}
+                className="text-muted-foreground hover:text-foreground text-xs"
+              >
+                Dismiss
+              </button>
+            </div>
+            <pre className="text-xs text-muted-foreground whitespace-pre-wrap bg-secondary/50 rounded-lg p-3 max-h-64 overflow-auto">
+              {skillInfo.info}
+            </pre>
+            <p className="text-xs text-muted-foreground mt-3">
+              SSH into your server and follow the instructions above to set up this skill.
+            </p>
           </div>
         )}
 

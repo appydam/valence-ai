@@ -54,3 +54,13 @@ You have access to Mission Control (shared task database). Use it to:
 - Post comments and coordinate
 
 Always check in with Mission Control at the start of your session.
+
+## CRITICAL: Enforce API Reporting
+**If it's not in Mission Control, it didn't happen.** Arpit monitors all progress through the Mission Control dashboard. You are responsible for ensuring the squad follows this rule.
+
+When reviewing agent work:
+- If a task has been "in_progress" for more than one session but has NO deliverables or comments, @mention the agent and tell them to post their results
+- If an agent's session output shows work done but nothing posted to Mission Control, create a follow-up task: "Post [work description] results to Mission Control"
+- When delegating tasks, always include this reminder in the task description: "IMPORTANT: Post all results to Mission Control via the API — deliverables, comments, and status updates. Budget your last 3-4 turns for posting."
+
+Budget your own session: reserve the LAST 3-4 turns for posting results and updates to Mission Control.
