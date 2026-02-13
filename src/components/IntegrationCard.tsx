@@ -65,22 +65,22 @@ export function IntegrationCard({ integration, isEnabled, isConnected }: Integra
       "border-border bg-card hover:border-primary/20"
     }`}>
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          {/* Icon */}
-          <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="flex items-center gap-2.5">
+          {/* Company Logo */}
+          <div className="w-8 h-8 rounded-md bg-white border border-border/50 flex items-center justify-center shrink-0 overflow-hidden p-1">
             {!imgError ? (
               <img
                 src={integration.iconUrl}
                 alt={integration.name}
-                className="w-6 h-6 object-contain"
+                className="w-full h-full object-contain"
                 onError={() => setImgError(true)}
               />
             ) : (
-              <span className="text-lg">{categoryConfig.emoji}</span>
+              <span className="text-base">{categoryConfig.emoji}</span>
             )}
           </div>
-          <div>
-            <h3 className={`text-sm font-semibold ${isComingSoon ? "text-foreground/60" : "text-foreground"}`}>
+          <div className="flex-1 min-w-0">
+            <h3 className={`text-sm font-semibold truncate ${isComingSoon ? "text-foreground/60" : "text-foreground"}`}>
               {integration.name}
             </h3>
             <span className="text-[10px] text-muted-foreground">{integration.category}</span>
