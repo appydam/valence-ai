@@ -191,4 +191,17 @@ export default defineSchema({
     syncedToServer: v.boolean(),
     lastSyncedAt: v.optional(v.number()),
   }).index("by_agent", ["agentName"]),
+
+  integrations: defineTable({
+    slug: v.string(),
+    name: v.string(),
+    category: v.string(),
+    enabled: v.boolean(),
+    connectedAt: v.optional(v.number()),
+    paragonType: v.optional(v.string()),
+    config: v.optional(v.string()),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_category", ["category"])
+    .index("by_enabled", ["enabled"]),
 });

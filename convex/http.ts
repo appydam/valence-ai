@@ -646,6 +646,41 @@ http.route({
   }),
 });
 
+// GET /api/integrations
+http.route({
+  path: "/api/integrations",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const enabledOnly = url.searchParams.get("enabledOnly") === "true";
+    const category = url.searchParams.get("category") || undefined;
+    const integrations = await ctx.runQuery(api.integrations.list, { enabledOnly, category });
+    return new Response(JSON.stringify(integrations), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// POST /api/integrations/toggle
+http.route({
+  path: "/api/integrations/toggle",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const id = await ctx.runMutation(api.integrations.toggle, {
+      slug: body.slug,
+      name: body.name,
+      category: body.category,
+      enabled: body.enabled,
+    });
+    return new Response(JSON.stringify({ ok: true, id }), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
 // CORS preflight handlers
 http.route({ path: "/api/heartbeat", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/tasks", method: "OPTIONS", handler: optionsHandler() });
@@ -667,5 +702,7 @@ http.route({ path: "/api/ssh/restart-openclaw", method: "OPTIONS", handler: opti
 http.route({ path: "/api/soul/save", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/soul", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/soul/sync", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/toggle", method: "OPTIONS", handler: optionsHandler() });
 
 export default http;

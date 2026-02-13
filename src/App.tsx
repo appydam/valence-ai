@@ -11,6 +11,7 @@ import CommandCenter from "./pages/Command";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import Tools from "./pages/Tools";
+import Integrations from "./pages/Integrations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/command" element={<CommandCenter />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/tools" element={<Tools />} />
+          <Route path="/integrations" element={<Integrations />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

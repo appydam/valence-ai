@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Activity, LayoutGrid, Users, Terminal, FileText, Settings, ChevronLeft, ChevronRight, Wrench, FolderOpen } from "lucide-react";
+import { Activity, LayoutGrid, Users, Terminal, FileText, Settings, ChevronLeft, ChevronRight, Wrench, FolderOpen, Plug } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
 
@@ -11,6 +11,7 @@ const navItems = [
   { title: "Documents", path: "/documents", icon: FileText },
   { title: "Agents", path: "/agents", icon: Users },
   { title: "Tools", path: "/tools", icon: Wrench },
+  { title: "Integrations", path: "/integrations", icon: Plug },
   { title: "Command Center", path: "/command", icon: Terminal },
   { title: "Settings", path: "/settings", icon: Settings },
 ];
