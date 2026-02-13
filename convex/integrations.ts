@@ -8,15 +8,19 @@ export const list = query({
     enabledOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    let query = ctx.db.query("integrations");
-
-    if (args.category) {
-      query = query.withIndex("by_category", (q) => q.eq("category", args.category));
+    if (args.category !== undefined) {
+      return await ctx.db
+        .query("integrations")
+        .withIndex("by_category", (q) => q.eq("category", args.category!))
+        .collect();
     } else if (args.enabledOnly) {
-      query = query.withIndex("by_enabled", (q) => q.eq("enabled", true));
+      return await ctx.db
+        .query("integrations")
+        .withIndex("by_enabled", (q) => q.eq("enabled", true))
+        .collect();
     }
 
-    return await query.collect();
+    return await ctx.db.query("integrations").collect();
   },
 });
 
