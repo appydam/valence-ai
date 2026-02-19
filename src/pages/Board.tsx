@@ -8,8 +8,10 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { TaskStatus, AgentName, TaskPriority } from "@/types/mission";
-import { Plus, List, FolderPlus } from "lucide-react";
+import { Plus, List, FolderPlus, Zap } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
+import { useToast } from "@/hooks/use-toast";
 
 const columns: { key: TaskStatus; label: string }[] = [
   { key: "inbox", label: "Inbox" },
@@ -20,10 +22,13 @@ const columns: { key: TaskStatus; label: string }[] = [
 ];
 
 const Board = () => {
+  const { user } = useUser();
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const missionFromUrl = searchParams.get("mission");
   const [selectedMissionId, setSelectedMissionId] = useState<Id<"missions"> | null>(null);
   const missions = useQuery(api.missions.list, {}) ?? [];
+  const [wakingAgents, setWakingAgents] = useState(false);
 
   // Fix orphaned tasks on first load
   const fixOrphaned = useMutation(api.tasks.fixOrphanedTasks);
@@ -63,11 +68,48 @@ const Board = () => {
       creator: "Human",
       tags: data.tags,
       ...(data.missionId ? { missionId: data.missionId as Id<"missions"> } : {}),
+      // NEW: Capture current user's ID for agent-to-integration wiring
+      ...(user?.id ? { requiredUserId: user.id } : {}),
     });
     // Auto-select the mission board (newly created or existing)
     const targetMission = data.missionId || result?.missionId;
     if (targetMission) {
       setSelectedMissionId(targetMission as Id<"missions">);
+    }
+  };
+
+  const handleWakeAgents = async () => {
+    setWakingAgents(true);
+    try {
+      const convexSiteUrl = import.meta.env.VITE_CONVEX_URL.replace('.convex.cloud', '.convex.site');
+      const response = await fetch(`${convexSiteUrl}/api/agents/wake`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Agents Notified",
+          description: data.agents.length > 0
+            ? `${data.agents.length} agent(s) with pending tasks`
+            : "No agents with pending tasks",
+        });
+      } else {
+        toast({
+          title: "Wake Issue",
+          description: data.error || data.message || "Could not wake agents",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Wake Failed",
+        description: "Could not wake agents. Ensure agent-wakeup-server is running.",
+        variant: "destructive",
+      });
+    } finally {
+      setWakingAgents(false);
     }
   };
 
@@ -80,6 +122,14 @@ const Board = () => {
             <p className="text-sm text-muted-foreground mt-1">Track and manage squad tasks</p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleWakeAgents}
+              disabled={wakingAgents}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            >
+              <Zap className={`w-4 h-4 ${wakingAgents ? 'animate-pulse' : ''}`} />
+              {wakingAgents ? 'Waking...' : 'Wake Agents'}
+            </button>
             <button onClick={() => setShowNewMission(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-surface-hover transition-colors text-foreground">
               <FolderPlus className="w-4 h-4" /> New Mission

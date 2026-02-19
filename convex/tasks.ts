@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
+import { api, internal } from "./_generated/api";
 
 export const list = query({
   args: {
@@ -57,7 +58,9 @@ export const create = mutation({
     creator: v.string(),
     tags: v.array(v.string()),
     missionId: v.optional(v.id("missions")),
-    dependsOn: v.optional(v.array(v.id("tasks"))), // NEW: task dependencies
+    dependsOn: v.optional(v.array(v.id("tasks"))), // Task dependencies
+    requiredIntegrations: v.optional(v.array(v.string())), // NEW: Required blueprint slugs
+    requiredUserId: v.optional(v.string()), // NEW: User ID for integration credentials
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -114,9 +117,11 @@ export const create = mutation({
       deliverables: [],
       ...(missionId ? { missionId } : {}),
       ...(args.dependsOn ? { dependsOn: args.dependsOn } : {}),
+      ...(args.requiredIntegrations ? { requiredIntegrations: args.requiredIntegrations } : {}),
+      ...(args.requiredUserId ? { requiredUserId: args.requiredUserId } : {}),
     });
 
-    // Auto-update assigned agent's status to "working"
+    // Auto-update assigned agent's status and trigger wakeup
     if (args.assignee) {
       const agent = await ctx.db
         .query("agents")
@@ -129,6 +134,13 @@ export const create = mutation({
           lastHeartbeat: now,
         });
       }
+
+      // Wake up the agent on the server (non-blocking)
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: args.assignee,
+        taskId: taskId as string,
+        reason: "task_created",
+      });
     }
 
     // Update blocking relationship for dependencies
@@ -265,6 +277,15 @@ export const update = mutation({
       }
     }
     await ctx.db.patch(id, updates);
+
+    // If assignee changed, wake up the new agent
+    if (updates.assignee && updates.assignee !== existing.assignee) {
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: updates.assignee,
+        taskId: id as string,
+        reason: "task_reassigned",
+      });
+    }
   },
 });
 
@@ -295,7 +316,7 @@ export const claim = mutation({
       updatedAt: now,
     });
 
-    // Auto-update agent status to "working"
+    // Auto-update agent status to "working" and wake up agent
     const agent = await ctx.db
       .query("agents")
       .withIndex("by_name", (q) => q.eq("name", args.agentName))
@@ -307,6 +328,13 @@ export const claim = mutation({
         lastHeartbeat: now,
       });
     }
+
+    // Wake up the agent on the server
+    await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+      agentName: args.agentName,
+      taskId: args.id as string,
+      reason: "task_claimed",
+    });
   },
 });
 
@@ -393,5 +421,87 @@ export const addDeliverable = mutation({
       ],
       updatedAt: Date.now(),
     });
+
+    // Auto-process blueprint.json deliverables from doc scraping
+    if (args.name === "blueprint.json" && args.type === "json") {
+      // Find scraper job ID from task tags (format: "job_k1xyz...")
+      const jobTag = task.tags?.find(tag => tag.startsWith("job_"));
+
+      if (jobTag) {
+        const jobId = jobTag.replace("job_", "") as Id<"scraperJobs">;
+
+        try {
+          // Automatically complete the doc scraping analysis
+          await ctx.scheduler.runAfter(0, api.docScraper.completeAnalysis, {
+            jobId,
+            blueprintJson: args.content,
+            createdBy: task.creator || "system",
+          });
+        } catch (error) {
+          console.error("Failed to auto-complete doc scraping:", error);
+          // Don't throw - deliverable was still added successfully
+        }
+      }
+    }
+  },
+});
+
+/**
+ * Check if an agent can execute a task based on required integrations
+ * Returns whether the user has all required integration connections
+ */
+export const canAgentExecuteTask = query({
+  args: {
+    taskId: v.id("tasks"),
+    agentName: v.union(
+      v.literal("Kaze"),
+      v.literal("Scout"),
+      v.literal("Forge"),
+      v.literal("Ghost")
+    ),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      return { canExecute: false, reason: "Task not found" };
+    }
+
+    // Check if task requires integrations
+    if (!task.requiredIntegrations || task.requiredIntegrations.length === 0) {
+      return { canExecute: true };
+    }
+
+    // Check if user has required connections
+    const connections = await ctx.db
+      .query("connections")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    // Get blueprint slugs for all active connections
+    const connectedBlueprints = new Set(
+      await Promise.all(
+        connections.map(async (conn) => {
+          const bp = await ctx.db.get(conn.blueprintId);
+          return bp?.slug;
+        })
+      )
+    );
+
+    // Check which required integrations are missing
+    const missingIntegrations = task.requiredIntegrations.filter(
+      (slug) => !connectedBlueprints.has(slug)
+    );
+
+    if (missingIntegrations.length > 0) {
+      return {
+        canExecute: false,
+        reason: `Missing required integrations: ${missingIntegrations.join(", ")}`,
+        missingIntegrations,
+      };
+    }
+
+    return { canExecute: true };
   },
 });

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Integration, CATEGORY_CONFIG } from "@/data/integrations";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { CheckCircle2, Clock, Zap } from "lucide-react";
+import { CheckCircle2, Clock, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface IntegrationCardProps {
   integration: Integration;
@@ -11,48 +10,27 @@ interface IntegrationCardProps {
 }
 
 export function IntegrationCard({ integration, isEnabled, isConnected }: IntegrationCardProps) {
-  const toggle = useMutation(api.integrations.toggle);
-  const [toggling, setToggling] = useState(false);
+  const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
 
   const categoryConfig = CATEGORY_CONFIG[integration.category];
   const isComingSoon = integration.status === "coming_soon";
 
-  const handleToggle = async () => {
-    setToggling(true);
-    try {
-      await toggle({
-        slug: integration.slug,
-        name: integration.name,
-        category: integration.category,
-        enabled: !isEnabled,
-      });
-    } catch (e) {
-      console.error("Failed to toggle integration:", e);
-    }
-    setToggling(false);
+  const handleCreateBlueprint = () => {
+    // Navigate to blueprint wizard with pre-filled name and category
+    navigate(`/integrations/blueprint/new?name=${encodeURIComponent(integration.name)}&category=${encodeURIComponent(integration.category)}`);
   };
 
   // Determine display status
   const getStatusBadge = () => {
-    if (isConnected) return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/10 text-green-500">
-        <CheckCircle2 className="w-3 h-3" /> Connected
-      </span>
-    );
-    if (isEnabled) return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary">
-        <Zap className="w-3 h-3" /> Enabled
-      </span>
-    );
     if (isComingSoon) return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-500/10 text-orange-500">
         <Clock className="w-3 h-3" /> Coming Soon
       </span>
     );
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-muted-foreground">
-        Available
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-500">
+        Template
       </span>
     );
   };
@@ -93,22 +71,15 @@ export function IntegrationCard({ integration, isEnabled, isConnected }: Integra
         {integration.description}
       </p>
 
-      {/* Enable toggle */}
+      {/* Create Blueprint button (templates are reference only) */}
       {!isComingSoon && (
-        <div className="flex items-center justify-between pt-2 border-t border-border">
-          <span className="text-[10px] text-muted-foreground">
-            {isEnabled ? "Enabled for agents" : "Enable for agents"}
-          </span>
+        <div className="flex items-center gap-2 pt-2 border-t border-border">
           <button
-            onClick={handleToggle}
-            disabled={toggling}
-            className={`relative w-9 h-5 rounded-full transition-colors ${
-              isEnabled ? "bg-primary" : "bg-secondary"
-            } ${toggling ? "opacity-50" : ""}`}
+            onClick={handleCreateBlueprint}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors w-full justify-center bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
-              isEnabled ? "left-[18px]" : "left-0.5"
-            }`} />
+            <Plus className="w-3.5 h-3.5" />
+            Create Blueprint
           </button>
         </div>
       )}

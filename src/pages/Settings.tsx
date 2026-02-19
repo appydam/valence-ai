@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Server, Key, Zap, Check, Eye, EyeOff, ExternalLink, HelpCircle, AlertCircle } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { SSH_PROXY_URL } from "@/lib/utils";
 
 function Tooltip({ text }: { text: string }) {
   return (
@@ -70,20 +71,16 @@ const SettingsPage = () => {
         }
       }
 
-      const response = await fetch("http://localhost:3001/ssh/test", {
+      // Use Convex's built-in SSH test endpoint
+      const response = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          host: sshHost,
-          port: parseInt(sshPort),
-          username: sshUser,
-          privateKey: keyToUse,
-        }),
       });
+
       const data = await response.json();
       setTestResult(data);
     } catch (error: any) {
-      setTestResult({ ok: false, message: `Cannot connect to SSH proxy service. Make sure it's running on port 3001. Error: ${error.message}` });
+      setTestResult({ ok: false, message: `Cannot connect to SSH proxy service: ${error.message}` });
     }
     setTesting(false);
   };

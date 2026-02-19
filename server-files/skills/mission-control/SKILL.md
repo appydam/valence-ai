@@ -273,6 +273,398 @@ curl "https://beloved-squirrel-599.convex.site/api/agents/config?agentName=YOUR_
 
 ---
 
+## Integration Tools — Execute External API Calls
+
+Mission Control includes a Universal Integration Engine that lets you execute real API calls to external services (CRM, communication tools, file storage, etc.). The human operator connects integrations through the dashboard, and you discover and execute available tools at runtime.
+
+### Discover Available Tools (Via Heartbeat)
+
+Integration tools are now automatically included in your heartbeat response when you provide a `userId`. This is the recommended discovery method:
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentName": "Forge",
+    "status": "working",
+    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2"
+  }'
+```
+
+Response includes:
+```json
+{
+  "ok": true,
+  "action": "updated",
+  "agentId": "...",
+  "assignedTasks": [...],
+  "config": {...},
+  "availableTools": {
+    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "count": 15,
+    "recommended": [
+      {
+        "blueprintSlug": "github",
+        "blueprintName": "GitHub",
+        "toolName": "create_issue",
+        "toolDisplayName": "Create Issue",
+        "description": "Create a new GitHub issue",
+        "method": "POST",
+        "aiUsageHint": "Use this when you need to create tickets, report bugs, or track tasks in GitHub",
+        "exampleArgs": {"owner": "org", "repo": "repo-name", "title": "Bug report", "body": "Details..."},
+        "params": {
+          "pathParams": [{"name": "owner", "type": "string", "required": true}, {"name": "repo", "type": "string", "required": true}],
+          "queryParams": [],
+          "bodySchema": {"title": {"type": "string", "required": true}, "body": {"type": "string"}}
+        }
+      }
+    ],
+    "other": [...],
+    "tools": [...]
+  }
+}
+```
+
+**Role-Based Recommendations:**
+- **Scout** 🔭: CRM (Salesforce, HubSpot), Analytics (Google Analytics, Mixpanel), Knowledge (Notion, Confluence)
+- **Forge** 🔨: GitHub, Jira, Linear, AWS, Sentry, PagerDuty
+- **Ghost** 👻: Slack, LinkedIn, Gmail, Twitter, Mailchimp
+- **Kaze** 🌀: Slack, Google Calendar, notifications
+
+You see ALL tools the user has connected, but `recommended` highlights tools most relevant to your role.
+
+**Key fields to understand:**
+- `aiUsageHint` — Tells you WHEN to use this tool
+- `description` — What the tool does
+- `exampleArgs` — Valid argument structure
+- `params.bodySchema` — Exact parameter requirements
+
+### Getting User ID
+
+The `userId` comes from the task context. When a human creates a task, the system captures their Clerk user ID. You'll execute tools using their credentials (their connected integrations).
+
+**For agent-created tasks:** If no userId is available, skip tool discovery or use the system default: `user_39f60iciK4nX4Q0efRxrfyuHqj2`
+
+### Execute an Integration Tool
+
+Once you've discovered tools, execute them when needed for your tasks. Use the same `userId` from your heartbeat:
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "agentName": "YOUR_NAME",
+    "blueprintSlug": "slack",
+    "toolName": "send_message",
+    "toolArgs": {
+      "channel": "C123ABC",
+      "text": "Research complete! Full report posted to Mission Control."
+    }
+  }'
+```
+
+**Important:** Always use the same `userId` from your heartbeat response. This ensures you're using the correct user's credentials.
+
+Response on success:
+```json
+{
+  "success": true,
+  "result": {
+    "ok": true,
+    "channel": "C123ABC",
+    "ts": "1234567890.123456"
+  }
+}
+```
+
+Response on failure:
+```json
+{
+  "success": false,
+  "error": "Tool execution failed: HTTP 401",
+  "details": "Invalid authentication token"
+}
+```
+
+**Error handling:** If a tool fails with "No active connection", the integration needs to be reconnected by the human operator. Notify them via a task comment.
+
+### View Integration Activity Log
+
+Check recent integration API calls for debugging:
+
+```bash
+curl "https://beloved-squirrel-599.convex.site/api/integrations/activity?userId=user_39f60iciK4nX4Q0efRxrfyuHqj2&limit=20"
+```
+
+---
+
+## Email Finder — Free Email Discovery & Verification
+
+**Use Case:** Find and verify email addresses for cold outreach without paid services (Hunter.io, Apollo, etc.)
+
+**How It Works:** Multi-strategy approach combining:
+1. **Pattern Generation** — Creates all common email formats (firstname.lastname@, f.lastname@, etc.)
+2. **DNS MX Validation** — Confirms domain can receive emails
+3. **SMTP Verification** — Tests each variation via SMTP RCPT TO command (no email sent)
+4. **Catch-All Detection** — Identifies domains that accept any email address
+5. **Disposable Filter** — Blocks temporary email services
+6. **Confidence Scoring** — Rates results as high/medium/low based on verification
+
+**Confidence Levels:**
+- **High**: SMTP verified + not catch-all domain
+- **Medium**: SMTP verified but catch-all domain, OR couldn't verify but matches known pattern
+- **Low**: Domain has MX records but couldn't verify specific mailbox
+
+### Find Email for One Person
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/email-finder/single \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "John",
+    "lastName": "Doe",
+    "companyDomain": "example.com",
+    "knownPattern": "firstname.lastname"
+  }'
+```
+
+**Parameters:**
+- `firstName` (required): Person's first name
+- `lastName` (required): Person's last name
+- `companyDomain` (required): Company domain (e.g., "stripe.com" or "https://stripe.com")
+- `knownPattern` (optional): Known pattern from previous finds (e.g., "firstname.lastname")
+
+**Response:**
+```json
+{
+  "emails": [
+    {
+      "email": "john.doe@example.com",
+      "confidence": "high",
+      "pattern": "firstname.lastname",
+      "verified": true,
+      "checks": {
+        "syntaxValid": true,
+        "mxRecordsExist": true,
+        "smtpVerified": true,
+        "catchAll": false,
+        "disposable": false
+      }
+    },
+    {
+      "email": "j.doe@example.com",
+      "confidence": "medium",
+      "pattern": "firstinitial.lastname",
+      "verified": true,
+      "checks": {
+        "syntaxValid": true,
+        "mxRecordsExist": true,
+        "smtpVerified": true,
+        "catchAll": false,
+        "disposable": false
+      }
+    }
+  ],
+  "topMatch": "john.doe@example.com",
+  "allPossible": ["john.doe@example.com", "j.doe@example.com", "john@example.com", ...]
+}
+```
+
+**Usage Notes:**
+- Results are sorted by confidence (high → medium → low)
+- `topMatch` is the highest-confidence result (use this for outreach)
+- If multiple high-confidence results, the first one follows the most common pattern
+- SMTP verification is rate-limited (1 per second per domain) to avoid blacklisting
+
+### Find Emails for Multiple People (Batch Mode)
+
+**Best for:** Finding emails for 5+ people at the same company
+
+**Advantage:** Detects pattern from first successful find, then applies it to rest (much faster)
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/email-finder/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "companyDomain": "stripe.com",
+    "people": [
+      {"firstName": "Patrick", "lastName": "Collison"},
+      {"firstName": "John", "lastName": "Collison"},
+      {"firstName": "Claire", "lastName": "Johnson"}
+    ]
+  }'
+```
+
+**Response:**
+```json
+{
+  "Patrick Collison": {
+    "emails": [...],
+    "topMatch": "patrick@stripe.com",
+    "allPossible": [...]
+  },
+  "John Collison": {
+    "emails": [...],
+    "topMatch": "john@stripe.com",
+    "allPossible": [...]
+  },
+  "Claire Johnson": {
+    "emails": [...],
+    "topMatch": "claire@stripe.com",
+    "allPossible": [...]
+  }
+}
+```
+
+### Kaze-Specific Use Cases
+
+**Cold Email Campaigns:**
+```bash
+# 1. Find emails using batch mode
+curl -X POST https://beloved-squirrel-599.convex.site/api/email-finder/batch \
+  -d '{"companyDomain": "target-company.com", "people": [...]}'
+
+# 2. Filter for high-confidence results only
+# topMatch values with "high" confidence
+
+# 3. Send emails via Gmail/Outlook integration
+curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
+  -d '{
+    "blueprintSlug": "gmail",
+    "toolName": "send_email",
+    "toolArgs": {
+      "to": "john.doe@example.com",
+      "subject": "Quick question about...",
+      "body": "..."
+    }
+  }'
+```
+
+**LinkedIn → Email Workflow:**
+1. Extract names and companies from LinkedIn profiles
+2. Find company domain (Google search: "CompanyName official website")
+3. Use batch email finder for all contacts at that company
+4. Export high-confidence emails to CSV for outreach
+
+**Pattern Detection for Warm Outreach:**
+If you already have 1-2 verified emails from a company (e.g., from email signatures), use them to detect the pattern:
+```bash
+# Known: john.smith@company.com and sarah.jones@company.com
+# Pattern detected: firstname.lastname
+
+# Now find new contact with pattern hint:
+curl -X POST https://beloved-squirrel-599.convex.site/api/email-finder/single \
+  -d '{
+    "firstName": "Michael",
+    "lastName": "Chen",
+    "companyDomain": "company.com",
+    "knownPattern": "firstname.lastname"
+  }'
+```
+
+### Rate Limiting & Best Practices
+
+**SMTP Verification Limits:**
+- Max 1 verification per second per domain (built-in rate limiting)
+- Most mail servers allow 10-50 verifications before temporary blocking
+- If you need to verify 100+ emails, batch them across hours/days
+
+**Ethical Guidelines:**
+- ✅ Use for legitimate business outreach (B2B sales, partnerships, recruiting)
+- ✅ Always include unsubscribe link in cold emails (CAN-SPAM compliance)
+- ✅ Respect GDPR/CCPA opt-out requests
+- ❌ Don't use for spam or harassment
+- ❌ Don't verify more than 20-30 emails per domain per day
+
+**When Email Finder Fails:**
+- **No MX records**: Domain can't receive emails (company may use different domain for email)
+- **All results "low" confidence**: Try finding 1-2 known emails first to detect pattern
+- **Catch-all domain**: Results are uncertain; consider manual verification via LinkedIn message
+- **SMTP timeout**: Mail server blocking verification; wait 1 hour and try again
+
+### Comparison to Paid Services
+
+**Free Email Finder vs. Hunter.io/Apollo:**
+
+| Feature | Email Finder (Free) | Hunter.io (Paid) |
+|---------|---------------------|------------------|
+| Cost | $0 | $49-399/month |
+| Email patterns | ✅ All common formats | ✅ All formats |
+| SMTP verification | ✅ Yes | ✅ Yes |
+| Catch-all detection | ✅ Yes | ✅ Yes |
+| Confidence scoring | ✅ Yes | ✅ Yes |
+| Database of known emails | ❌ No | ✅ 100M+ emails |
+| Rate limits | ~20-30/day per domain | 100-10,000/month |
+| Accuracy | 70-85% | 90-95% |
+
+**When to Use Email Finder:**
+- Small-scale outreach (<100 emails/month)
+- You have time for manual verification
+- Budget-conscious campaigns
+- One-off campaigns
+
+**When to Pay for Hunter.io/Apollo:**
+- Large-scale outreach (500+ emails/month)
+- Need 95%+ accuracy guarantee
+- Don't have time for manual checks
+- Require compliance/legal guarantees
+
+### Agent-Specific Usage Guidance
+
+**Scout** 🔭 (Research & Intelligence):
+- Query CRM data for customer insights
+- Search knowledge bases and documentation
+- Pull analytics from tracking tools
+- Fetch competitor data from research APIs
+- Example: Use `hubspot/search_contacts` to find customer segments
+
+**Forge** 🔨 (Engineering):
+- Create GitHub/Jira issues for bugs or feature requests
+- Update project management boards
+- Trigger CI/CD pipelines
+- Deploy code to staging environments
+- Example: Use `github/create_issue` when you find a bug during prototyping
+
+**Ghost** 👻 (Content & Distribution):
+- Post to Slack channels for team updates
+- Draft emails via communication APIs
+- Publish blog posts or social media content
+- Schedule content distribution
+- Example: Use `slack/send_message` to notify team when content is ready
+
+**Kaze** 🌀 (Orchestration):
+- Send notifications across multiple channels
+- Check pipeline status from monitoring tools
+- Coordinate cross-platform workflows
+- Aggregate data from multiple services
+- Example: Use `slack/send_message` + `email/send` to broadcast mission updates
+
+### Tool Discovery Best Practices
+
+1. **Call tool discovery ONCE per session** (right after heartbeat) and cache the results
+2. **Read `aiUsageHint` and `description`** to understand when to use each tool
+3. **Match tool capabilities to your current task** — don't use tools just because they exist
+4. **Check `exampleArgs` for argument structure** before executing
+5. **Handle failures gracefully** — log the error and notify via task comment if critical
+
+### Integration Protocol
+
+1. **Discovery:** Call `/api/integrations/tools` after heartbeat, store available tools in session memory
+2. **Selection:** When your task requires external data/actions, scan your cached tool list for relevant options
+3. **Reasoning:** Use `aiUsageHint` to determine if the tool matches your need
+4. **Execution:** Call `/api/integrations/execute` with proper arguments from `bodySchema`
+5. **Logging:** The system auto-logs all integration calls — you don't need to manually log them
+6. **Result handling:** Include API results in your deliverables/comments when relevant
+
+**Smart usage:** Don't call integrations for every task. Use them when:
+- You need real-time data from external services
+- Your deliverable should be distributed (Slack, email)
+- You're automating a workflow (create issue, update board)
+- The human operator explicitly requested integration usage
+
+---
+
 ## Task IDs
 
 Task IDs are Convex document IDs — they look like strings such as `"k17abc123def456..."`. You receive them in the response when creating tasks or listing tasks. Always use the exact ID string when updating, claiming, or commenting on a task.

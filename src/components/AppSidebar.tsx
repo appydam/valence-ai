@@ -1,6 +1,21 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Activity, LayoutGrid, Users, Terminal, FileText, Settings, ChevronLeft, ChevronRight, Wrench, FolderOpen, Plug } from "lucide-react";
+import {
+  Activity,
+  LayoutGrid,
+  Users,
+  Terminal,
+  FileText,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Wrench,
+  FolderOpen,
+  Plug,
+  Webhook,
+  BarChart3
+} from "lucide-react";
+import { UserButton } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
 
@@ -12,6 +27,8 @@ const navItems = [
   { title: "Agents", path: "/agents", icon: Users },
   { title: "Tools", path: "/tools", icon: Wrench },
   { title: "Integrations", path: "/integrations", icon: Plug },
+  { title: "Webhooks", path: "/webhooks", icon: Webhook },
+  { title: "Analytics", path: "/analytics", icon: BarChart3 },
   { title: "Command Center", path: "/command", icon: Terminal },
   { title: "Settings", path: "/settings", icon: Settings },
 ];
@@ -26,49 +43,68 @@ export function AppSidebar() {
       collapsed ? "w-16" : "w-60"
     )}>
       {/* Logo */}
-      <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
-          <img src="/logo.svg" alt="Mission Control" className="w-8 h-8" />
+      <div className={cn(
+        "flex items-center gap-3 p-4 border-b border-border",
+        collapsed ? "justify-center" : ""
+      )}>
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 overflow-hidden shrink-0">
+          <img src="/logo.svg" alt="Mission Control" className="w-6 h-6" />
         </div>
         {!collapsed && (
-          <div>
-            <h1 className="text-sm font-bold tracking-tight text-foreground">Mission Control</h1>
-            <p className="text-[10px] text-muted-foreground">AI Agent Squad</p>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold tracking-tight text-foreground truncate">Mission Control</h1>
+            <p className="text-[10px] text-muted-foreground truncate">AI Agent Squad</p>
           </div>
         )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-2 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
+          const Icon = item.icon;
           return (
             <Link
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
                 isActive
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-surface-hover"
+                  ? "bg-primary/10 text-primary font-medium shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
               )}
+              title={collapsed ? item.title : undefined}
             >
-              <item.icon className="w-4 h-4 shrink-0" />
-              {!collapsed && <span>{item.title}</span>}
+              <Icon className="w-5 h-5 shrink-0" />
+              {!collapsed && <span className="truncate">{item.title}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Bottom */}
-      <div className="p-3 border-t border-border space-y-2">
-        {/* Connection status */}
+      <div className="p-3 border-t border-border space-y-3">
+        {/* User Profile */}
         <div className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-lg",
+          "flex items-center gap-3 px-2 py-2 rounded-lg bg-accent/30",
           collapsed ? "justify-center" : ""
         )}>
-          <div className="w-2 h-2 rounded-full bg-status-online animate-pulse-glow" />
-          {!collapsed && <span className="text-xs text-muted-foreground">Connected</span>}
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: "w-8 h-8",
+                userButtonPopoverCard: "bg-card",
+              },
+            }}
+          />
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs font-medium text-foreground">Online</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Notifications */}
@@ -77,7 +113,8 @@ export function AppSidebar() {
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center w-full py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
+          className="flex items-center justify-center w-full py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200"
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>

@@ -1,7 +1,8 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import { filterToolsByAgentRole } from "./lib/agentToolRecommendations";
 
 const http = httpRouter();
 
@@ -39,8 +40,47 @@ http.route({
     const agentConfig = await ctx.runQuery(api.agentConfigs.getByAgent, {
       agentName: body.agentName,
     });
+
+    // Discover integration tools if userId provided
+    let availableTools = undefined;
+    if (body.userId) {
+      try {
+        const toolsResult = await ctx.runAction(internal.executionEngine.listAvailableTools, {
+          userId: body.userId,
+        });
+
+        // Filter by agent role
+        const { recommended, other } = filterToolsByAgentRole(toolsResult.tools, body.agentName);
+
+        availableTools = {
+          userId: body.userId,
+          count: toolsResult.count,
+          tools: toolsResult.tools,
+          recommended: recommended,
+          other: other,
+        };
+      } catch (error: any) {
+        // If tool discovery fails, don't break the heartbeat
+        console.error("[Heartbeat] Tool discovery failed:", error.message);
+        availableTools = {
+          userId: body.userId,
+          count: 0,
+          tools: [],
+          recommended: [],
+          other: [],
+          error: error.message,
+        };
+      }
+    }
+
     return new Response(
-      JSON.stringify({ ok: true, ...result, assignedTasks: tasks, config: agentConfig }),
+      JSON.stringify({
+        ok: true,
+        ...result,
+        assignedTasks: tasks,
+        config: agentConfig,
+        availableTools  // NEW: Integration tools
+      }),
       { status: 200, headers: corsHeaders() }
     );
   }),
@@ -77,6 +117,8 @@ http.route({
       tags: body.tags || [],
       ...(body.missionId ? { missionId: body.missionId as Id<"missions"> } : {}),
       ...(body.dependsOn ? { dependsOn: body.dependsOn } : {}),
+      ...(body.requiredIntegrations ? { requiredIntegrations: body.requiredIntegrations } : {}),
+      ...(body.requiredUserId ? { requiredUserId: body.requiredUserId } : {}),
     });
     return new Response(JSON.stringify({ id: result.taskId, missionId: result.missionId }), {
       status: 201,
@@ -646,35 +688,649 @@ http.route({
   }),
 });
 
-// GET /api/integrations
+// ============================================================
+// UNIVERSAL INTEGRATION ENGINE ENDPOINTS
+// ============================================================
+
+// POST /api/integrations/tools - List available tools for user
 http.route({
-  path: "/api/integrations",
+  path: "/api/integrations/tools",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { userId } = await request.json();
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "userId required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runAction(api.executionEngine.listAvailableTools, { userId });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/execute - Execute a tool (real API call)
+http.route({
+  path: "/api/integrations/execute",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { userId, agentName, blueprintSlug, toolName, toolArgs } = await request.json();
+    if (!userId || !blueprintSlug || !toolName) {
+      return new Response(JSON.stringify({ error: "userId, blueprintSlug, and toolName required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+
+    try {
+      const result = await ctx.runAction(api.executionEngine.executeTool, {
+        userId, agentName, blueprintSlug, toolName, toolArgs,
+      });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    } catch (error: any) {
+      console.error("[HTTP /api/integrations/execute] Error:", error);
+      return new Response(JSON.stringify({
+        success: false,
+        error: error.message || "Tool execution failed",
+        details: error.stack?.split('\n')[0] || ""
+      }), { status: 200, headers: corsHeaders() });
+    }
+  }),
+});
+
+// GET /api/integrations/activity - Get execution activity log
+http.route({
+  path: "/api/integrations/activity",
   method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
-    const enabledOnly = url.searchParams.get("enabledOnly") === "true";
-    const category = url.searchParams.get("category") || undefined;
-    const integrations = await ctx.runQuery(api.integrations.list, { enabledOnly, category });
-    return new Response(JSON.stringify(integrations), {
+    const userId = url.searchParams.get("userId");
+    const limit = url.searchParams.get("limit");
+    const result = await ctx.runQuery(api.integrationActivity.list, {
+      userId: userId || undefined,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/oauth/start - Start OAuth flow
+http.route({
+  path: "/api/integrations/oauth/start",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { blueprintSlug, userId } = await request.json();
+    if (!blueprintSlug || !userId) {
+      return new Response(JSON.stringify({ error: "blueprintSlug and userId required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runAction(api.connectionActions.startOAuth, { blueprintSlug, userId });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// GET /api/integrations/oauth/callback - OAuth redirect handler
+http.route({
+  path: "/api/integrations/oauth/callback",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    const error = url.searchParams.get("error");
+
+    console.log("[OAuth Callback] Received callback with params:", { code: code?.substring(0, 10), state: state?.substring(0, 10), error });
+
+    if (error || !code || !state) {
+      console.log("[OAuth Callback] Missing params or error, sending error message");
+      return new Response(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>OAuth Error</title></head>
+        <body>
+          <h3>OAuth Error</h3>
+          <p>Error: ${error || 'Missing required parameters (code or state)'}</p>
+          <script>
+            if (window.opener) {
+              window.opener.postMessage({ type: "oauth_error", error: "${error || 'missing_params'}" }, "*");
+              setTimeout(() => window.close(), 1000);
+            }
+          </script>
+        </body>
+        </html>
+      `, {
+        status: 400,
+        headers: { "Content-Type": "text/html" }
+      });
+    }
+
+    try {
+      console.log("[OAuth Callback] Calling handleOAuthCallback action...");
+      await ctx.runAction(api.connectionActions.handleOAuthCallback, { code, state });
+      console.log("[OAuth Callback] Success! Sending success message");
+
+      return new Response(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>OAuth Success</title></head>
+        <body>
+          <h3>✅ Authorization Successful!</h3>
+          <p>This window will close automatically...</p>
+          <script>
+            console.log("[OAuth Callback Page] Sending success message to opener");
+            if (window.opener) {
+              window.opener.postMessage({ type: "oauth_success" }, "*");
+              setTimeout(() => {
+                console.log("[OAuth Callback Page] Closing window");
+                window.close();
+              }, 500);
+            } else {
+              console.error("[OAuth Callback Page] No window.opener found!");
+            }
+          </script>
+        </body>
+        </html>
+      `, {
+        status: 200,
+        headers: { "Content-Type": "text/html" }
+      });
+    } catch (e: any) {
+      console.error("[OAuth Callback] Error:", e.message);
+      const safeError = encodeURIComponent(e.message || "Unknown error");
+
+      return new Response(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>OAuth Failed</title></head>
+        <body>
+          <h3>OAuth Failed</h3>
+          <p id="err"></p>
+          <script>
+            var errorMsg = decodeURIComponent("${safeError}");
+            document.getElementById("err").textContent = errorMsg;
+            console.error("[OAuth Callback] Error:", errorMsg);
+            if (window.opener) {
+              window.opener.postMessage({ type: "oauth_error", error: errorMsg }, "*");
+              setTimeout(function() { window.close(); }, 2000);
+            }
+          </script>
+        </body>
+        </html>
+      `, {
+        status: 500,
+        headers: { "Content-Type": "text/html" }
+      });
+    }
+  }),
+});
+
+// POST /api/integrations/connect-key - Connect via API key
+http.route({
+  path: "/api/integrations/connect-key",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { blueprintSlug, userId, apiKey } = await request.json();
+    if (!blueprintSlug || !userId || !apiKey) {
+      return new Response(JSON.stringify({ error: "blueprintSlug, userId, and apiKey required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    try {
+      const result = await ctx.runAction(api.connectionActions.connectApiKey, { blueprintSlug, userId, apiKey });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    } catch (e: any) {
+      return new Response(
+        JSON.stringify({ success: false, error: e.message || "Connection failed" }),
+        { status: 200, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
+// GET /api/integrations/connections - List user's connections
+http.route({
+  path: "/api/integrations/connections",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "userId required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runQuery(api.connections.listByUser, { userId });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/disconnect - Disconnect a connection
+http.route({
+  path: "/api/integrations/disconnect",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { blueprintId, userId } = await request.json();
+    if (!blueprintId || !userId) {
+      return new Response(JSON.stringify({ error: "blueprintId and userId required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runMutation(api.connections.disconnect, { blueprintId, userId });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// GET /api/integrations/blueprints - List blueprints
+http.route({
+  path: "/api/integrations/blueprints",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const category = url.searchParams.get("category");
+    const status = url.searchParams.get("status");
+    const result = await ctx.runQuery(api.blueprints.list, {
+      category: category || undefined,
+      status: status || undefined,
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/blueprints - Create blueprint
+http.route({
+  path: "/api/integrations/blueprints",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const result = await ctx.runMutation(api.blueprints.create, body);
+    return new Response(JSON.stringify({ id: result }), { status: 201, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/blueprints/update - Update blueprint
+http.route({
+  path: "/api/integrations/blueprints/update",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const result = await ctx.runMutation(api.blueprints.update, body);
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/blueprints/archive - Archive blueprint
+http.route({
+  path: "/api/integrations/blueprints/archive",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { id } = await request.json();
+    const result = await ctx.runMutation(api.blueprints.archive, { id });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/scrape - Start doc scrape job
+http.route({
+  path: "/api/integrations/scrape",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { url, createdBy, suggestedName, suggestedCategory } = await request.json();
+    if (!url || !createdBy) {
+      return new Response(JSON.stringify({ error: "url and createdBy required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    try {
+      const result = await ctx.runAction(api.docScraper.startScrape, {
+        url, createdBy, suggestedName, suggestedCategory,
+      });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    } catch (e: any) {
+      const errorMsg = (e.message || "Scraping failed")
+        .replace(/^Uncaught Error:\s*/, "")
+        .split("\n")[0];
+      return new Response(
+        JSON.stringify({ error: errorMsg }),
+        { status: 200, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
+// GET /api/integrations/scrape/status - Poll scrape job status
+http.route({
+  path: "/api/integrations/scrape/status",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const jobId = url.searchParams.get("jobId");
+    if (!jobId) {
+      return new Response(JSON.stringify({ error: "jobId required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runQuery(api.docScraper.getJob, { id: jobId as Id<"scraperJobs"> });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/tools/create - Create a blueprint tool
+http.route({
+  path: "/api/integrations/tools/create",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const result = await ctx.runMutation(api.blueprintTools.create, body);
+    return new Response(JSON.stringify({ id: result }), { status: 201, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/integrations/tools/bulk - Bulk create blueprint tools
+http.route({
+  path: "/api/integrations/tools/bulk",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const result = await ctx.runMutation(api.blueprintTools.bulkCreate, body);
+    return new Response(JSON.stringify(result), { status: 201, headers: corsHeaders() });
+  }),
+});
+
+// GET /api/integrations/blueprint-tools - List tools for a blueprint
+http.route({
+  path: "/api/integrations/blueprint-tools",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const blueprintId = url.searchParams.get("blueprintId");
+    if (!blueprintId) {
+      return new Response(JSON.stringify({ error: "blueprintId required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runQuery(api.blueprintTools.listByBlueprint, {
+      blueprintId: blueprintId as Id<"blueprints">
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// ============================================================
+// WEBHOOK RECEIVERS
+// ============================================================
+
+// POST /api/webhooks/slack - Receive Slack events
+http.route({
+  path: "/api/webhooks/slack",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const result = await ctx.runMutation(api.webhooks.handleSlack, body);
+
+    // Return challenge for URL verification
+    if (body.challenge) {
+      return new Response(JSON.stringify({ challenge: body.challenge }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/webhooks/github - Receive GitHub events
+http.route({
+  path: "/api/webhooks/github",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const event = request.headers.get("X-GitHub-Event") || "unknown";
+
+    const result = await ctx.runMutation(api.webhooks.handleGitHub, {
+      event,
+      action: body.action,
+      repository: body.repository,
+      sender: body.sender,
+      pullRequest: body.pull_request,
+      issue: body.issue,
+      reviewRequest: body.requested_reviewer,
+    });
+
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/webhooks/linear - Receive Linear events
+http.route({
+  path: "/api/webhooks/linear",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+
+    const result = await ctx.runMutation(api.webhooks.handleLinear, {
+      action: body.action,
+      type: body.type,
+      data: body.data,
+      webhookId: body.webhookId,
+    });
+
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// GET /api/webhooks/tasks - List tasks created by webhooks
+http.route({
+  path: "/api/webhooks/tasks",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const source = url.searchParams.get("source") || undefined;
+    const limit = url.searchParams.get("limit");
+
+    const result = await ctx.runQuery(api.webhooks.listWebhookTasks, {
+      source,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// ============================================================
+// EMAIL FINDER ENDPOINTS (Free Email Discovery)
+// ============================================================
+
+// POST /api/email-finder/single - Find email for one person
+http.route({
+  path: "/api/email-finder/single",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { firstName, lastName, companyDomain, knownPattern } = await request.json();
+    if (!firstName || !lastName || !companyDomain) {
+      return new Response(JSON.stringify({ error: "firstName, lastName, and companyDomain required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runAction(api.emailFinder.findSingleEmail, {
+      firstName, lastName, companyDomain, knownPattern,
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/email-finder/batch - Find emails for multiple people at same company
+http.route({
+  path: "/api/email-finder/batch",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { people, companyDomain } = await request.json();
+    if (!people || !Array.isArray(people) || !companyDomain) {
+      return new Response(JSON.stringify({ error: "people (array) and companyDomain required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runAction(api.emailFinder.findBatchEmails, {
+      people, companyDomain,
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// ============================================================
+// WEBHOOK SYSTEM ENDPOINTS
+// ============================================================
+
+// Generic webhook receiver: POST /webhooks/{blueprintSlug}/{userId}/{endpointName}
+http.route({
+  pathPrefix: "/webhooks/",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split("/").filter(Boolean);
+
+    // Expected: webhooks/{blueprintSlug}/{userId}/{endpointName}
+    if (pathParts.length < 4) {
+      return new Response(JSON.stringify({ error: "Invalid webhook URL format" }), {
+        status: 400,
+        headers: corsHeaders(),
+      });
+    }
+
+    const [_, blueprintSlug, userId, endpointName] = pathParts;
+    const urlPath = `/webhooks/${blueprintSlug}/${userId}/${endpointName}`;
+
+    // Get request headers
+    const headers: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headers[key.toLowerCase()] = value;
+    });
+
+    // Get raw body for signature verification
+    const rawBody = await request.text();
+    let eventData;
+
+    try {
+      eventData = JSON.parse(rawBody);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON payload" }), {
+        status: 400,
+        headers: corsHeaders(),
+      });
+    }
+
+    // Determine event type (varies by provider)
+    const eventType =
+      headers["x-github-event"] || // GitHub
+      headers["x-event-key"] || // Bitbucket
+      headers["x-gitlab-event"] || // GitLab
+      eventData.type || // Generic
+      eventData.event || // Generic
+      eventData.action || // Generic
+      "webhook.received";
+
+    // Process webhook
+    const result = await ctx.runAction(api.webhookReceiverActions.receive, {
+      urlPath,
+      eventType,
+      eventData: JSON.stringify(eventData),
+      headers: JSON.stringify(headers),
+      rawBody,
+    });
+
+    if (!result.success) {
+      return new Response(JSON.stringify({ error: result.error }), {
+        status: result.statusCode || 400,
+        headers: corsHeaders(),
+      });
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      eventId: result.eventId,
+      taskId: result.taskId,
+      processed: result.processed,
+    }), {
       status: 200,
       headers: corsHeaders(),
     });
   }),
 });
 
-// POST /api/integrations/toggle
+// POST /api/webhooks/endpoints - Create webhook endpoint
 http.route({
-  path: "/api/integrations/toggle",
+  path: "/api/webhooks/endpoints",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json();
-    const id = await ctx.runMutation(api.integrations.toggle, {
-      slug: body.slug,
-      name: body.name,
-      category: body.category,
-      enabled: body.enabled,
+    const endpointId = await ctx.runMutation(api.webhookEndpoints.create, body);
+    return new Response(JSON.stringify({ id: endpointId }), {
+      status: 200,
+      headers: corsHeaders(),
     });
-    return new Response(JSON.stringify({ ok: true, id }), {
+  }),
+});
+
+// GET /api/webhooks/endpoints - List webhook endpoints
+http.route({
+  path: "/api/webhooks/endpoints",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+    const blueprintId = url.searchParams.get("blueprintId");
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "userId required" }), {
+        status: 400,
+        headers: corsHeaders(),
+      });
+    }
+
+    const endpoints = await ctx.runQuery(api.webhookEndpoints.list, {
+      userId,
+      blueprintId: blueprintId as any,
+    });
+
+    return new Response(JSON.stringify(endpoints), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// POST /api/webhooks/rules - Create automation rule
+http.route({
+  path: "/api/webhooks/rules",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const ruleId = await ctx.runMutation(api.automationRules.create, body);
+    return new Response(JSON.stringify({ id: ruleId }), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// GET /api/webhooks/events - List webhook events
+http.route({
+  path: "/api/webhooks/events",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+    const endpointId = url.searchParams.get("endpointId");
+    const status = url.searchParams.get("status");
+    const limit = url.searchParams.get("limit");
+
+    const events = await ctx.runQuery(api.webhookReceiver.listEvents, {
+      userId: userId || undefined,
+      endpointId: endpointId as any,
+      status: status as any,
+      limit: limit ? parseInt(limit) : undefined,
+    });
+
+    return new Response(JSON.stringify(events), {
       status: 200,
       headers: corsHeaders(),
     });
@@ -702,7 +1358,103 @@ http.route({ path: "/api/ssh/restart-openclaw", method: "OPTIONS", handler: opti
 http.route({ path: "/api/soul/save", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/soul", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/soul/sync", method: "OPTIONS", handler: optionsHandler() });
-http.route({ path: "/api/integrations", method: "OPTIONS", handler: optionsHandler() });
-http.route({ path: "/api/integrations/toggle", method: "OPTIONS", handler: optionsHandler() });
+// Integration Engine CORS handlers
+http.route({ path: "/api/integrations/tools", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/execute", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/activity", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/oauth/start", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/connect-key", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/connections", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/disconnect", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/blueprints", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/blueprints/update", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/blueprints/archive", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/scrape", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/scrape/status", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/tools/create", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/tools/bulk", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/blueprint-tools", method: "OPTIONS", handler: optionsHandler() });
+// Webhook CORS handlers
+http.route({ path: "/api/webhooks/slack", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/webhooks/github", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/webhooks/linear", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/webhooks/tasks", method: "OPTIONS", handler: optionsHandler() });
+// Email Finder CORS handlers
+http.route({ path: "/api/email-finder/single", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/email-finder/batch", method: "OPTIONS", handler: optionsHandler() });
+
+// POST /api/agents/wake - Wake up agents with pending tasks
+http.route({
+  path: "/api/agents/wake",
+  method: "POST",
+  handler: httpAction(async (ctx) => {
+    const AGENT_WAKEUP_URL = process.env.AGENT_WAKEUP_SERVER_URL;
+
+    if (!AGENT_WAKEUP_URL) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "AGENT_WAKEUP_SERVER_URL not configured in Convex environment variables",
+          hint: "Add the Railway URL for your agent-wakeup-server (e.g., https://your-service.up.railway.app)",
+        }),
+        { status: 500, headers: corsHeaders() }
+      );
+    }
+
+    // Get all agents
+    const agents = await ctx.runQuery(api.agents.list, {});
+
+    // Check which agents have tasks
+    const agentsWithTasks = [];
+    for (const agent of agents) {
+      const tasks = await ctx.runQuery(api.tasks.list, { assignee: agent.name });
+      const pendingTasks = tasks.filter(t => t.status === "assigned" || t.status === "in_progress");
+
+      if (pendingTasks.length > 0) {
+        agentsWithTasks.push({
+          name: agent.name,
+          status: agent.status,
+          taskCount: pendingTasks.length,
+          currentTaskId: agent.currentTaskId,
+        });
+      }
+    }
+
+    // If no agents have tasks, return early
+    if (agentsWithTasks.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          agents: [],
+          message: "No agents with pending tasks",
+        }),
+        { status: 200, headers: corsHeaders() }
+      );
+    }
+
+    // Call internal action to wake agents (needs crypto for HMAC)
+    const wakeResults = await ctx.runAction(internal.wakeAgents.wakeAgentsInternal, {
+      agentsWithTasks: agentsWithTasks.map(a => ({
+        name: a.name,
+        currentTaskId: a.currentTaskId || "",
+      })),
+      wakeupUrl: AGENT_WAKEUP_URL,
+    });
+
+    const successCount = wakeResults.filter(r => r.success).length;
+
+    return new Response(
+      JSON.stringify({
+        success: successCount > 0,
+        agents: agentsWithTasks,
+        wakeResults,
+        message: `Woke ${successCount} out of ${agentsWithTasks.length} agent(s)`,
+      }),
+      { status: 200, headers: corsHeaders() }
+    );
+  }),
+});
+
+http.route({ path: "/api/agents/wake", method: "OPTIONS", handler: optionsHandler() });
 
 export default http;

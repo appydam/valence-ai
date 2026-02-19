@@ -306,6 +306,9 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        // Full path to openclaw (npm global install)
+        const openclawBin = "/home/ubuntu/.npm-global/bin/openclaw";
+
         // Check if agent is already running
         try {
           await executeSSH(sshConfig, `pgrep -f "openclaw run ${agentName}"`);
@@ -324,7 +327,7 @@ const server = http.createServer(async (req, res) => {
         // Start the agent
         const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
         const logFile = `/tmp/openclaw-${agentName}-${timestamp}.log`;
-        const startCommand = `nohup openclaw run ${agentName} > ${logFile} 2>&1 & echo $!`;
+        const startCommand = `nohup ${openclawBin} run ${agentName} > ${logFile} 2>&1 & echo $!`;
 
         const pid = await executeSSH(sshConfig, startCommand);
 
