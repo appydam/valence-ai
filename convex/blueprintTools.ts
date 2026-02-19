@@ -16,6 +16,24 @@ export const listByBlueprint = query({
 });
 
 /**
+ * Get tool counts for all blueprints (for listing page)
+ */
+export const countsByBlueprint = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("blueprintTools").collect();
+    const counts: Record<string, number> = {};
+    for (const tool of all) {
+      if (tool.status === "active") {
+        const key = tool.blueprintId as string;
+        counts[key] = (counts[key] || 0) + 1;
+      }
+    }
+    return counts;
+  },
+});
+
+/**
  * Get a single tool by blueprint + name
  */
 export const getByName = query({

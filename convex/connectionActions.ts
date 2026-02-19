@@ -67,7 +67,12 @@ export const startOAuth = action({
       ts: Date.now(),
     });
 
-    const state = encrypt(statePayload, encKey);
+    // Convert to URL-safe Base64 to prevent corruption when Atlassian/other providers
+    // redirect back — standard Base64 +/= chars get mangled by URL encoding
+    const state = encrypt(statePayload, encKey)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=/g, "");
 
     // Build callback URL - use CONVEX_SITE_URL env var
     const convexSiteUrl = process.env.CONVEX_SITE_URL || "https://beloved-squirrel-599.convex.site";
@@ -116,9 +121,14 @@ export const handleOAuthCallback = action({
     }
 
     // Decrypt and validate state parameter
+    // Restore standard Base64 from URL-safe Base64 before decrypting
     let statePayload: any;
     try {
-      const decrypted = decrypt(args.state, encKey);
+      const standardBase64 = args.state
+        .replace(/-/g, "+")
+        .replace(/_/g, "/")
+        .padEnd(args.state.length + (4 - (args.state.length % 4)) % 4, "=");
+      const decrypted = decrypt(standardBase64, encKey);
       statePayload = JSON.parse(decrypted);
     } catch (e) {
       throw new Error("Invalid state parameter - possible CSRF attempt");

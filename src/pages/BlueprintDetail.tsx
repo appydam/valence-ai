@@ -53,19 +53,22 @@ export default function BlueprintDetail() {
   const [editedAuthConfig, setEditedAuthConfig] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch blueprint
-  const blueprint = useQuery(api.blueprints.get, id ? { id: id as Id<"blueprints"> } : "skip");
+  // All queries fire in parallel — no cascading waits
+  const blueprintId = id as Id<"blueprints"> | undefined;
 
-  // Fetch tools
+  // Fetch blueprint
+  const blueprint = useQuery(api.blueprints.get, blueprintId ? { id: blueprintId } : "skip");
+
+  // Fetch tools — uses ID from URL directly, no need to wait for blueprint query
   const tools = useQuery(
     api.blueprintTools.listByBlueprint,
-    blueprint ? { blueprintId: blueprint._id } : "skip"
+    blueprintId ? { blueprintId } : "skip"
   );
 
-  // Fetch connection status
+  // Fetch connection status — fires immediately
   const connections = useQuery(api.connections.listByUser, { userId });
 
-  // Fetch activity for this integration
+  // Fetch activity — fires immediately
   const allActivity = useQuery(api.integrationActivity.list, {
     userId,
     limit: 100,
@@ -260,40 +263,6 @@ export default function BlueprintDetail() {
     }
   };
 
-  // Setup instructions for specific integrations
-  const getSetupInstructions = (slug: string): { title: string; steps: string[] } | null => {
-    const instructions: Record<string, { title: string; steps: string[] }> = {
-      notion: {
-        title: "Notion Setup Required",
-        steps: [
-          "Open your Notion workspace",
-          "Navigate to any page you want the AI to access",
-          "Click the '...' menu in the top-right corner",
-          "Select 'Connect to' (or 'Add connections')",
-          "Find and select your integration (e.g., 'my AI')",
-          "Click 'Confirm' to grant access",
-          "Repeat for any additional pages or databases",
-        ],
-      },
-      "stripe-api": {
-        title: "Stripe Setup",
-        steps: [
-          "Your Stripe API key is connected and ready to use",
-          "Use test mode keys (sk_test_...) for testing",
-          "Switch to live keys (sk_live_...) for production",
-        ],
-      },
-      "gong": {
-        title: "Gong Setup",
-        steps: [
-          "Your Gong API token is connected",
-          "Ensure your token has the required scopes for the tools you want to use",
-          "Contact your Gong admin if you need additional API permissions",
-        ],
-      },
-    };
-    return instructions[slug] || null;
-  };
 
   if (!blueprint) {
     return (
@@ -546,20 +515,110 @@ export default function BlueprintDetail() {
       )}
 
       {/* Setup Instructions */}
-      {isConnected && getSetupInstructions(blueprint.slug) && (
-        <Card className="mb-6 border-blue-200 bg-blue-50/50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center text-blue-700">
-              <Info className="w-4 h-4 mr-2" />
-              {getSetupInstructions(blueprint.slug)!.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="text-sm space-y-1.5 list-decimal list-inside text-muted-foreground">
-              {getSetupInstructions(blueprint.slug)!.steps.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
+      {isConnected && blueprint.slug === "stripe-api" && (
+        <Card className="mb-6 border-green-200 dark:border-green-800 bg-gradient-to-br from-[#635BFF]/5 to-transparent">
+          <CardContent className="pt-5 pb-5">
+            <div className="flex items-start gap-4">
+              {/* Stripe logo / icon area */}
+              <div className="shrink-0 w-10 h-10 rounded-xl bg-[#635BFF] flex items-center justify-center shadow-md">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Stripe Connected</h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="w-3 h-3" /> Live
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400">
+                    Test Mode
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-border bg-card px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Mode</p>
+                    <p className="text-sm font-semibold text-foreground">Test</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">sk_test_...</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-card px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Tools</p>
+                    <p className="text-sm font-semibold text-foreground">588</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">API endpoints</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-card px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Auth</p>
+                    <p className="text-sm font-semibold text-foreground">Basic</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Secret key</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+                  <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>Using test mode. Switch to a <code className="px-1 py-0.5 rounded bg-muted text-foreground font-mono text-[10px]">sk_live_...</code> key to go live.</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isConnected && blueprint.slug === "gong" && (
+        <Card className="mb-6 border-border bg-gradient-to-br from-orange-500/5 to-transparent">
+          <CardContent className="pt-5 pb-5">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center shadow-md">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Gong Connected</h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="w-3 h-3" /> Live
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg border border-border bg-card px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Tools</p>
+                    <p className="text-sm font-semibold text-foreground">53</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">API endpoints</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-card px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Auth</p>
+                    <p className="text-sm font-semibold text-foreground">Basic</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Key + Secret</p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-card px-3 py-2.5">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Access</p>
+                    <p className="text-sm font-semibold text-foreground">Full</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Calls & stats</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isConnected && blueprint.slug === "notion" && (
+        <Card className="mb-6 border-border bg-gradient-to-br from-foreground/5 to-transparent">
+          <CardContent className="pt-5 pb-5">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 w-10 h-10 rounded-xl bg-foreground flex items-center justify-center shadow-md">
+                <span className="text-background font-bold text-lg">N</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-sm font-semibold text-foreground">Notion Connected</h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="w-3 h-3" /> Live
+                  </span>
+                </div>
+                <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                  <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>Remember to share Notion pages with your integration. Go to any page → <strong className="text-foreground">···</strong> → <strong className="text-foreground">Connect to</strong> → select your integration.</span>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

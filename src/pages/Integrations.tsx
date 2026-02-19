@@ -5,12 +5,51 @@ import { IntegrationActivityFeed } from "@/components/IntegrationActivityFeed";
 import { INTEGRATIONS, INTEGRATION_CATEGORIES, CATEGORY_CONFIG, Integration } from "@/data/integrations";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Search, Plug, ExternalLink, Sparkles, Activity, Plus, Code, ChevronRight } from "lucide-react";
+import { Search, Plug, ExternalLink, Sparkles, Activity, Plus, Code, ChevronRight, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
+
+// Pre-computed base64 SVG data URIs for logos that have no reliable CDN
+// Linear logo (indigo diamond - official Linear brand mark)
+const LINEAR_LOGO = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMC40MDMwMTMgMzcuMzk5MUMtMC4xMzQzMzggMzYuNjE0MSAtMC4xMzQzMzggMzUuNTk4NiAwLjQwMzAxMyAzNC44MTM2TDI2LjQ4MzIgMC40MDMwMTNDMjcuMTgzMyAtMC4xMzQzMzggMjguMTk4OCAtMC4xMzQzMzggMjguOTgzOCAwLjQwMzAxM0w2My41OTcgMjYuNDgzMkM2NC4xMzQzIDI3LjE4MzMgNjQuMTM0MyAyOC4xOTg4IDYzLjU5NyAyOC45ODM4TDM3LjUxNjggNjMuNTk3QzM2LjgxNjcgNjQuMTM0MyAzNS44MDEyIDY0LjEzNDMgMzUuMDE2MiA2My41OTdMMC40MDMwMTMgMzcuMzk5MVoiIGZpbGw9IiM1RTZBRDIiLz48L3N2Zz4=";
+
+// Intercom logo (blue rounded square with white vertical bars)
+const INTERCOM_LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0IiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzFGOERFRCIvPjxyZWN0IHg9IjE2IiB5PSIxOCIgd2lkdGg9IjQiIGhlaWdodD0iMjAiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjI0IiB5PSIxNCIgd2lkdGg9IjQiIGhlaWdodD0iMjgiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjMyIiB5PSIxNiIgd2lkdGg9IjQiIGhlaWdodD0iMjQiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjQwIiB5PSIxNCIgd2lkdGg9IjQiIGhlaWdodD0iMjgiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjQ4IiB5PSIxOCIgd2lkdGg9IjQiIGhlaWdodD0iMjAiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik0xNCA0OGM0IDMuNSAxMCA2IDE4IDZzMTQtMi41IDE4LTYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiLz48L3N2Zz4=";
+
+// Gong logo (purple badge with G)
+const GONG_LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0IiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzgwMzlERiIvPjx0ZXh0IHg9IjMyIiB5PSI0NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSI0MCIgZmlsbD0id2hpdGUiPkc8L3RleHQ+PC9zdmc+";
+
+// Logo URLs keyed by blueprint slug
+const BLUEPRINT_LOGOS: Record<string, string> = {
+  "github":          "https://github.githubassets.com/favicons/favicon.svg",
+  "slack":           "https://cdn.worldvectorlogo.com/logos/slack-new-logo.svg",
+  "notion":          "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
+  "linear":          LINEAR_LOGO,
+  "jira":            "https://cdn.worldvectorlogo.com/logos/jira-1.svg",
+  "salesforce":      "https://cdn.worldvectorlogo.com/logos/salesforce-2.svg",
+  "hubspot":         "https://www.hubspot.com/hubfs/HubSpot_Logos/HubSpot-Inversed-Favicon.png",
+  "intercom":        INTERCOM_LOGO,
+  "stripe-api":      "https://cdn.worldvectorlogo.com/logos/stripe-4.svg",
+  "gong":            GONG_LOGO,
+  "google-sheets":   "https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png",
+  "google-calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
+  "gmail":           "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
+};
+
+// Category labels to display-friendly text
+const CATEGORY_LABELS: Record<string, string> = {
+  "developer_tools": "Dev Tools",
+  "project_management": "Project Mgmt",
+  "communication": "Communication",
+  "CRM": "CRM",
+  "Productivity": "Productivity",
+  "Communication": "Communication",
+  "Payments": "Payments",
+  "support": "Support",
+};
 
 const Integrations = () => {
   const navigate = useNavigate();
@@ -26,6 +65,9 @@ const Integrations = () => {
 
   // Get custom blueprints (active only)
   const blueprints = useQuery(api.blueprints.list, { status: "active" }) ?? [];
+
+  // Get tool counts for all blueprints
+  const toolCounts = useQuery(api.blueprintTools.countsByBlueprint) ?? {};
 
   // Get connections to see which blueprints are connected
   const connections = useQuery(api.connections.listByUser, { userId }) ?? [];
@@ -106,34 +148,83 @@ const Integrations = () => {
             </h2>
           </div>
           {blueprints && blueprints.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
               {blueprints.map(blueprint => {
                 const isConnected = connectedBlueprintIds.has(blueprint._id);
+                const logoUrl = blueprint.iconUrl || BLUEPRINT_LOGOS[blueprint.slug];
+                const categoryLabel = CATEGORY_LABELS[blueprint.category] || blueprint.category;
+                const count = toolCounts[blueprint._id as string] || 0;
                 return (
                   <div
                     key={blueprint._id}
                     onClick={() => navigate(`/integrations/blueprint/${blueprint._id}`)}
-                    className="p-4 rounded-lg border border-border bg-card hover:border-primary/50 transition-colors cursor-pointer"
+                    className={`group relative rounded-lg border bg-card transition-all cursor-pointer hover:shadow-md hover:shadow-black/5 hover:-translate-y-0.5 ${
+                      isConnected
+                        ? "border-green-500/30 hover:border-green-500/50"
+                        : "border-border hover:border-border/80"
+                    }`}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-sm">{blueprint.name}</h3>
-                      <div className="flex gap-1">
-                        <Badge variant={blueprint.status === "active" ? "default" : "secondary"} className="text-xs">
-                          {blueprint.status}
-                        </Badge>
-                        {isConnected && (
-                          <Badge variant="default" className="text-xs bg-green-500">
-                            Connected
-                          </Badge>
+                    {/* Connected indicator bar */}
+                    {isConnected && (
+                      <div className="absolute top-0 left-3 right-3 h-[2px] bg-gradient-to-r from-green-500/0 via-green-500 to-green-500/0 rounded-b" />
+                    )}
+
+                    <div className="px-3 py-2.5">
+                      {/* Row: logo + name + status */}
+                      <div className="flex items-center gap-2.5 mb-1.5">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                          {logoUrl ? (
+                            <img
+                              src={logoUrl}
+                              alt={blueprint.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                const el = e.target as HTMLImageElement;
+                                el.style.display = "none";
+                                el.parentElement!.innerHTML = `<span class="text-xs font-bold text-muted-foreground">${blueprint.name.charAt(0)}</span>`;
+                              }}
+                            />
+                          ) : (
+                            <span className="text-xs font-bold text-muted-foreground">
+                              {blueprint.name.charAt(0)}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-semibold text-sm truncate flex-1 group-hover:text-primary transition-colors">
+                          {blueprint.name}
+                        </h3>
+                        {isConnected ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-500/10 text-green-500 shrink-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            Live
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium text-muted-foreground/60 shrink-0">
+                            Setup
+                          </span>
                         )}
                       </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                      {blueprint.description}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline">{blueprint.authType}</Badge>
-                      <span>{blueprint.category}</span>
+
+                      {/* Description - single line */}
+                      <p className="text-[11px] text-muted-foreground mb-2 line-clamp-1 leading-normal pl-[42px]">
+                        {blueprint.description}
+                      </p>
+
+                      {/* Footer: category + auth + tool count */}
+                      <div className="flex items-center gap-1.5 pl-[42px]">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/60 text-muted-foreground capitalize">
+                          {categoryLabel}
+                        </span>
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted/60 text-muted-foreground">
+                          {blueprint.authType.replace("_", " ")}
+                        </span>
+                        {count > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary ml-auto">
+                            <Wrench className="w-2.5 h-2.5" />
+                            {count}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
