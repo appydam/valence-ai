@@ -33,85 +33,34 @@ http.route({
       currentTaskId: body.currentTaskId,
     });
 
-    // Return only active tasks (assigned/in_progress/in_review) — not done/cancelled
-    const tasks = await ctx.runQuery(api.tasks.listActive, {
+    // Return assigned tasks and config for the agent
+    const tasks = await ctx.runQuery(api.tasks.list, {
       assignee: body.agentName,
     });
-
-    // Enrich tasks with dependency context — capped to prevent N+1 explosion
-    let enrichedCount = 0;
-    const tasksWithContext = await Promise.all(
-      tasks.map(async (task: any) => {
-        if (enrichedCount >= 2) return task; // Max 2 tasks get dependency enrichment
-        if (task.dependsOn && task.dependsOn.length > 0) {
-          enrichedCount++;
-          // Cap at 3 dependencies per task
-          const depsToEnrich = task.dependsOn.slice(0, 3);
-          const depContext = await Promise.all(
-            depsToEnrich.map(async (depId: any) => {
-              const dep = await ctx.runQuery(api.tasks.getById, { id: depId });
-              if (!dep) return null;
-              // Truncate deliverable content in dependency context
-              const truncatedDeliverables = dep.deliverables?.slice(0, 2).map((d: any) => ({
-                name: d.name,
-                type: d.type,
-                content: d.content?.length > 500 ? d.content.slice(0, 500) + "..." : d.content,
-              }));
-              return { title: dep.title, status: dep.status, deliverables: truncatedDeliverables };
-            })
-          );
-          return { ...task, dependencyContext: depContext.filter(Boolean) };
-        }
-        return task;
-      })
-    );
-
     const agentConfig = await ctx.runQuery(api.agentConfigs.getByAgent, {
       agentName: body.agentName,
     });
 
-    // Only discover integration tools if explicitly requested (lazy loading)
+    // Discover integration tools if userId provided
     let availableTools = undefined;
-    if (body.userId && body.includeTools) {
+    if (body.userId) {
       try {
         const toolsResult = await ctx.runAction(internal.executionEngine.listAvailableTools, {
           userId: body.userId,
         });
 
-        // Cap heavy integrations (Stripe, Salesforce, SAP, etc.) to top 20 most useful tools
-        const HEAVY_BLUEPRINT_CAP = 20;
-        const HEAVY_BLUEPRINT_WHITELIST: Record<string, string[]> = {
-          "stripe-api": [
-            "GetBalance", "GetCustomers", "GetCustomersCustomer", "PostCustomers", "PostCustomersCustomer",
-            "GetCharges", "GetChargesCharge", "PostCharges",
-            "GetPaymentIntents", "GetPaymentIntentsIntent", "PostPaymentIntents", "PostPaymentIntentsIntentConfirm",
-            "GetInvoices", "GetInvoicesInvoice", "PostInvoices", "PostInvoicesInvoiceSend",
-            "GetRefunds", "PostRefunds",
-            "GetSubscriptions", "GetSubscriptionsSubscriptionExposedId", "PostSubscriptions",
-            "GetProducts", "GetProductsId", "PostProducts",
-            "GetPrices", "GetPricesPrice", "PostPrices",
-            "PostCheckoutSessions", "GetCheckoutSessionsSession",
-            "GetPayouts", "GetPayoutsPayout",
-          ],
-        };
-        const filteredTools = toolsResult.tools.filter((tool: any) => {
-          const slug = tool.blueprintSlug;
-          if (HEAVY_BLUEPRINT_WHITELIST[slug]) {
-            return HEAVY_BLUEPRINT_WHITELIST[slug].includes(tool.toolName);
-          }
-          return true;
-        });
-
-        const { recommended, other } = filterToolsByAgentRole(filteredTools, body.agentName);
+        // Filter by agent role
+        const { recommended, other } = filterToolsByAgentRole(toolsResult.tools, body.agentName);
 
         availableTools = {
           userId: body.userId,
-          count: filteredTools.length,
-          tools: filteredTools,
+          count: toolsResult.count,
+          tools: toolsResult.tools,
           recommended: recommended,
           other: other,
         };
       } catch (error: any) {
+        // If tool discovery fails, don't break the heartbeat
         console.error("[Heartbeat] Tool discovery failed:", error.message);
         availableTools = {
           userId: body.userId,
@@ -128,9 +77,9 @@ http.route({
       JSON.stringify({
         ok: true,
         ...result,
-        assignedTasks: tasksWithContext,
+        assignedTasks: tasks,
         config: agentConfig,
-        availableTools,
+        availableTools  // NEW: Integration tools
       }),
       { status: 200, headers: corsHeaders() }
     );
@@ -247,73 +196,6 @@ http.route({
       status: 200,
       headers: corsHeaders(),
     });
-  }),
-});
-
-// POST /api/tasks/delegate
-http.route({
-  path: "/api/tasks/delegate",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    if (!body.parentTaskId || !body.subtasks || !body.delegatedBy) {
-      return new Response(
-        JSON.stringify({ error: "parentTaskId, subtasks, and delegatedBy are required" }),
-        { status: 400, headers: corsHeaders() }
-      );
-    }
-    try {
-      const result = await ctx.runMutation(api.tasks.delegateTask, {
-        parentTaskId: body.parentTaskId as Id<"tasks">,
-        subtasks: body.subtasks,
-        delegatedBy: body.delegatedBy,
-        userId: body.userId,
-      });
-      return new Response(JSON.stringify(result), {
-        status: 201,
-        headers: corsHeaders(),
-      });
-    } catch (error: any) {
-      return new Response(
-        JSON.stringify({ error: error.message || "Delegation failed" }),
-        { status: 400, headers: corsHeaders() }
-      );
-    }
-  }),
-});
-
-// POST /api/tasks/complete — Batch complete a task in one call
-http.route({
-  path: "/api/tasks/complete",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    if (!body.taskId || !body.agentName) {
-      return new Response(
-        JSON.stringify({ error: "taskId and agentName are required" }),
-        { status: 400, headers: corsHeaders() }
-      );
-    }
-    try {
-      const result = await ctx.runMutation(api.tasks.completeTask, {
-        taskId: body.taskId as Id<"tasks">,
-        agentName: body.agentName,
-        deliverables: body.deliverables,
-        comment: body.comment,
-        mentions: body.mentions,
-        activityDetails: body.activityDetails,
-        status: body.status,
-      });
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: corsHeaders(),
-      });
-    } catch (error: any) {
-      return new Response(
-        JSON.stringify({ error: error.message || "Task completion failed" }),
-        { status: 400, headers: corsHeaders() }
-      );
-    }
   }),
 });
 
@@ -1461,8 +1343,6 @@ http.route({ path: "/api/tasks", method: "OPTIONS", handler: optionsHandler() })
 http.route({ path: "/api/tasks/update", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/tasks/claim", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/tasks/deliverable", method: "OPTIONS", handler: optionsHandler() });
-http.route({ path: "/api/tasks/delegate", method: "OPTIONS", handler: optionsHandler() });
-http.route({ path: "/api/tasks/complete", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/comments", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/activity", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/notifications", method: "OPTIONS", handler: optionsHandler() });
@@ -1508,19 +1388,6 @@ http.route({
   path: "/api/agents/wake",
   method: "POST",
   handler: httpAction(async (ctx) => {
-    const AGENT_WAKEUP_URL = process.env.AGENT_WAKEUP_SERVER_URL;
-
-    if (!AGENT_WAKEUP_URL) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "AGENT_WAKEUP_SERVER_URL not configured in Convex environment variables",
-          hint: "Add the Railway URL for your agent-wakeup-server (e.g., https://your-service.up.railway.app)",
-        }),
-        { status: 500, headers: corsHeaders() }
-      );
-    }
-
     // Get all agents
     const agents = await ctx.runQuery(api.agents.list, {});
 
@@ -1540,120 +1407,18 @@ http.route({
       }
     }
 
-    // If no agents have tasks, return early
-    if (agentsWithTasks.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          agents: [],
-          message: "No agents with pending tasks",
-        }),
-        { status: 200, headers: corsHeaders() }
-      );
-    }
-
-    // Call internal action to wake agents (needs crypto for HMAC)
-    const wakeResults = await ctx.runAction(internal.wakeAgents.wakeAgentsInternal, {
-      agentsWithTasks: agentsWithTasks.map(a => ({
-        name: a.name,
-        currentTaskId: a.currentTaskId || "",
-      })),
-      wakeupUrl: AGENT_WAKEUP_URL,
-    });
-
-    const successCount = wakeResults.filter(r => r.success).length;
-
     return new Response(
       JSON.stringify({
-        success: successCount > 0,
+        success: true,
         agents: agentsWithTasks,
-        wakeResults,
-        message: `Woke ${successCount} out of ${agentsWithTasks.length} agent(s)`,
+        message: `Found ${agentsWithTasks.length} agent(s) with pending tasks`,
+        note: "Agents will be notified via webhook if agent-wakeup-server is running",
       }),
-      { status: 200, headers: corsHeaders() }
+      { status: 200, headers: cors Headers() }
     );
   }),
 });
 
 http.route({ path: "/api/agents/wake", method: "OPTIONS", handler: optionsHandler() });
-
-
-// POST /api/missions
-http.route({
-  path: "/api/missions",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    const missionId = await ctx.runMutation(api.missions.create, {
-      title: body.title,
-      description: body.description || "",
-      createdBy: body.creator || "Human",
-    });
-    const mission = await ctx.runQuery(api.missions.getById, { missionId });
-    return new Response(JSON.stringify({ missionId, mission }), {
-      status: 201,
-      headers: corsHeaders(),
-    });
-  }),
-});
-
-http.route({ path: "/api/missions", method: "OPTIONS", handler: optionsHandler() });
-
-// GET /api/messages?agentName=Kaze&unreadOnly=true
-// Agents poll this to get messages directed at them from the human
-http.route({
-  path: "/api/messages",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const url = new URL(request.url);
-    const agentName = url.searchParams.get("agentName");
-    const unreadOnly = url.searchParams.get("unreadOnly") === "true";
-
-    if (!agentName) {
-      return new Response(JSON.stringify({ error: "agentName required" }), {
-        status: 400,
-        headers: corsHeaders(),
-      });
-    }
-
-    const messages = await ctx.runQuery(api.messages.listByConversation, { agentName });
-
-    // If unreadOnly, return only messages from human (agent hasn't replied yet would be a separate tracking concern)
-    // For now return all messages — agent can track which it's seen via timestamp
-    const filtered = unreadOnly
-      ? messages.filter((m: any) => m.from === "human")
-      : messages;
-
-    return new Response(JSON.stringify({ messages: filtered }), {
-      status: 200,
-      headers: corsHeaders(),
-    });
-  }),
-});
-
-// POST /api/messages — Agent sends a reply back to human
-http.route({
-  path: "/api/messages",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    const { from, to, content } = body;
-
-    if (!from || !to || !content) {
-      return new Response(JSON.stringify({ error: "from, to, and content are required" }), {
-        status: 400,
-        headers: corsHeaders(),
-      });
-    }
-
-    const id = await ctx.runMutation(api.messages.send, { from, to, content });
-    return new Response(JSON.stringify({ ok: true, id }), {
-      status: 200,
-      headers: corsHeaders(),
-    });
-  }),
-});
-
-http.route({ path: "/api/messages", method: "OPTIONS", handler: optionsHandler() });
 
 export default http;

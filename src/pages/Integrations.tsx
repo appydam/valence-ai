@@ -11,33 +11,7 @@ import { useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
-
-// Pre-computed base64 SVG data URIs for logos that have no reliable CDN
-// Linear logo (indigo diamond - official Linear brand mark)
-const LINEAR_LOGO = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMC40MDMwMTMgMzcuMzk5MUMtMC4xMzQzMzggMzYuNjE0MSAtMC4xMzQzMzggMzUuNTk4NiAwLjQwMzAxMyAzNC44MTM2TDI2LjQ4MzIgMC40MDMwMTNDMjcuMTgzMyAtMC4xMzQzMzggMjguMTk4OCAtMC4xMzQzMzggMjguOTgzOCAwLjQwMzAxM0w2My41OTcgMjYuNDgzMkM2NC4xMzQzIDI3LjE4MzMgNjQuMTM0MyAyOC4xOTg4IDYzLjU5NyAyOC45ODM4TDM3LjUxNjggNjMuNTk3QzM2LjgxNjcgNjQuMTM0MyAzNS44MDEyIDY0LjEzNDMgMzUuMDE2MiA2My41OTdMMC40MDMwMTMgMzcuMzk5MVoiIGZpbGw9IiM1RTZBRDIiLz48L3N2Zz4=";
-
-// Intercom logo (blue rounded square with white vertical bars)
-const INTERCOM_LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0IiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzFGOERFRCIvPjxyZWN0IHg9IjE2IiB5PSIxOCIgd2lkdGg9IjQiIGhlaWdodD0iMjAiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjI0IiB5PSIxNCIgd2lkdGg9IjQiIGhlaWdodD0iMjgiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjMyIiB5PSIxNiIgd2lkdGg9IjQiIGhlaWdodD0iMjQiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjQwIiB5PSIxNCIgd2lkdGg9IjQiIGhlaWdodD0iMjgiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjQ4IiB5PSIxOCIgd2lkdGg9IjQiIGhlaWdodD0iMjAiIHJ4PSIyIiBmaWxsPSJ3aGl0ZSIvPjxwYXRoIGQ9Ik0xNCA0OGM0IDMuNSAxMCA2IDE4IDZzMTQtMi41IDE4LTYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIGZpbGw9Im5vbmUiLz48L3N2Zz4=";
-
-// Gong logo (purple badge with G)
-const GONG_LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0IiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxNCIgZmlsbD0iIzgwMzlERiIvPjx0ZXh0IHg9IjMyIiB5PSI0NCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLEhlbHZldGljYSxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSI0MCIgZmlsbD0id2hpdGUiPkc8L3RleHQ+PC9zdmc+";
-
-// Logo URLs keyed by blueprint slug
-const BLUEPRINT_LOGOS: Record<string, string> = {
-  "github":          "https://github.githubassets.com/favicons/favicon.svg",
-  "slack":           "https://cdn.worldvectorlogo.com/logos/slack-new-logo.svg",
-  "notion":          "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
-  "linear":          LINEAR_LOGO,
-  "jira":            "https://cdn.worldvectorlogo.com/logos/jira-1.svg",
-  "salesforce":      "https://cdn.worldvectorlogo.com/logos/salesforce-2.svg",
-  "hubspot":         "https://www.hubspot.com/hubfs/HubSpot_Logos/HubSpot-Inversed-Favicon.png",
-  "intercom":        INTERCOM_LOGO,
-  "stripe-api":      "https://cdn.worldvectorlogo.com/logos/stripe-4.svg",
-  "gong":            GONG_LOGO,
-  "google-sheets":   "https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png",
-  "google-calendar": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg",
-  "gmail":           "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg",
-};
+import { BLUEPRINT_LOGOS } from "@/lib/integrationLogos";
 
 // Category labels to display-friendly text
 const CATEGORY_LABELS: Record<string, string> = {
@@ -151,7 +125,7 @@ const Integrations = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
               {blueprints.map(blueprint => {
                 const isConnected = connectedBlueprintIds.has(blueprint._id);
-                const logoUrl = blueprint.iconUrl || BLUEPRINT_LOGOS[blueprint.slug];
+                const logoUrl = BLUEPRINT_LOGOS[blueprint.slug] || blueprint.iconUrl;
                 const categoryLabel = CATEGORY_LABELS[blueprint.category] || blueprint.category;
                 const count = toolCounts[blueprint._id as string] || 0;
                 return (
@@ -172,17 +146,12 @@ const Integrations = () => {
                     <div className="px-3 py-2.5">
                       {/* Row: logo + name + status */}
                       <div className="flex items-center gap-2.5 mb-1.5">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                        <div className="w-8 h-8 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
                           {logoUrl ? (
                             <img
                               src={logoUrl}
                               alt={blueprint.name}
                               className="w-full h-full object-contain"
-                              onError={(e) => {
-                                const el = e.target as HTMLImageElement;
-                                el.style.display = "none";
-                                el.parentElement!.innerHTML = `<span class="text-xs font-bold text-muted-foreground">${blueprint.name.charAt(0)}</span>`;
-                              }}
                             />
                           ) : (
                             <span className="text-xs font-bold text-muted-foreground">

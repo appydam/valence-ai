@@ -7,16 +7,14 @@ import { api } from "./_generated/api";
 /**
  * Agent Wakeup System
  *
- * Instead of polling via cron every 3 hours, agents wake up immediately
- * when a task is assigned to them.
+ * Always sends the webhook to the wakeup server — the server handles dedup
+ * itself (queues tasks if agent is already running, starts new session on exit).
+ * This ensures zero task loss even at session boundaries.
  *
- * Flow:
- * 1. Task assigned to agent (create/update/claim mutation)
- * 2. Mutation schedules this action (0ms delay)
- * 3. Action calls HTTP webhook on Lightsail server
- * 4. Lightsail starts OpenClaw session for that agent
- * 5. Agent sends heartbeat, discovers task, works on it
- * 6. Agent goes idle after completing work
+ * Activity log dedup: only logs `agent_wakeup` for STARTED results (new session),
+ * not for QUEUED results, to keep the activity feed clean.
+ *
+ * Fallback: 10-minute sweep cron catches tasks if webhook fails entirely.
  */
 
 const AGENT_SLUGS: Record<string, string> = {
@@ -26,10 +24,6 @@ const AGENT_SLUGS: Record<string, string> = {
   Ghost: "ghost",
 };
 
-/**
- * Wake up an agent by calling the webhook on the Lightsail server.
- * The webhook starts an OpenClaw session for the specified agent.
- */
 export const triggerWakeup = internalAction({
   args: {
     agentName: v.string(),
@@ -43,7 +37,6 @@ export const triggerWakeup = internalAction({
       return;
     }
 
-    // Get webhook URL from env var
     const webhookUrl = process.env.AGENT_WAKEUP_WEBHOOK_URL;
     const webhookSecret = process.env.AGENT_WAKEUP_WEBHOOK_SECRET;
 
@@ -52,14 +45,15 @@ export const triggerWakeup = internalAction({
       return;
     }
 
-    console.log(`[AgentWakeup] Waking up ${args.agentName} for task ${args.taskId} (${args.reason || "task_assigned"})`);
+    const reason = args.reason || "task_assigned";
+    console.log(`[AgentWakeup] Waking up ${args.agentName} for task ${args.taskId} (${reason})`);
 
     try {
       const payload = {
         agent: slug,
         agentName: args.agentName,
         taskId: args.taskId,
-        reason: args.reason || "task_assigned",
+        reason,
         timestamp: Date.now(),
       };
 
@@ -67,7 +61,6 @@ export const triggerWakeup = internalAction({
         "Content-Type": "application/json",
       };
 
-      // Add HMAC signature if secret is configured
       if (webhookSecret) {
         const crypto = await import("crypto");
         const signature = crypto
@@ -77,7 +70,7 @@ export const triggerWakeup = internalAction({
         headers["X-Webhook-Signature"] = signature;
       }
 
-      const response = await fetch(webhookUrl, {
+      const response = await fetch(`${webhookUrl}/wake`, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
@@ -91,24 +84,34 @@ export const triggerWakeup = internalAction({
 
       console.log(`[AgentWakeup] ${args.agentName}: ${responseText}`);
 
-      // Log the wakeup activity
-      await ctx.runMutation(api.activity.create, {
-        agentName: args.agentName as any,
-        action: "agent_wakeup",
-        details: `Woke up for task: ${args.taskId}. ${responseText}`,
-        taskId: args.taskId,
-      });
+      // Only log activity for STARTED (new session), not QUEUED (reduces noise)
+      const isStarted = responseText.includes("STARTED");
+      if (isStarted) {
+        try {
+          await ctx.runMutation(api.activityFns.log, {
+            agentName: args.agentName as any,
+            action: "agent_wakeup",
+            details: `Woke up for task: ${args.taskId}. ${responseText}`,
+            taskId: args.taskId,
+          });
+        } catch (logErr: any) {
+          console.error(`[AgentWakeup] Failed to log activity: ${logErr.message}`);
+        }
+      }
     } catch (error: any) {
       console.error(`[AgentWakeup] Failed to wake ${args.agentName}:`, error.message);
 
-      // Log failure but don't throw — the task is still assigned,
-      // the cron job will pick it up as a fallback
-      await ctx.runMutation(api.activity.create, {
-        agentName: args.agentName as any,
-        action: "agent_wakeup_failed",
-        details: `Failed to wake up: ${error.message}. Task ${args.taskId} is still assigned — cron fallback active.`,
-        taskId: args.taskId,
-      });
+      try {
+        await ctx.runMutation(api.activityFns.log, {
+          agentName: args.agentName as any,
+          action: "agent_wakeup_failed",
+          details: `Failed to wake up: ${error.message}. Task ${args.taskId} — sweep cron will retry.`,
+          taskId: args.taskId,
+        });
+      } catch (logErr: any) {
+        console.error(`[AgentWakeup] Failed to log failure activity: ${logErr.message}`);
+      }
+      // No auto-retry — sweep cron (every 10 min) is the fallback
     }
   },
 });

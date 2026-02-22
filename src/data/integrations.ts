@@ -16,7 +16,8 @@ export type IntegrationCategory =
   | "Business Intelligence"
   | "Social Media"
   | "Payments"
-  | "HR";
+  | "HR"
+  | "Design";
 
 export type IntegrationStatus = "available" | "coming_soon";
 
@@ -48,6 +49,7 @@ export const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
   "Social Media",
   "Payments",
   "HR",
+  "Design",
 ];
 
 export const CATEGORY_CONFIG: Record<IntegrationCategory, { emoji: string; color: string }> = {
@@ -69,6 +71,7 @@ export const CATEGORY_CONFIG: Record<IntegrationCategory, { emoji: string; color
   "Social Media": { emoji: "📱", color: "fuchsia" },
   "Payments": { emoji: "💳", color: "lime" },
   "HR": { emoji: "👥", color: "yellow" },
+  "Design": { emoji: "🎨", color: "fuchsia" },
 };
 
 export const INTEGRATIONS: Integration[] = [
@@ -112,6 +115,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "gong", name: "Gong", category: "Sales", description: "Access Gong call recordings and insights", iconUrl: "https://cdn.worldvectorlogo.com/logos/gong-1.svg", status: "available" },
   { slug: "salesloft", name: "Salesloft", category: "Sales", description: "Connect with Salesloft cadences and activities", iconUrl: "https://cdn.worldvectorlogo.com/logos/salesloft.svg", status: "available" },
   { slug: "apollo", name: "Apollo.io", category: "Sales", description: "Search contacts and enrich leads with Apollo", iconUrl: "https://cdn.worldvectorlogo.com/logos/apollo-io.svg", status: "available" },
+  { slug: "mindtickle", name: "MindTickle", category: "Sales", description: "Track sales readiness, training completion, coaching sessions, and rep performance scores", iconUrl: "https://logo.clearbit.com/mindtickle.com", status: "available" },
 
   // Project & Task Management
   { slug: "jira", name: "JIRA", category: "Project Management", description: "Create and update Jira issues and projects", iconUrl: "https://cdn.worldvectorlogo.com/logos/jira-1.svg", status: "available" },
@@ -173,7 +177,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "sage-intacct", name: "Sage Intacct", category: "Accounting", description: "Connect with Sage Intacct financials", iconUrl: "https://cdn.worldvectorlogo.com/logos/sage-2.svg", status: "available" },
   { slug: "netsuite", name: "NetSuite", category: "Accounting", description: "Access Oracle NetSuite ERP data", iconUrl: "https://cdn.worldvectorlogo.com/logos/netsuite-2.svg", status: "available" },
   { slug: "dynamics365-bc", name: "Dynamics 365 Business Central", category: "Accounting", description: "Connect with Microsoft Business Central", iconUrl: "https://cdn.worldvectorlogo.com/logos/microsoft-5.svg", status: "available" },
-  { slug: "sap-s4hana", name: "SAP S/4HANA", category: "Accounting", description: "Integrate with SAP S/4HANA", iconUrl: "https://cdn.worldvectorlogo.com/logos/sap-1.svg", status: "coming_soon" },
+  { slug: "sap-s4hana", name: "SAP S/4HANA", category: "Accounting", description: "Integrate with SAP S/4HANA ERP — sales orders, purchase orders, business partners, and billing", iconUrl: "https://cdn.worldvectorlogo.com/logos/sap-1.svg", status: "available" },
   { slug: "oracle-financials", name: "Oracle Financials Cloud", category: "Accounting", description: "Access Oracle Financials data", iconUrl: "https://cdn.worldvectorlogo.com/logos/oracle-6.svg", status: "coming_soon" },
   { slug: "dynamics365-finance", name: "Dynamics 365 Finance", category: "Accounting", description: "Connect with Dynamics 365 Finance", iconUrl: "https://cdn.worldvectorlogo.com/logos/microsoft-5.svg", status: "coming_soon" },
   { slug: "sage-accounting", name: "Sage Accounting", category: "Accounting", description: "Manage Sage Accounting data", iconUrl: "https://cdn.worldvectorlogo.com/logos/sage-2.svg", status: "available" },
@@ -185,7 +189,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "unleashed", name: "Unleashed", category: "E-commerce", description: "Access Unleashed inventory management", iconUrl: "https://cdn.worldvectorlogo.com/logos/unleashed-1.svg", status: "available" },
 
   // Advertising
-  { slug: "facebook-ads", name: "Facebook Ads", category: "Advertising", description: "Manage Facebook advertising campaigns", iconUrl: "https://cdn.worldvectorlogo.com/logos/facebook-4.svg", status: "available" },
+  { slug: "facebook-ads", name: "Meta Ads", category: "Advertising", description: "Manage Meta (Facebook & Instagram) advertising campaigns", iconUrl: "https://cdn.worldvectorlogo.com/logos/meta-icon.svg", status: "available" },
   { slug: "google-campaign-manager", name: "Google Campaign Manager", category: "Advertising", description: "Access Google Campaign Manager data", iconUrl: "https://cdn.worldvectorlogo.com/logos/google-icon.svg", status: "available" },
   { slug: "google-ads", name: "Google Ads", category: "Advertising", description: "Manage Google Ads campaigns", iconUrl: "https://cdn.worldvectorlogo.com/logos/google-ads-1.svg", status: "available" },
   { slug: "google-ad-manager", name: "Google Ad Manager", category: "Advertising", description: "Access Google Ad Manager reports", iconUrl: "https://cdn.worldvectorlogo.com/logos/google-ad-manager.svg", status: "available" },
@@ -204,6 +208,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "power-bi", name: "Power BI", category: "Business Intelligence", description: "Access Power BI reports and datasets", iconUrl: "https://cdn.worldvectorlogo.com/logos/power-bi.svg", status: "available" },
   { slug: "segment", name: "Segment", category: "Business Intelligence", description: "Stream events to Segment CDP", iconUrl: "https://cdn.worldvectorlogo.com/logos/segment-1.svg", status: "available" },
   { slug: "snowflake", name: "Snowflake", category: "Business Intelligence", description: "Query Snowflake data warehouse", iconUrl: "https://cdn.worldvectorlogo.com/logos/snowflake-3.svg", status: "available" },
+  { slug: "looker", name: "Looker", category: "Business Intelligence", description: "Run saved Looks, execute inline queries, and browse dashboards for live analytics", iconUrl: "https://logo.clearbit.com/looker.com", status: "available" },
   { slug: "amplitude", name: "Amplitude", category: "Business Intelligence", description: "Access Amplitude analytics data", iconUrl: "https://cdn.worldvectorlogo.com/logos/amplitude-icon.svg", status: "coming_soon" },
 
   // Social Media
@@ -222,4 +227,8 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "workable", name: "Workable", category: "HR", description: "Manage Workable recruiting pipeline", iconUrl: "https://cdn.worldvectorlogo.com/logos/workable-1.svg", status: "available" },
   { slug: "workday", name: "Workday", category: "HR", description: "Access Workday HCM data", iconUrl: "https://cdn.worldvectorlogo.com/logos/workday-1.svg", status: "available" },
   { slug: "zoho-people", name: "Zoho People", category: "HR", description: "Manage Zoho People HR records", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "sap-successfactors", name: "SAP SuccessFactors", category: "HR", description: "Access employee profiles, job info, compensation, time-off, and performance goals via SAP SuccessFactors", iconUrl: "https://logo.clearbit.com/sap.com", status: "available" },
+
+  // Design
+  { slug: "figma", name: "Figma", category: "Design", description: "Access Figma files, export frames as images, read and post comments on designs", iconUrl: "https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg", status: "available" },
 ];

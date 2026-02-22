@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Integration, CATEGORY_CONFIG } from "@/data/integrations";
-import { CheckCircle2, Clock, Plus } from "lucide-react";
+import { Clock, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { BLUEPRINT_LOGOS } from "@/lib/integrationLogos";
 
 interface IntegrationCardProps {
   integration: Integration;
@@ -15,6 +16,7 @@ export function IntegrationCard({ integration, isEnabled, isConnected }: Integra
 
   const categoryConfig = CATEGORY_CONFIG[integration.category];
   const isComingSoon = integration.status === "coming_soon";
+  const logoUrl = BLUEPRINT_LOGOS[integration.slug] || integration.iconUrl;
 
   const handleCreateBlueprint = () => {
     // Navigate to blueprint wizard with pre-filled name and category
@@ -45,16 +47,16 @@ export function IntegrationCard({ integration, isEnabled, isConnected }: Integra
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2.5">
           {/* Company Logo */}
-          <div className="w-8 h-8 rounded-md bg-white border border-border/50 flex items-center justify-center shrink-0 overflow-hidden p-1">
+          <div className="w-8 h-8 rounded-md bg-white/[0.06] border border-white/10 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
             {!imgError ? (
               <img
-                src={integration.iconUrl}
+                src={logoUrl}
                 alt={integration.name}
                 className="w-full h-full object-contain"
                 onError={() => setImgError(true)}
               />
             ) : (
-              <span className="text-base">{categoryConfig.emoji}</span>
+              <span className="text-base">{categoryConfig?.emoji ?? integration.name.charAt(0)}</span>
             )}
           </div>
           <div className="flex-1 min-w-0">

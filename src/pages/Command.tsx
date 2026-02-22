@@ -35,7 +35,7 @@ const CommandCenter = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-4 h-[calc(100vh-7rem)] flex flex-col">
+      <div className="flex flex-col gap-4" style={{ height: "calc(100vh - 7rem)" }}>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Command Center</h1>
           <p className="text-sm text-muted-foreground mt-1">Direct communication with agents</p>
@@ -68,7 +68,8 @@ const CommandCenter = () => {
         </div>
 
         {/* Chat area */}
-        <div ref={scrollRef} className="flex-1 overflow-auto rounded-xl border border-border bg-card p-4 space-y-3">
+        <div ref={scrollRef} className="flex-1 overflow-auto rounded-xl border border-border bg-card p-4">
+          <div className="flex flex-col gap-3">
           {messages.map(msg => {
             const isHuman = msg.from === "human";
             const msgConfig = !isHuman ? AGENT_CONFIG[msg.from as AgentName] : null;
@@ -97,6 +98,7 @@ const CommandCenter = () => {
               No messages yet. Start a conversation with {selectedAgent}.
             </div>
           )}
+          </div>
         </div>
 
         {/* Input */}

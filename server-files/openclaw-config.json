@@ -1,6 +1,17 @@
 {
   "_comment": "Merge these agent entries into the 'agents' section of ~/.openclaw/openclaw.json",
   "agents": {
+    "kaze": {
+      "name": "Kaze",
+      "description": "Chief of Staff — orchestrates the squad, delegates tasks, manages pipelines autonomously",
+      "soul": "~/.openclaw/workspace/agents/kaze/SOUL.md",
+      "skills": ["mission-control"],
+      "model": "anthropic/claude-opus-4-5",
+      "session": {
+        "maxTurns": 30,
+        "timeout": 600
+      }
+    },
     "scout": {
       "name": "Scout",
       "description": "Market Intelligence agent — researches trends, finds opportunities",

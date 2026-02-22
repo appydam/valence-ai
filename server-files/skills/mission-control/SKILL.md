@@ -23,12 +23,21 @@ All requests go to: `https://beloved-squirrel-599.convex.site`
 
 ### Check In (Heartbeat)
 
-Call this at the START of every session to let Mission Control know you're active. The response includes any tasks assigned to you AND your current configuration.
+Call this at the START of every session to let Mission Control know you're active. The response includes your **active tasks** (assigned/in_progress/in_review only — not done/cancelled) and your current configuration.
+
+**Your heartbeat already contains everything you need. Do NOT call `GET /api/tasks` separately — the heartbeat response includes your assigned tasks.**
 
 ```bash
 curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
   -H "Content-Type: application/json" \
   -d '{"agentName": "YOUR_NAME", "status": "working"}'
+```
+
+To also discover integration tools, add `includeTools: true` and `userId`:
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "YOUR_NAME", "status": "working", "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2", "includeTools": true}'
 ```
 
 Response includes:
@@ -42,7 +51,8 @@ Response includes:
     "skills": ["mission-control"],
     "sessionMaxTurns": 30,
     "sessionTimeout": 600
-  }
+  },
+  "availableTools": {...}
 }
 ```
 
@@ -142,6 +152,30 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/deliverable \
   }'
 ```
 
+### Complete a Task (Batch — PREFERRED)
+
+**Use this instead of separate deliverable/comment/activity/status calls.** Finishes a task in ONE call: adds deliverables, posts comment, logs activity, updates status, sets you to idle. Chain reactions (wake Kaze for review, unblock dependent tasks) fire automatically.
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/complete \
+  -H "Content-Type: application/json" \
+  -d '{
+    "taskId": "TASK_ID",
+    "agentName": "YOUR_NAME",
+    "deliverables": [
+      {"name": "report.md", "type": "markdown", "content": "# Full report content..."}
+    ],
+    "comment": "Completed research on X. Key findings: ... @Kaze for review.",
+    "mentions": ["Kaze"],
+    "activityDetails": "Finished research task: analyzed 10 sources, compiled report",
+    "status": "in_review"
+  }'
+```
+
+All fields except `taskId` and `agentName` are optional. `status` defaults to `"in_review"`.
+
+**This is the recommended way to finish any task.** It saves 4-5 API calls and ensures all chain reactions fire correctly.
+
 ### Post a Comment
 
 Use comments to communicate with other agents or the human operator.
@@ -181,6 +215,36 @@ curl "https://beloved-squirrel-599.convex.site/api/activity?agentName=YOUR_NAME&
 ```
 
 Both `agentName` and `limit` are optional query parameters.
+
+### Check Direct Messages (Command Center)
+
+The human operator can send you direct messages via the Command Center. **Always check these at the start of your session after heartbeat.** If you were woken up with reason `direct_message`, this is why.
+
+```bash
+curl "https://beloved-squirrel-599.convex.site/api/messages?agentName=YOUR_NAME"
+```
+
+Read the conversation history (messages between you and "human"). Respond to any messages from "human" that you haven't replied to yet.
+
+### Reply to a Direct Message
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "YOUR_NAME",
+    "to": "human",
+    "content": "Your reply here"
+  }'
+```
+
+**When you receive a `direct_message` wakeup reason:**
+1. Call `POST /api/heartbeat` (status: working)
+2. Call `GET /api/messages?agentName=YOUR_NAME` to read the conversation
+3. Read the latest message(s) from "human"
+4. Reply with `POST /api/messages` with your response
+5. If the message asks you to do a task, create it via `POST /api/tasks` and confirm in your reply
+6. Send heartbeat with status "idle" when done
 
 ### Check Notifications
 
@@ -675,16 +739,13 @@ Task IDs are Convex document IDs — they look like strings such as `"k17abc123d
 
 **If you didn't post it to Mission Control, it didn't happen.** The human operator monitors progress through the Mission Control dashboard. Work that only exists in your terminal output or session memory is invisible and worthless.
 
-Every session MUST include these API calls — no exceptions:
-1. **Heartbeat** at the start (status: working)
+Every session MUST follow this workflow:
+1. **Heartbeat** at the start (status: working) — your tasks are in the response, no need to call GET /api/tasks separately
 2. **Claim or update task** to `in_progress` before doing any work
-3. **Add deliverable** with your actual output (not just a summary — the full report/code/draft)
-4. **Post a comment** with a summary and @mention Kaze
-5. **Log activity** describing what you did
-6. **Update task status** to `in_review` when done
-7. **Heartbeat** at the end (status: idle)
+3. **Do your work** (research, code, draft, etc.)
+4. **Complete task with ONE call** — use `POST /api/tasks/complete` to submit deliverables + comment + activity + status in a single request. This is the preferred way to finish any task.
 
-**Budget your session turns:** Reserve the LAST 3-4 turns of every session for posting results to Mission Control. Do NOT spend all turns on research/work and run out before posting. If you're running low on turns, STOP working and POST what you have immediately.
+**Budget your session turns:** Reserve the LAST 2-3 turns of every session for posting results via `/api/tasks/complete`. Do NOT spend all turns on research/work and run out before posting. If you're running low on turns, STOP working and POST what you have immediately.
 
 **Minimum viable session:** If you can only do one thing, make it posting results. A short deliverable posted to Mission Control is infinitely more valuable than a long analysis that stays in your terminal.
 
@@ -692,16 +753,14 @@ Every session MUST include these API calls — no exceptions:
 
 ## Workflow Protocol
 
-1. **On wake up:** Send heartbeat with status `"working"`, check for assigned tasks in the response
-2. **If assigned tasks exist:** Claim the highest priority one (sets status to `in_progress`)
-3. **If no assigned tasks:** Check inbox (`?status=inbox`), claim something relevant to your role
-4. **If inbox is empty:** Create tasks based on your standing priorities
-5. **While working:** Log activity periodically so progress is visible
-6. **When done (or running low on turns):** Add deliverables with FULL content, post a summary comment, set status to `"in_review"`
-7. **@mention Kaze** in comments if you need a decision or if something is blocked
-8. **@mention other agents** if you need their expertise on a task
-9. **Before signing off:** Send heartbeat with status `"idle"`
-10. **Check notifications** at the start of each session after heartbeat — respond to @mentions and thread updates
-11. **Create standalone documents** for longer outputs (reports, code artifacts, analysis) using the documents endpoint rather than only attaching them as task deliverables
-12. **Periodically report token/cost usage** via the usage endpoint so the human operator can track spending per agent
-13. **Check your config** from the heartbeat response — note if the operator changed your model or session settings
+1. **On wake up:** Send heartbeat with status `"working"` — your active tasks are in the response (no separate GET needed)
+2. **Check direct messages:** `GET /api/messages?agentName=YOUR_NAME` — if woken with reason `direct_message`, reply to the human first before working on tasks
+3. **Check notifications** — respond to @mentions
+4. **If assigned tasks exist:** Claim the highest priority one (sets status to `in_progress`)
+5. **If no assigned tasks:** Check inbox (`?status=inbox`), claim something relevant to your role
+6. **If inbox is empty:** Create tasks based on your standing priorities
+7. **Do your work** — spend the bulk of your turns on actual research/code/drafting
+8. **When done (or running low on turns):** Call `POST /api/tasks/complete` with deliverables + comment + activity in ONE call. This replaces separate deliverable/comment/activity/status update calls.
+9. **@mention Kaze** in your completion comment if you need a decision or review
+10. **Create standalone documents** for longer outputs using the documents endpoint
+11. **Check your config** from the heartbeat response — note if the operator changed your model or settings

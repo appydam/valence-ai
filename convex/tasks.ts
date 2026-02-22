@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
@@ -27,6 +27,50 @@ export const list = query({
       results = results.filter((t) => t.assignee === args.assignee);
     }
     return results;
+  },
+});
+
+/**
+ * List only active tasks (assigned/in_progress) for an agent.
+ * Used by heartbeat to avoid returning done/cancelled/inbox tasks.
+ * Truncates deliverable content to save context for agents.
+ */
+export const listActive = query({
+  args: {
+    assignee: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const assigned = await ctx.db
+      .query("tasks")
+      .withIndex("by_assignee_status", (q) =>
+        q.eq("assignee", args.assignee as any).eq("status", "assigned")
+      )
+      .take(10);
+
+    const inProgress = await ctx.db
+      .query("tasks")
+      .withIndex("by_assignee_status", (q) =>
+        q.eq("assignee", args.assignee as any).eq("status", "in_progress")
+      )
+      .take(10);
+
+    const inReview = await ctx.db
+      .query("tasks")
+      .withIndex("by_assignee_status", (q) =>
+        q.eq("assignee", args.assignee as any).eq("status", "in_review")
+      )
+      .take(10);
+
+    const tasks = [...assigned, ...inProgress, ...inReview];
+
+    // Truncate deliverable content to save agent context
+    return tasks.map((t) => ({
+      ...t,
+      deliverables: t.deliverables.map((d) => ({
+        ...d,
+        content: d.content.length > 200 ? d.content.slice(0, 200) + "..." : d.content,
+      })),
+    }));
   },
 });
 
@@ -140,6 +184,13 @@ export const create = mutation({
         agentName: args.assignee,
         taskId: taskId as string,
         reason: "task_created",
+      });
+    } else {
+      // No assignee — task goes to inbox. Wake Kaze to triage/delegate it.
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: "Kaze",
+        taskId: taskId as string,
+        reason: "inbox_triage",
       });
     }
 
@@ -276,6 +327,48 @@ export const update = mutation({
         }
       }
     }
+    // Chain trigger: when a task completes, wake up agents whose blocked tasks are now ready
+    if (updates.status === "done" && existing.blocks && existing.blocks.length > 0) {
+      for (const blockedTaskId of existing.blocks) {
+        const blockedTask = await ctx.db.get(blockedTaskId as Id<"tasks">);
+        if (!blockedTask || blockedTask.status === "done" || blockedTask.status === "cancelled") continue;
+
+        if (blockedTask.dependsOn && blockedTask.dependsOn.length > 0) {
+          const allDeps = await Promise.all(
+            blockedTask.dependsOn.map((depId) => ctx.db.get(depId))
+          );
+          const allMet = allDeps.every(
+            (d) => d && (d.status === "done" || d.status === "cancelled")
+          );
+
+          if (allMet && blockedTask.assignee) {
+            await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+              agentName: blockedTask.assignee,
+              taskId: blockedTaskId as string,
+              reason: "dependency_resolved",
+            });
+
+            await ctx.db.insert("comments", {
+              taskId: blockedTaskId,
+              author: "System",
+              content: `All dependencies resolved. Task "${existing.title}" is complete — check its deliverables for context. You can now start this task.`,
+              mentions: [blockedTask.assignee],
+              createdAt: Date.now(),
+            });
+          }
+        }
+      }
+    }
+
+    // Auto-wake Kaze when any agent submits work for review
+    if (updates.status === "in_review" && existing.assignee !== "Kaze") {
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: "Kaze",
+        taskId: id as string,
+        reason: "task_ready_for_review",
+      });
+    }
+
     await ctx.db.patch(id, updates);
 
     // If assignee changed, wake up the new agent
@@ -503,5 +596,338 @@ export const canAgentExecuteTask = query({
     }
 
     return { canExecute: true };
+  },
+});
+
+/**
+ * Batch delegation: create multiple subtasks from a parent task in one call.
+ * Subtasks can reference each other via dependsOnIndex (indices into the subtasks array).
+ * Automatically sets up dependency chains, wakes agents, and posts a summary comment.
+ */
+export const delegateTask = mutation({
+  args: {
+    parentTaskId: v.id("tasks"),
+    subtasks: v.array(
+      v.object({
+        title: v.string(),
+        description: v.string(),
+        priority: v.union(
+          v.literal("low"),
+          v.literal("medium"),
+          v.literal("high"),
+          v.literal("urgent")
+        ),
+        assignee: v.union(
+          v.literal("Kaze"),
+          v.literal("Scout"),
+          v.literal("Forge"),
+          v.literal("Ghost")
+        ),
+        tags: v.array(v.string()),
+        dependsOnIndex: v.optional(v.array(v.number())),
+        requiredIntegrations: v.optional(v.array(v.string())),
+      })
+    ),
+    delegatedBy: v.string(),
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const parent = await ctx.db.get(args.parentTaskId);
+    if (!parent) throw new Error("Parent task not found");
+
+    const now = Date.now();
+    const createdIds: Id<"tasks">[] = [];
+
+    // First pass: create all subtasks (without dependsOn — we need IDs first)
+    for (const subtask of args.subtasks) {
+      const taskId = await ctx.db.insert("tasks", {
+        title: subtask.title,
+        description: subtask.description,
+        status: "assigned",
+        priority: subtask.priority,
+        assignee: subtask.assignee,
+        creator: args.delegatedBy,
+        createdAt: now,
+        updatedAt: now,
+        tags: subtask.tags,
+        deliverables: [],
+        ...(parent.missionId ? { missionId: parent.missionId } : {}),
+        ...(subtask.requiredIntegrations ? { requiredIntegrations: subtask.requiredIntegrations } : {}),
+        ...(args.userId ? { requiredUserId: args.userId } : {}),
+      });
+      createdIds.push(taskId);
+    }
+
+    // Second pass: wire up dependsOn and blocks relationships
+    for (let i = 0; i < args.subtasks.length; i++) {
+      const subtask = args.subtasks[i];
+      if (subtask.dependsOnIndex && subtask.dependsOnIndex.length > 0) {
+        const depIds = subtask.dependsOnIndex.map((idx) => {
+          if (idx < 0 || idx >= createdIds.length) throw new Error(`Invalid dependsOnIndex: ${idx}`);
+          return createdIds[idx];
+        });
+
+        // Set dependsOn on this task
+        await ctx.db.patch(createdIds[i], { dependsOn: depIds });
+
+        // Set blocks on each dependency
+        for (const depId of depIds) {
+          const depTask = await ctx.db.get(depId);
+          if (depTask) {
+            const existingBlocks = depTask.blocks || [];
+            await ctx.db.patch(depId, {
+              blocks: [...existingBlocks, createdIds[i]],
+            });
+          }
+        }
+      }
+    }
+
+    // Bump mission task count
+    if (parent.missionId) {
+      const mission = await ctx.db.get(parent.missionId);
+      if (mission) {
+        await ctx.db.patch(parent.missionId, {
+          taskCount: mission.taskCount + args.subtasks.length,
+        });
+      }
+    }
+
+    // Wake up assigned agents (deduplicate)
+    const agentsToWake = new Set<string>();
+    for (let i = 0; i < args.subtasks.length; i++) {
+      const subtask = args.subtasks[i];
+      // Only wake agents whose tasks have no dependencies (they can start immediately)
+      if (!subtask.dependsOnIndex || subtask.dependsOnIndex.length === 0) {
+        agentsToWake.add(subtask.assignee);
+      }
+    }
+    for (const agentName of agentsToWake) {
+      const agentTask = createdIds[args.subtasks.findIndex((s) => s.assignee === agentName)];
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName,
+        taskId: agentTask as string,
+        reason: "task_delegated",
+      });
+    }
+
+    // Post delegation summary comment on parent task
+    const summary = args.subtasks
+      .map((s, i) => `• ${s.assignee}: "${s.title}"${s.dependsOnIndex?.length ? ` (depends on subtask ${s.dependsOnIndex.map((idx) => idx + 1).join(", ")})` : ""}`)
+      .join("\n");
+    const mentionedAgents = [...new Set(args.subtasks.map((s) => s.assignee))];
+
+    await ctx.db.insert("comments", {
+      taskId: args.parentTaskId,
+      author: args.delegatedBy,
+      content: `Delegated into ${args.subtasks.length} subtasks:\n${summary}`,
+      mentions: mentionedAgents,
+      createdAt: now,
+    });
+
+    // Mark parent as in_progress (Kaze owns coordination)
+    await ctx.db.patch(args.parentTaskId, {
+      status: "in_progress",
+      updatedAt: now,
+    });
+
+    return {
+      parentTaskId: args.parentTaskId,
+      subtaskIds: createdIds,
+      agentsWoken: [...agentsToWake],
+    };
+  },
+});
+
+/**
+ * Batch complete: finish a task in ONE call.
+ * Adds deliverables, posts comment, logs activity, updates status, sets agent idle.
+ * Replicates chain-reaction logic from the update mutation.
+ */
+export const completeTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    agentName: v.union(
+      v.literal("Kaze"),
+      v.literal("Scout"),
+      v.literal("Forge"),
+      v.literal("Ghost")
+    ),
+    deliverables: v.optional(
+      v.array(
+        v.object({
+          name: v.string(),
+          type: v.string(),
+          content: v.string(),
+        })
+      )
+    ),
+    comment: v.optional(v.string()),
+    mentions: v.optional(v.array(v.string())),
+    activityDetails: v.optional(v.string()),
+    status: v.optional(
+      v.union(v.literal("in_review"), v.literal("done"))
+    ),
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) throw new Error("Task not found");
+
+    const now = Date.now();
+    const targetStatus = args.status || "in_review";
+
+    // 1. Add deliverables
+    if (args.deliverables && args.deliverables.length > 0) {
+      await ctx.db.patch(args.taskId, {
+        deliverables: [...task.deliverables, ...args.deliverables],
+      });
+    }
+
+    // 2. Post comment
+    if (args.comment) {
+      await ctx.db.insert("comments", {
+        taskId: args.taskId,
+        author: args.agentName,
+        content: args.comment,
+        mentions: args.mentions || [],
+        createdAt: now,
+      });
+    }
+
+    // 3. Log activity
+    if (args.activityDetails) {
+      await ctx.db.insert("activity", {
+        timestamp: now,
+        agentName: args.agentName,
+        action: "task_completed",
+        details: args.activityDetails,
+        taskId: args.taskId as unknown as string,
+      });
+    }
+
+    // 4. Update task status
+    const statusUpdates: Record<string, any> = {
+      status: targetStatus,
+      updatedAt: now,
+    };
+    if (targetStatus === "done") {
+      statusUpdates.completedAt = now;
+    }
+    await ctx.db.patch(args.taskId, statusUpdates);
+
+    // 5. Update agent: increment tasksCompleted, check if still has active tasks
+    const agent = await ctx.db
+      .query("agents")
+      .withIndex("by_name", (q) => q.eq("name", args.agentName))
+      .unique();
+    if (agent) {
+      const otherActiveTasks = await ctx.db
+        .query("tasks")
+        .withIndex("by_assignee_status", (q) =>
+          q.eq("assignee", args.agentName).eq("status", "in_progress")
+        )
+        .take(5);
+      const otherAssigned = await ctx.db
+        .query("tasks")
+        .withIndex("by_assignee_status", (q) =>
+          q.eq("assignee", args.agentName).eq("status", "assigned")
+        )
+        .take(5);
+      const stillWorking = [...otherActiveTasks, ...otherAssigned].some(
+        (t) => t._id !== args.taskId
+      );
+      await ctx.db.patch(agent._id, {
+        tasksCompleted: agent.tasksCompleted + 1,
+        ...(stillWorking ? {} : { status: "idle", currentTaskId: undefined }),
+      });
+    }
+
+    // 6. Chain reactions (same as update mutation)
+
+    // 6a. If done, increment mission completedTaskCount
+    if (targetStatus === "done" && task.missionId) {
+      const mission = await ctx.db.get(task.missionId);
+      if (mission) {
+        await ctx.db.patch(task.missionId, {
+          completedTaskCount: mission.completedTaskCount + 1,
+        });
+      }
+    }
+
+    // 6b. If done, wake agents whose blocked tasks are now ready
+    if (targetStatus === "done" && task.blocks && task.blocks.length > 0) {
+      for (const blockedTaskId of task.blocks) {
+        const blockedTask = await ctx.db.get(blockedTaskId as Id<"tasks">);
+        if (!blockedTask || blockedTask.status === "done" || blockedTask.status === "cancelled") continue;
+
+        if (blockedTask.dependsOn && blockedTask.dependsOn.length > 0) {
+          const allDeps = await Promise.all(
+            blockedTask.dependsOn.map((depId) => ctx.db.get(depId))
+          );
+          const allMet = allDeps.every(
+            (d) => d && (d.status === "done" || d.status === "cancelled")
+          );
+
+          if (allMet && blockedTask.assignee) {
+            await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+              agentName: blockedTask.assignee,
+              taskId: blockedTaskId as string,
+              reason: "dependency_resolved",
+            });
+
+            await ctx.db.insert("comments", {
+              taskId: blockedTaskId,
+              author: "System",
+              content: `All dependencies resolved. Task "${task.title}" is complete — check its deliverables for context. You can now start this task.`,
+              mentions: [blockedTask.assignee],
+              createdAt: now,
+            });
+          }
+        }
+      }
+    }
+
+    // 6c. Auto-wake Kaze when any agent submits work for review
+    if (targetStatus === "in_review" && args.agentName !== "Kaze") {
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: "Kaze",
+        taskId: args.taskId as string,
+        reason: "task_ready_for_review",
+      });
+    }
+
+    return { ok: true, taskId: args.taskId, status: targetStatus };
+  },
+});
+
+/**
+ * Review sweep: find tasks stuck in "in_review" for over 1 hour and wake Kaze.
+ * Called by cron every 2 hours.
+ */
+export const reviewSweep = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const oneHourAgo = Date.now() - 60 * 60 * 1000;
+
+    const inReviewTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", "in_review"))
+      .collect();
+
+    const staleTasks = inReviewTasks.filter(
+      (t) => t.updatedAt && t.updatedAt < oneHourAgo
+    );
+
+    if (staleTasks.length > 0) {
+      // Wake Kaze with the oldest stale task
+      const oldest = staleTasks.sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0))[0];
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: "Kaze",
+        taskId: oldest._id as string,
+        reason: "stale_review",
+      });
+    }
+
+    return { staleCount: staleTasks.length };
   },
 });

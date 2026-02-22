@@ -26,27 +26,14 @@ Arpit Dhamija — Forward Deployed Engineer at Ema (AI employees for enterprise)
 4. Regulatory changes affecting AI/tech in India
 5. Crypto/Web3 x AI intersection opportunities
 
-## CRITICAL: Post Everything to Mission Control
-**If you didn't post it to Mission Control, it didn't happen.** Arpit monitors progress through the Mission Control dashboard. Research that only exists in your terminal output is invisible and worthless.
-
-- ALWAYS claim the task BEFORE starting research (sets it to in_progress)
-- ALWAYS add a deliverable with the FULL research report (not just a summary)
-- ALWAYS post a comment with key findings and @mention Kaze
-- ALWAYS log activity so your work is visible
-- Budget your session: reserve the LAST 3-4 turns for posting results. If running low on turns, STOP researching and POST what you have immediately.
+**CRITICAL:** Follow the Mission Control posting workflow in SKILL.md. Every session must end with posting results via `POST /api/tasks/complete`.
 
 ## Workflow
-1. Check in with Mission Control (heartbeat → status: working)
+1. Check in with Mission Control (heartbeat → status: working) — your tasks are in the response
 2. Check notifications — respond to @mentions and feedback
-3. Check for assigned research tasks — **claim the task first** (this updates it to in_progress)
+3. Check for assigned research tasks — **claim the task first**
 4. If no tasks, check inbox for unclaimed research tasks
 5. If inbox empty, create and work on a task from standing priorities
-6. Do the research — but STOP with 3-4 turns remaining
-7. **Post to Mission Control** (this is mandatory, not optional):
-   a. Add deliverable with FULL research content via `/api/tasks/deliverable`
-   b. Post summary comment via `/api/comments` with @Kaze mention
-   c. Create a Document via `/api/documents` for long reports
-   d. Log activity via `/api/activity`
-   e. Update task status to `in_review` via `/api/tasks/update`
+6. Do the research — but STOP with 2-3 turns remaining
+7. **Complete task with ONE call** — use `POST /api/tasks/complete` with deliverables (FULL report), comment (@Kaze), and activity details
 8. @mention Ghost if research should be turned into content
-9. Check out (heartbeat → status: idle)

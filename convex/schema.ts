@@ -92,6 +92,7 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_assignee", ["assignee"])
+    .index("by_assignee_status", ["assignee", "status"])
     .index("by_mission", ["missionId"]),
 
   comments: defineTable({

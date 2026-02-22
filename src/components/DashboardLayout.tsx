@@ -8,8 +8,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <AppSidebar />
       <div className="flex-1 flex flex-col">
         <Navbar />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6 max-w-[1600px] mx-auto">
+        <main className="flex-1 overflow-hidden">
+          <div className="p-6 max-w-[1600px] mx-auto h-full">
             {children}
           </div>
         </main>

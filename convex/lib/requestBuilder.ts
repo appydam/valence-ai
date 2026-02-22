@@ -245,8 +245,11 @@ function applyAuth(
 
   switch (blueprint.authType) {
     case "oauth2": {
-      // Always capitalize "Bearer" — some providers (e.g. HubSpot) return lowercase "bearer"
-      const tokenType = (credentials.tokenType || "Bearer").replace(/^bearer$/i, "Bearer");
+      // Normalize token type — some providers return non-standard values:
+      //   HubSpot → "bearer" (lowercase) → fix to "Bearer"
+      //   Slack   → "bot"               → fix to "Bearer"
+      const rawType = credentials.tokenType || "Bearer";
+      const tokenType = /^(bearer|bot)$/i.test(rawType) ? "Bearer" : rawType;
       headers["Authorization"] = `${tokenType} ${
         credentials.accessToken || credentials.token
       }`;
