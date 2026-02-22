@@ -1528,7 +1528,7 @@ http.route({
     const agentsWithTasks = [];
     for (const agent of agents) {
       const tasks = await ctx.runQuery(api.tasks.list, { assignee: agent.name });
-      const pendingTasks = tasks.filter(t => t.status === "assigned" || t.status === "in_progress");
+      const pendingTasks = tasks.filter((t: any) => t.status === "assigned" || t.status === "in_progress");
 
       if (pendingTasks.length > 0) {
         agentsWithTasks.push({
@@ -1561,7 +1561,7 @@ http.route({
       wakeupUrl: AGENT_WAKEUP_URL,
     });
 
-    const successCount = wakeResults.filter(r => r.success).length;
+    const successCount = wakeResults.filter((r: any) => r.success).length;
 
     return new Response(
       JSON.stringify({
