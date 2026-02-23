@@ -4,16 +4,14 @@ import {
   Activity,
   LayoutGrid,
   Users,
-  Terminal,
-  FileText,
   Settings,
   ChevronLeft,
   ChevronRight,
-  Wrench,
   FolderOpen,
   Plug,
   Webhook,
-  BarChart3
+  BarChart3,
+  Brain
 } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
@@ -23,13 +21,11 @@ const navItems = [
   { title: "Activity Feed", path: "/", icon: Activity },
   { title: "Mission Board", path: "/board", icon: LayoutGrid },
   { title: "Missions", path: "/missions", icon: FolderOpen },
-  { title: "Documents", path: "/documents", icon: FileText },
   { title: "Agents", path: "/agents", icon: Users },
-  { title: "Tools", path: "/tools", icon: Wrench },
+  { title: "Memory Bank", path: "/memory", icon: Brain },
   { title: "Integrations", path: "/integrations", icon: Plug },
   { title: "Webhooks", path: "/webhooks", icon: Webhook },
   { title: "Analytics", path: "/analytics", icon: BarChart3 },
-  { title: "Command Center", path: "/command", icon: Terminal },
   { title: "Settings", path: "/settings", icon: Settings },
 ];
 

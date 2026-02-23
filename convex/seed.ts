@@ -4,7 +4,7 @@ export const clearAll = mutation({
   args: {},
   handler: async (ctx) => {
     // Note: sshConfig is intentionally excluded so SSH credentials survive reseeds
-    const tables = ["agents", "tasks", "missions", "comments", "activity", "messages", "notifications", "documents", "usage", "agentConfigs", "soulFiles"] as const;
+    const tables = ["agents", "tasks", "missions", "comments", "activity", "messages", "notifications", "usage", "agentConfigs", "soulFiles"] as const;
     for (const table of tables) {
       const docs = await ctx.db.query(table).collect();
       for (const doc of docs) {
@@ -269,38 +269,6 @@ export const seedAll = mutation({
       action: "assigned task",
       details: "Assigned ProductHunt scraper to Forge",
       taskId: t2 as unknown as string,
-    });
-
-    // Seed documents
-    await ctx.db.insert("documents", {
-      title: "AI Agent Startup Landscape — January 2026",
-      content: "# AI Agent Startup Landscape\n\n## Overview\nThe AI agent space saw significant funding activity in January 2026, with over $2.3B deployed across 47 deals.\n\n## Top Funded Startups\n1. **AgentStack** ($180M Series B) — Enterprise agent orchestration\n2. **Nexus AI** ($120M Series A) — Multi-agent collaboration platform\n3. **CogniFlow** ($95M Series A) — Autonomous coding agents\n\n## Key Trends\n- Shift from single-agent to multi-agent architectures\n- Enterprise adoption accelerating\n- Developer tooling maturing rapidly",
-      type: "report",
-      author: "Scout",
-      tags: ["research", "ai", "startups"],
-      taskId: t1,
-      createdAt: hours(3),
-      updatedAt: hours(3),
-    });
-    await ctx.db.insert("documents", {
-      title: "ProductHunt Scraper — Architecture Notes",
-      content: "# ProductHunt Scraper Architecture\n\n## Approach\nQueue-based scraper with rate limit handling.\n\n## Stack\n- Python 3.12 + asyncio\n- aiohttp for requests\n- Redis for job queue\n- PostgreSQL for storage\n\n## Rate Limits\n- PH API: 900 requests/15min\n- Implemented exponential backoff with jitter\n- Queue processes jobs in batches of 10",
-      type: "code",
-      author: "Forge",
-      tags: ["code", "architecture", "automation"],
-      taskId: t2,
-      createdAt: hours(2),
-      updatedAt: hours(2),
-    });
-    await ctx.db.insert("documents", {
-      title: "Competitive Pricing Analysis Q1 2026",
-      content: "# Competitive Pricing Analysis\n\n## Competitors Analyzed\n1. CrewAI — $49/mo starter, $199/mo pro\n2. AutoGen — Open source, enterprise pricing on request\n3. LangGraph — $29/mo dev, $149/mo team\n4. AgentOps — $39/mo, usage-based scaling\n5. Fixie.ai — Free tier + $99/mo pro\n\n## Key Findings\n- Most competitors use usage-based pricing for scale\n- Free tiers are standard for developer acquisition\n- Enterprise deals range $5K-50K/mo",
-      type: "analysis",
-      author: "Scout",
-      tags: ["research", "pricing", "strategy"],
-      taskId: t5,
-      createdAt: hours(4),
-      updatedAt: hours(2),
     });
 
     // Seed agent configs (matching actual server openclaw.json)

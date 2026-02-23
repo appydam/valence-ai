@@ -4,11 +4,12 @@ import { TaskCard } from "@/components/TaskCard";
 import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { NewTaskModal } from "@/components/NewTaskModal";
 import { NewMissionModal } from "@/components/NewMissionModal";
+import { SquadView } from "@/components/SquadView";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { TaskStatus, AgentName, TaskPriority } from "@/types/mission";
-import { Plus, List, FolderPlus, Zap } from "lucide-react";
+import { Plus, List, FolderPlus, Zap, Swords, LayoutGrid } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,7 @@ const Board = () => {
   const [selectedMissionId, setSelectedMissionId] = useState<Id<"missions"> | null>(null);
   const missions = useQuery(api.missions.list, {}) ?? [];
   const [wakingAgents, setWakingAgents] = useState(false);
+  const [view, setView] = useState<"board" | "squad">("board");
 
   // Fix orphaned tasks on first load
   const fixOrphaned = useMutation(api.tasks.fixOrphanedTasks);
@@ -68,10 +70,8 @@ const Board = () => {
       creator: "Human",
       tags: data.tags,
       ...(data.missionId ? { missionId: data.missionId as Id<"missions"> } : {}),
-      // NEW: Capture current user's ID for agent-to-integration wiring
       ...(user?.id ? { requiredUserId: user.id } : {}),
     });
-    // Auto-select the mission board (newly created or existing)
     const targetMission = data.missionId || result?.missionId;
     if (targetMission) {
       setSelectedMissionId(targetMission as Id<"missions">);
@@ -87,7 +87,6 @@ const Board = () => {
         headers: { 'Content-Type': 'application/json' }
       });
       const data = await response.json();
-
       if (data.success) {
         toast({
           title: "Agents Notified",
@@ -102,7 +101,7 @@ const Board = () => {
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Wake Failed",
         description: "Could not wake agents. Ensure agent-wakeup-server is running.",
@@ -113,6 +112,58 @@ const Board = () => {
     }
   };
 
+  // Squad mode: full-bleed layout, terrarium fills all available height
+  if (view === "squad") {
+    return (
+      <DashboardLayout fullBleed>
+        <div className="h-full flex flex-col">
+          {/* Slim header strip */}
+          <div
+            className="shrink-0 flex items-center justify-between px-4 py-2 border-b"
+            style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(10,26,15,0.95)" }}
+          >
+            <div className="flex items-center gap-1 p-0.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <button
+                onClick={() => setView("board")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Board
+              </button>
+              <button
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-white transition-colors"
+                style={{ background: "rgba(255,255,255,0.1)" }}
+              >
+                <Swords className="w-3.5 h-3.5" />
+                Squad Ops
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">Live</span>
+            </div>
+          </div>
+
+          {/* Terrarium — fills remaining height */}
+          <div className="flex-1 min-h-0">
+            <SquadView onTaskSelect={setSelectedTaskId} />
+          </div>
+        </div>
+
+        {/* Task detail panel */}
+        {selectedTask && (
+          <div className="fixed inset-y-0 right-0 z-50 w-[480px] shadow-2xl animate-slide-in-right">
+            <TaskDetailPanel
+              task={selectedTask as any}
+              onClose={() => setSelectedTaskId(null)}
+            />
+          </div>
+        )}
+      </DashboardLayout>
+    );
+  }
+
+  // Board mode: normal layout with kanban
   return (
     <DashboardLayout>
       <div className="space-y-4">
@@ -122,6 +173,23 @@ const Board = () => {
             <p className="text-sm text-muted-foreground mt-1">Track and manage squad tasks</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* View toggle */}
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-secondary border border-border">
+              <button
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-background text-foreground shadow-sm transition-colors"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Board
+              </button>
+              <button
+                onClick={() => setView("squad")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Swords className="w-3.5 h-3.5" />
+                Squad Ops
+              </button>
+            </div>
+
             <button
               onClick={handleWakeAgents}
               disabled={wakingAgents}

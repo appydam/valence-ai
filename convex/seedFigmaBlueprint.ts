@@ -15,7 +15,10 @@
  *    - OAUTH_SECRET_FIGMA = Client Secret from app registration
  */
 
-import { mutation } from "./_generated/server";
+import { mutation, action } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { v } from "convex/values";
+
 
 export default mutation({
   args: {},
@@ -49,7 +52,7 @@ export default mutation({
         clientSecret: "OAUTH_SECRET_FIGMA",
         authorizeUrl: "https://www.figma.com/oauth",
         tokenUrl: "https://api.figma.com/v1/oauth/token",
-        scopes: ["files:read", "file_comments:write", "file_comments:read"],
+        scopes: ["current_user:read", "file_content:read", "file_metadata:read", "file_comments:read", "file_comments:write", "projects:read"],
         scopeSeparator: ",",
         tokenEndpointAuth: "body",
       }),
@@ -67,6 +70,17 @@ export default mutation({
     });
 
     const tools = [
+      {
+        name: "get_me",
+        displayName: "Get Current User",
+        description:
+          "Get the currently authenticated Figma user. No parameters required. Use this to verify the connection is working.",
+        method: "GET" as const,
+        path: "/me",
+        aiUsageHint:
+          "Call this to verify the Figma connection is active and get the current user info (name, email, handle).",
+        exampleArgs: JSON.stringify({}),
+      },
       {
         name: "get_file",
         displayName: "Get File",
@@ -335,5 +349,46 @@ export default mutation({
         "5. Set OAUTH_SECRET_FIGMA in Convex env vars",
       ],
     };
+  },
+});
+
+/**
+ * Patch the live Figma blueprint's authConfig with the real client ID from env vars.
+ * Run this after setting FIGMA_CLIENT_ID in Convex env vars.
+ *
+ * Usage: npx convex run seedFigmaBlueprint:patchClientId
+ */
+export const patchClientId = action({
+  args: {},
+  handler: async (ctx) => {
+    const clientId = process.env.FIGMA_CLIENT_ID;
+    if (!clientId || clientId === "YOUR_FIGMA_CLIENT_ID") {
+      throw new Error("FIGMA_CLIENT_ID env var is not set in Convex");
+    }
+
+    await ctx.runMutation(internal.seedFigmaBlueprint.applyClientId, { clientId });
+    return { ok: true, clientId };
+  },
+});
+
+export const applyClientId = mutation({
+  args: { clientId: v.string() },
+  handler: async (ctx, { clientId }) => {
+    const blueprint = await ctx.db
+      .query("blueprints")
+      .withIndex("by_slug", (q) => q.eq("slug", "figma"))
+      .first();
+
+    if (!blueprint) throw new Error("Figma blueprint not found — run the seed first");
+
+    const authConfig = JSON.parse(blueprint.authConfig);
+    authConfig.clientId = clientId;
+
+    await ctx.db.patch(blueprint._id, {
+      authConfig: JSON.stringify(authConfig),
+      updatedAt: Date.now(),
+    });
+
+    return { ok: true };
   },
 });

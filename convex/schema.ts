@@ -136,27 +136,6 @@ export default defineSchema({
     .index("by_recipient", ["recipientAgent", "read"])
     .index("by_recipient_time", ["recipientAgent", "createdAt"]),
 
-  documents: defineTable({
-    title: v.string(),
-    content: v.string(),
-    type: v.union(
-      v.literal("report"),
-      v.literal("code"),
-      v.literal("analysis"),
-      v.literal("draft"),
-      v.literal("other")
-    ),
-    author: v.string(),
-    tags: v.array(v.string()),
-    taskId: v.optional(v.id("tasks")),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_author", ["author"])
-    .index("by_type", ["type"])
-    .index("by_created", ["createdAt"])
-    .index("by_task", ["taskId"]),
-
   usage: defineTable({
     agentName: agentNameValidator,
     totalCost: v.number(),
@@ -607,4 +586,129 @@ export default defineSchema({
     computedAt: v.number(),
   })
     .index("by_period", ["periodType", "periodStart"]),
+
+  // ============================================================
+  // MEMORY SYSTEM TABLES
+  // ============================================================
+
+  agentMemory: defineTable({
+    agentName: agentNameValidator,
+    memoryType: v.union(
+      v.literal("api_quirk"),
+      v.literal("user_preference"),
+      v.literal("pattern"),
+      v.literal("decision"),
+      v.literal("env_fact"),
+      v.literal("workflow"),
+      v.literal("failure"),
+      v.literal("shortcut")
+    ),
+    title: v.string(),
+    body: v.string(),
+    evidence: v.optional(v.string()),
+    tags: v.array(v.string()),
+    taskId: v.optional(v.string()),
+    relatedAgents: v.array(agentNameValidator),
+    importanceScore: v.number(),
+    confirmations: v.number(),
+    contradictions: v.number(),
+    useCount: v.number(),
+    humanEndorsed: v.boolean(),
+    humanFlagged: v.boolean(),
+    endorsedBy: v.optional(v.string()),
+    endorsedAt: v.optional(v.number()),
+    status: v.union(
+      v.literal("active"),
+      v.literal("superseded"),
+      v.literal("archived"),
+      v.literal("flagged")
+    ),
+    supersededBy: v.optional(v.id("agentMemory")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    lastSurfacedAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
+  })
+    .index("by_agent", ["agentName"])
+    .index("by_agent_type", ["agentName", "memoryType"])
+    .index("by_agent_status", ["agentName", "status"])
+    .index("by_importance", ["importanceScore"])
+    .index("by_created", ["createdAt"]),
+
+  sessionHandoffs: defineTable({
+    agentName: agentNameValidator,
+    sessionSummary: v.string(),
+    tasksCompleted: v.array(v.string()),
+    taskTitles: v.array(v.string()),
+    newMemoriesCreated: v.array(v.id("agentMemory")),
+    openQuestions: v.optional(v.string()),
+    nextSessionHint: v.optional(v.string()),
+    sessionStart: v.number(),
+    sessionEnd: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_agent", ["agentName"])
+    .index("by_agent_time", ["agentName", "createdAt"]),
+
+  soulFileVersions: defineTable({
+    agentName: agentNameValidator,
+    content: v.string(),
+    version: v.number(),
+    changeLog: v.string(),
+    memoriesDistilled: v.array(v.id("agentMemory")),
+    status: v.union(
+      v.literal("pending_review"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("auto_applied")
+    ),
+    reviewedBy: v.optional(v.string()),
+    reviewedAt: v.optional(v.number()),
+    reviewNote: v.optional(v.string()),
+    distilledAt: v.number(),
+    distilledBy: v.string(),
+  })
+    .index("by_agent", ["agentName"])
+    .index("by_agent_version", ["agentName", "version"])
+    .index("by_agent_status", ["agentName", "status"]),
+
+  memoryDistillationJobs: defineTable({
+    agentName: agentNameValidator,
+    status: v.union(
+      v.literal("pending"),
+      v.literal("running"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    memoriesAnalyzed: v.number(),
+    sourceMemoryIds: v.array(v.id("agentMemory")),
+    soulVersionId: v.optional(v.id("soulFileVersions")),
+    changeCount: v.optional(v.number()),
+    triggeredBy: v.string(),
+    error: v.optional(v.string()),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_agent", ["agentName"])
+    .index("by_status", ["status"]),
+
+  // Figma Plugin command queue — agents push design specs, plugin polls and executes
+  figmaPluginCommands: defineTable({
+    createdBy: v.string(),
+    fileKey: v.string(),
+    label: v.string(),
+    spec: v.string(), // JSON string of the design spec
+    status: v.union(
+      v.literal("pending"),
+      v.literal("executing"),
+      v.literal("done"),
+      v.literal("failed")
+    ),
+    resultNodeIds: v.optional(v.array(v.string())),
+    resultError: v.optional(v.string()),
+    createdAt: v.number(),
+    executedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_file", ["fileKey"]),
 });

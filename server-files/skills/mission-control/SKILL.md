@@ -729,6 +729,96 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/email-finder/single \
 
 ---
 
+## Figma Design Bridge — Push Designs Directly to Figma
+
+When a task involves creating UI screens, mockups, app designs, or visual assets in Figma, use this bridge to render them directly. The Figma plugin (running in Arpit's browser) polls for commands and renders them live.
+
+**Default Figma file key:** `o98oBcDvJ1NRYUyuXvzDGX`
+
+### Push a design spec to Figma
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/figma-plugin/push \
+  -H "Content-Type: application/json" \
+  -d '{
+    "createdBy": "Kaze",
+    "fileKey": "o98oBcDvJ1NRYUyuXvzDGX",
+    "label": "Sleep Coach — Home Screen",
+    "spec": "{\"name\":\"Home\",\"width\":375,\"height\":812,\"background\":\"#0A0A1A\",\"elements\":[...]}"
+  }'
+```
+
+Response: `{"id": "COMMAND_ID"}` — save this to poll status later.
+
+### Check if a design rendered
+
+```bash
+curl "https://beloved-squirrel-599.convex.site/api/figma-plugin/status?id=COMMAND_ID"
+```
+
+Response includes `status` (`pending`, `executing`, `done`, `failed`) and `resultNodeIds` when done.
+
+### Spec format
+
+The `spec` field is a **JSON string** (stringified). Structure:
+
+```json
+{
+  "name": "Screen Name",
+  "width": 375,
+  "height": 812,
+  "background": "#0A0A1A",
+  "elements": [
+    { "type": "text", "name": "Title", "x": 24, "y": 60, "content": "Hello", "fontSize": 32, "fill": "#FFFFFF", "fontStyle": "Bold" },
+    { "type": "rectangle", "x": 0, "y": 0, "width": 375, "height": 4, "fill": "#6366F1", "cornerRadius": 2 },
+    { "type": "button", "name": "CTA", "x": 16, "y": 700, "width": 343, "height": 56, "fill": "#6366F1", "cornerRadius": 16, "label": "Get Started", "fontSize": 16, "textColor": "#FFFFFF", "fontStyle": "Medium" },
+    { "type": "frame", "name": "Card", "x": 16, "y": 100, "width": 343, "height": 120, "fill": "#12122A", "cornerRadius": 20, "children": [
+      { "type": "text", "x": 20, "y": 20, "content": "Card title", "fontSize": 14, "fill": "#FFFFFF" }
+    ]},
+    { "type": "input", "x": 16, "y": 200, "width": 343, "height": 44, "placeholder": "Enter value...", "cornerRadius": 8 },
+    { "type": "divider", "x": 16, "y": 300, "width": 343, "height": 1, "fill": "#2A2A2A" },
+    { "type": "icon", "x": 24, "y": 60, "emoji": "🌙", "size": 24 }
+  ]
+}
+```
+
+**Supported element types:** `text`, `rectangle`, `frame`, `button`, `input`, `checkbox`, `divider`, `icon`
+
+**Text fontStyle options:** `"Regular"`, `"Medium"`, `"Bold"`, `"SemiBold"`, `"Light"`
+
+**Frame properties:** `fill`, `cornerRadius`, `stroke`, `strokeWeight`, `shadow`, `layout` (auto-layout), `children[]`
+
+**Shadow format:** `{ "color": "#000000", "opacity": 0.15, "x": 0, "y": 8, "blur": 32, "spread": 0 }`
+
+**Auto-layout format:** `{ "direction": "horizontal", "padding": 16, "gap": 12, "align": "center", "justify": "center" }`
+
+### Push multiple screens (one per frame in Figma)
+
+Push each screen as a separate call. Frames appear side-by-side in Figma automatically. Add a short wait between calls so the plugin can render each one:
+
+```bash
+# Push screen 1
+curl -X POST .../api/figma-plugin/push -d '{"createdBy":"Kaze","fileKey":"o98oBcDvJ1NRYUyuXvzDGX","label":"App — Onboarding","spec":"..."}'
+sleep 3
+# Push screen 2
+curl -X POST .../api/figma-plugin/push -d '{"createdBy":"Kaze","fileKey":"o98oBcDvJ1NRYUyuXvzDGX","label":"App — Dashboard","spec":"..."}'
+```
+
+### When to use this
+
+- Task description says "design in Figma", "create screens", "build UI mockup", "Figma designs"
+- Task involves app design, mobile UI, web UI, or any visual output
+- Arpit asks for a visual prototype or wireframe
+
+### Important notes
+
+- **The plugin must be open** in Arpit's Figma browser tab for commands to render. If the plugin isn't running, commands queue up and render the next time it's opened.
+- **Spec must be a valid JSON string** — use `JSON.stringify()` or escape quotes carefully in bash
+- **Each push = one Figma frame** — each screen should be a separate push call
+- **fileKey** — always use `o98oBcDvJ1NRYUyuXvzDGX` unless Arpit specifies a different file
+
+---
+
 ## Task IDs
 
 Task IDs are Convex document IDs — they look like strings such as `"k17abc123def456..."`. You receive them in the response when creating tasks or listing tasks. Always use the exact ID string when updating, claiming, or commenting on a task.
@@ -751,16 +841,101 @@ Every session MUST follow this workflow:
 
 ---
 
+## Memory System API
+
+You have a persistent memory system that survives across sessions. Use it to remember API quirks, user preferences, architecture decisions, and patterns you discover.
+
+### Reading memories (automatic)
+Your heartbeat response now includes:
+- `memories[]` — top 10 relevant memories sorted by importance and recency. Read these before touching tasks.
+- `workingContext.recentHandoff` — your previous session's summary, open questions, and hint for this session.
+- `workingContext.recentActivity` — last 10 activity entries.
+
+**Always read `workingContext.recentHandoff` first.** It tells you what your past self left unfinished and what to focus on.
+
+### Writing a memory: POST /api/agents/memory
+Call this when you discover something worth remembering for future sessions.
+
+```json
+{
+  "agentName": "Kaze",
+  "memoryType": "api_quirk",
+  "title": "GitHub search API returns empty on rate limit without 429",
+  "body": "When GitHub's search API is rate-limited it silently returns an empty array instead of a 429. Check X-RateLimit-Remaining header explicitly before assuming 0 results.",
+  "evidence": "Experienced on task abc123 — search returned 0 results, X-RateLimit-Remaining was 0",
+  "tags": ["github", "search", "rate-limit"],
+  "importanceScore": 0.85,
+  "taskId": "abc123",
+  "isSquadWide": true
+}
+```
+
+**memoryType options:**
+- `api_quirk` — Unexpected API behavior, edge cases, silent failures
+- `user_preference` — How the user likes things done ("prefers bullet lists", "wants terse replies")
+- `pattern` — Recurring patterns in task structure or outcomes
+- `decision` — Architecture or product decisions made ("we use Next.js not Remix")
+- `env_fact` — Environment facts (URLs, DB names, stack choices, credentials pattern)
+- `workflow` — How agents should coordinate ("always ping Scout before writing copy")
+- `failure` — What failed and why (so we don't repeat it)
+- `shortcut` — Better/faster ways to do something
+
+**importanceScore:** 0.0 (trivial) to 1.0 (critical). Reserve 0.8+ for things that would significantly change your approach.
+**isSquadWide:** Set true if all agents should know this. False if only relevant to your role.
+
+### Confirming a memory: POST /api/agents/memory/confirm
+When you encounter a memory from your heartbeat and independently verify it's still true:
+```json
+{ "id": "memory_id_here", "agentName": "Kaze" }
+```
+
+### Contradicting a memory: POST /api/agents/memory/contradict
+When a memory is outdated or wrong. Providing `newBody` creates a corrected replacement:
+```json
+{
+  "id": "memory_id_here",
+  "agentName": "Kaze",
+  "newBody": "GitHub search now properly returns 429 as of March 2025. Still worth checking headers."
+}
+```
+
+### Writing a session handoff: POST /api/agents/handoff
+**Call this at the END of every session**, even if you complete 0 tasks. This is how your next session knows where you left off.
+```json
+{
+  "agentName": "Kaze",
+  "sessionSummary": "Delegated Q2 research to Scout, reviewed Ghost's LinkedIn copy draft. Both in review.",
+  "tasksCompleted": ["taskId1", "taskId2"],
+  "taskTitles": ["Research Q2 competitors", "Review LinkedIn copy"],
+  "newMemoriesCreated": ["memId1"],
+  "openQuestions": "Unclear if user wants short-form or long-form for the blog post — needs clarification.",
+  "nextSessionHint": "Follow up with Scout on competitor research. Kaze needs to approve before Ghost writes copy.",
+  "sessionStart": 1740000000000,
+  "sessionEnd": 1740003600000
+}
+```
+
+### Memory writing guidelines
+- Write a memory when you discover something that would have changed your approach if you'd known it earlier.
+- Prefer specific and falsifiable memories over vague ones: "User prefers Loom for async video" beats "User likes async."
+- If a task fails because of something environmental, write an `env_fact` so it's not re-discovered.
+- Check `memories[]` in your heartbeat before writing — don't duplicate existing memories.
+- Do NOT write memories for things already in your SOUL file.
+
+---
+
 ## Workflow Protocol
 
 1. **On wake up:** Send heartbeat with status `"working"` — your active tasks are in the response (no separate GET needed)
-2. **Check direct messages:** `GET /api/messages?agentName=YOUR_NAME` — if woken with reason `direct_message`, reply to the human first before working on tasks
-3. **Check notifications** — respond to @mentions
-4. **If assigned tasks exist:** Claim the highest priority one (sets status to `in_progress`)
-5. **If no assigned tasks:** Check inbox (`?status=inbox`), claim something relevant to your role
-6. **If inbox is empty:** Create tasks based on your standing priorities
-7. **Do your work** — spend the bulk of your turns on actual research/code/drafting
-8. **When done (or running low on turns):** Call `POST /api/tasks/complete` with deliverables + comment + activity in ONE call. This replaces separate deliverable/comment/activity/status update calls.
-9. **@mention Kaze** in your completion comment if you need a decision or review
-10. **Create standalone documents** for longer outputs using the documents endpoint
-11. **Check your config** from the heartbeat response — note if the operator changed your model or settings
+2. **Read memories:** Check `workingContext.recentHandoff` for what your last session left unfinished. Read `memories[]` for relevant context before starting work.
+3. **Check direct messages:** `GET /api/messages?agentName=YOUR_NAME` — if woken with reason `direct_message`, reply to the human first before working on tasks
+4. **Check notifications** — respond to @mentions
+5. **If assigned tasks exist:** Claim the highest priority one (sets status to `in_progress`)
+6. **If no assigned tasks:** Check inbox (`?status=inbox`), claim something relevant to your role
+7. **If inbox is empty:** Create tasks based on your standing priorities
+8. **Do your work** — spend the bulk of your turns on actual research/code/drafting
+9. **Write memories mid-session** if you discover API quirks, preferences, or patterns worth keeping
+10. **When done (or running low on turns):** Call `POST /api/tasks/complete` with deliverables + comment + activity in ONE call. This replaces separate deliverable/comment/activity/status update calls.
+11. **@mention Kaze** in your completion comment if you need a decision or review
+12. **Check your config** from the heartbeat response — note if the operator changed your model or settings
+13. **Before ending session:** Call `POST /api/agents/handoff` with your session summary, open questions, and a hint for your next session

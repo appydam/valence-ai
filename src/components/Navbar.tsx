@@ -1,18 +1,16 @@
 import { useLocation } from "react-router-dom";
 import { Clock } from "@/components/Clock";
-import { Activity, LayoutGrid, Users, Terminal, FileText, Settings, Wrench, FolderOpen, Plug, Webhook, BarChart3 } from "lucide-react";
+import { Activity, LayoutGrid, Users, Settings, FolderOpen, Plug, Webhook, BarChart3, Brain } from "lucide-react";
 
 const routeConfig: Record<string, { title: string; icon: any }> = {
   "/": { title: "Activity Feed", icon: Activity },
   "/board": { title: "Mission Board", icon: LayoutGrid },
   "/missions": { title: "Missions", icon: FolderOpen },
-  "/documents": { title: "Documents", icon: FileText },
   "/agents": { title: "Agents", icon: Users },
-  "/tools": { title: "Tools", icon: Wrench },
+  "/memory": { title: "Memory Bank", icon: Brain },
   "/integrations": { title: "Integrations", icon: Plug },
   "/webhooks": { title: "Webhooks", icon: Webhook },
   "/analytics": { title: "Analytics", icon: BarChart3 },
-  "/command": { title: "Command Center", icon: Terminal },
   "/settings": { title: "Settings", icon: Settings },
 };
 

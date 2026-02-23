@@ -38,4 +38,24 @@ crons.interval(
   internal.agentWakeupSweep.sweep
 );
 
+/**
+ * Memory archive: expire TTL memories and archive 30-day-old unused low-score ones.
+ * Runs nightly at 3:00 UTC.
+ */
+crons.daily(
+  "memory-archive-stale",
+  { hourUTC: 3, minuteUTC: 0 },
+  internal.agentMemory.archiveStale
+);
+
+/**
+ * Soul distillation: Claude reads high-value memories and evolves each agent's SOUL file.
+ * Runs every Sunday at 2:00 UTC. Human review required before changes are applied.
+ */
+crons.weekly(
+  "soul-distillation-weekly",
+  { dayOfWeek: "sunday", hourUTC: 2, minuteUTC: 0 },
+  internal.soulDistillation.distillAllAgents
+);
+
 export default crons;

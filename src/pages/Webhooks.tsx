@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
@@ -82,6 +83,7 @@ export default function Webhooks() {
   };
 
   return (
+    <DashboardLayout>
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
@@ -381,5 +383,6 @@ export default function Webhooks() {
         />
       )}
     </div>
+    </DashboardLayout>
   );
 }

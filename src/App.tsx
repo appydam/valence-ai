@@ -9,14 +9,15 @@ import Board from "./pages/Board";
 import Missions from "./pages/Missions";
 import AgentsPage from "./pages/Agents";
 import CommandCenter from "./pages/Command";
-import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
-import Tools from "./pages/Tools";
 import Integrations from "./pages/Integrations";
 import BlueprintWizard from "./pages/BlueprintWizard";
 import BlueprintDetail from "./pages/BlueprintDetail";
 import Webhooks from "./pages/Webhooks";
 import Analytics from "./pages/Analytics";
+import MemoryBank from "./pages/MemoryBank";
+import AgentMemoryDetail from "./pages/AgentMemoryDetail";
+import SoulReview from "./pages/SoulReview";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -51,13 +52,14 @@ const App = () => (
             <Route path="/missions" element={<Missions />} />
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/command" element={<CommandCenter />} />
-            <Route path="/documents" element={<Documents />} />
-            <Route path="/tools" element={<Tools />} />
             <Route path="/integrations" element={<Integrations />} />
             <Route path="/integrations/blueprint/new" element={<BlueprintWizard />} />
             <Route path="/integrations/blueprint/:id" element={<BlueprintDetail />} />
             <Route path="/webhooks" element={<Webhooks />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/memory" element={<MemoryBank />} />
+            <Route path="/memory/:agentName" element={<AgentMemoryDetail />} />
+            <Route path="/soul/review/:versionId" element={<SoulReview />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />

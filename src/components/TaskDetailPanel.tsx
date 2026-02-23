@@ -5,7 +5,7 @@ import { MarkdownContent } from "@/components/MarkdownContent";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { X, Check, Inbox, Trash2, MessageSquare, FileText, Package, ChevronDown, ChevronRight } from "lucide-react";
+import { X, Check, Inbox, Trash2, MessageSquare, Package, ChevronDown, ChevronRight } from "lucide-react";
 
 const statusOptions: TaskStatus[] = ["inbox", "assigned", "in_progress", "in_review", "done", "cancelled"];
 const priorityOptions: TaskPriority[] = ["low", "medium", "high", "urgent"];
@@ -33,10 +33,8 @@ interface TaskDetailPanelProps {
 
 export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
   const comments = useQuery(api.comments.listByTask, { taskId: task._id }) ?? [];
-  const linkedDocs = useQuery(api.documents.listByTask, { taskId: task._id }) ?? [];
   const [newComment, setNewComment] = useState("");
   const [expandedDeliverable, setExpandedDeliverable] = useState<number | null>(task.deliverables.length > 0 ? 0 : null);
-  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
 
   const updateTask = useMutation(api.tasks.update);
@@ -63,7 +61,7 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
     setNewComment("");
   };
 
-  const hasOutcome = task.deliverables.length > 0 || linkedDocs.length > 0;
+  const hasOutcome = task.deliverables.length > 0;
   const isDone = task.status === "done";
 
   return (
@@ -109,7 +107,7 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
               <Package className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold text-foreground">Outcome</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium">
-                {task.deliverables.length + linkedDocs.length} item{task.deliverables.length + linkedDocs.length !== 1 ? "s" : ""}
+                {task.deliverables.length} item{task.deliverables.length !== 1 ? "s" : ""}
               </span>
             </div>
 
@@ -140,36 +138,6 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
                 </div>
               ))}
 
-              {/* Linked Documents */}
-              {linkedDocs.map(doc => {
-                const isAgent = Object.keys(AGENT_CONFIG).includes(doc.author);
-                const docAgentConfig = isAgent ? AGENT_CONFIG[doc.author as AgentName] : null;
-                return (
-                  <div key={doc._id}>
-                    <button
-                      onClick={() => setExpandedDoc(expandedDoc === doc._id ? null : doc._id)}
-                      className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-primary/[0.03] transition-colors"
-                    >
-                      {expandedDoc === doc._id ? (
-                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      ) : (
-                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      )}
-                      <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                      <span className="text-sm font-medium text-foreground truncate">{doc.title}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground shrink-0">{doc.type}</span>
-                      {docAgentConfig && <span className="text-xs shrink-0">{docAgentConfig.emoji}</span>}
-                    </button>
-                    {expandedDoc === doc._id && (
-                      <div className="px-4 pb-4 pt-0">
-                        <div className="rounded-lg bg-card border border-border p-4">
-                          <MarkdownContent content={doc.content} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           </div>
         )}
@@ -178,7 +146,7 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
         {!hasOutcome && isDone && (
           <div className="rounded-xl border border-dashed border-border p-4 text-center">
             <Package className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
-            <p className="text-xs text-muted-foreground">No deliverables or documents attached</p>
+            <p className="text-xs text-muted-foreground">No deliverables attached</p>
           </div>
         )}
 

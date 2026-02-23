@@ -124,6 +124,100 @@ http.route({
       }
     }
 
+    // ── Memory System: inject working context + episodic memories ──
+    let workingContext: {
+      recentHandoff: {
+        summary: string;
+        openQuestions?: string;
+        nextSessionHint?: string;
+        completedTaskTitles: string[];
+        memoriesCreated: number;
+        sessionEnd: number;
+      } | null;
+      recentActivity: { action: string; details: string; timestamp: number }[];
+      recentTaskSummary: { title: string; completedAt: number; deliverableCount: number }[];
+    } = { recentHandoff: null, recentActivity: [], recentTaskSummary: [] };
+    let memories: {
+      id: string;
+      memoryType: string;
+      title: string;
+      body: string;
+      importance: number;
+      humanEndorsed: boolean;
+      tags: string[];
+      createdAt: number;
+    }[] = [];
+
+    try {
+      // Fetch last handoff, recent activity, and top memories in parallel
+      const [handoffs, recentActivityRaw, completedTasks, agentMemories] = await Promise.all([
+        ctx.runQuery(api.sessionHandoffs.listForAgent, {
+          agentName: body.agentName,
+          limit: 1,
+        }),
+        ctx.runQuery(api.activityFns.list, { limit: 10 }),
+        ctx.runQuery(api.tasks.list, { assignee: body.agentName, status: "done" }),
+        ctx.runQuery(api.agentMemory.listForAgent, {
+          agentName: body.agentName,
+          includeSquadWide: true,
+          limit: 10,
+        }),
+      ]);
+
+      // Build recentHandoff
+      if (handoffs.length > 0) {
+        const h = handoffs[0];
+        workingContext.recentHandoff = {
+          summary: h.sessionSummary,
+          openQuestions: h.openQuestions,
+          nextSessionHint: h.nextSessionHint,
+          completedTaskTitles: h.taskTitles,
+          memoriesCreated: h.newMemoriesCreated.length,
+          sessionEnd: h.sessionEnd,
+        };
+      }
+
+      // Build recentActivity (last 10 entries formatted)
+      workingContext.recentActivity = (recentActivityRaw ?? []).slice(0, 10).map((a: any) => ({
+        action: a.action,
+        details: a.details || "",
+        timestamp: a._creationTime,
+      }));
+
+      // Build recentTaskSummary (last 5 completed tasks for this agent)
+      const myCompletedTasks = (completedTasks ?? [])
+        .filter((t: any) => t.assignee === body.agentName)
+        .sort((a: any, b: any) => b._creationTime - a._creationTime)
+        .slice(0, 5);
+      workingContext.recentTaskSummary = myCompletedTasks.map((t: any) => ({
+        title: t.title,
+        completedAt: t._creationTime,
+        deliverableCount: t.deliverables?.length ?? 0,
+      }));
+
+      // Shape memories for the heartbeat response
+      memories = agentMemories.map((m: any) => ({
+        id: m._id,
+        memoryType: m.memoryType,
+        title: m.title,
+        body: m.body,
+        importance: m.importanceScore,
+        humanEndorsed: m.humanEndorsed,
+        tags: m.tags,
+        createdAt: m.createdAt,
+      }));
+
+      // Async: increment use counts for memories we're surfacing (fire-and-forget)
+      if (agentMemories.length > 0) {
+        ctx.scheduler.runAfter(0, internal.agentMemory.incrementUseCount, {
+          ids: agentMemories.map((m: any) => m._id),
+        });
+      }
+    } catch (memErr: any) {
+      console.error("[Heartbeat] Memory injection failed:", memErr.message);
+      // Non-fatal — heartbeat still succeeds without memories
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -131,6 +225,8 @@ http.route({
         assignedTasks: tasksWithContext,
         config: agentConfig,
         availableTools,
+        workingContext,
+        memories,
       }),
       { status: 200, headers: corsHeaders() }
     );
@@ -443,69 +539,169 @@ http.route({
   }),
 });
 
-// GET /api/documents
-http.route({
-  path: "/api/documents",
-  method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const url = new URL(request.url);
-    const author = url.searchParams.get("author") || undefined;
-    const type = url.searchParams.get("type") || undefined;
-    const documents = await ctx.runQuery(api.documents.list, { author, type });
-    return new Response(JSON.stringify(documents), {
-      status: 200,
-      headers: corsHeaders(),
-    });
-  }),
-});
+// ── Memory System ─────────────────────────────────────────────
 
-// POST /api/documents
+// POST /api/agents/memory — agents write a new memory
 http.route({
-  path: "/api/documents",
+  path: "/api/agents/memory",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json();
-    const id = await ctx.runMutation(api.documents.create, {
+    const required = ["agentName", "memoryType", "title", "body", "tags", "importanceScore"];
+    for (const field of required) {
+      if (body[field] === undefined || body[field] === null) {
+        return new Response(JSON.stringify({ error: `${field} is required` }), {
+          status: 400,
+          headers: corsHeaders(),
+        });
+      }
+    }
+    const id = await ctx.runMutation(api.agentMemory.write, {
+      agentName: body.agentName,
+      memoryType: body.memoryType,
       title: body.title,
-      content: body.content,
-      type: body.type || "other",
-      author: body.author,
-      tags: body.tags || [],
-      taskId: body.taskId ? (body.taskId as Id<"tasks">) : undefined,
+      body: body.body,
+      evidence: body.evidence,
+      tags: body.tags,
+      taskId: body.taskId,
+      importanceScore: body.importanceScore,
+      isSquadWide: body.isSquadWide,
+      expiresAt: body.expiresAt,
     });
-    return new Response(JSON.stringify({ id }), {
+    return new Response(JSON.stringify({ ok: true, id }), {
       status: 201,
       headers: corsHeaders(),
     });
   }),
 });
 
-// POST /api/documents/update
+// POST /api/agents/memory/confirm — agent confirms a memory is still true
 http.route({
-  path: "/api/documents/update",
+  path: "/api/agents/memory/confirm",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const body = await request.json();
-    if (!body.id) {
-      return new Response(JSON.stringify({ error: "id is required" }), {
+    const { id, agentName } = await request.json();
+    if (!id || !agentName) {
+      return new Response(JSON.stringify({ error: "id and agentName required" }), {
         status: 400,
         headers: corsHeaders(),
       });
     }
-    const updateArgs: Record<string, any> = {
-      id: body.id as Id<"documents">,
-    };
-    if (body.title !== undefined) updateArgs.title = body.title;
-    if (body.content !== undefined) updateArgs.content = body.content;
-    if (body.type !== undefined) updateArgs.type = body.type;
-    if (body.tags !== undefined) updateArgs.tags = body.tags;
-    await ctx.runMutation(api.documents.update, updateArgs as any);
+    await ctx.runMutation(api.agentMemory.confirm, { id, agentName });
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: corsHeaders(),
     });
   }),
 });
+
+// POST /api/agents/memory/contradict — agent contradicts a memory, optionally with correction
+http.route({
+  path: "/api/agents/memory/contradict",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    if (!body.id || !body.agentName) {
+      return new Response(JSON.stringify({ error: "id and agentName required" }), {
+        status: 400,
+        headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runMutation(api.agentMemory.contradict, {
+      id: body.id,
+      agentName: body.agentName,
+      newBody: body.newBody,
+    });
+    return new Response(JSON.stringify({ ok: true, ...result }), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// POST /api/agents/handoff — agent writes end-of-session handoff note
+http.route({
+  path: "/api/agents/handoff",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    if (!body.agentName || !body.sessionSummary) {
+      return new Response(JSON.stringify({ error: "agentName and sessionSummary required" }), {
+        status: 400,
+        headers: corsHeaders(),
+      });
+    }
+    const id = await ctx.runMutation(api.sessionHandoffs.write, {
+      agentName: body.agentName,
+      sessionSummary: body.sessionSummary,
+      tasksCompleted: body.tasksCompleted || [],
+      taskTitles: body.taskTitles || [],
+      newMemoriesCreated: body.newMemoriesCreated || [],
+      openQuestions: body.openQuestions,
+      nextSessionHint: body.nextSessionHint,
+      sessionStart: body.sessionStart || Date.now(),
+      sessionEnd: body.sessionEnd || Date.now(),
+    });
+    return new Response(JSON.stringify({ ok: true, id }), {
+      status: 201,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+// ── SOUL Distillation ─────────────────────────────────────────
+
+// POST /api/soul/distill — manually trigger distillation for an agent
+http.route({
+  path: "/api/soul/distill",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    if (!body.agentName) {
+      return new Response(JSON.stringify({ error: "agentName is required" }), {
+        status: 400,
+        headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runAction(internal.soulDistillation.distillAgent, {
+      agentName: body.agentName,
+      triggeredBy: body.triggeredBy || "manual",
+    });
+    return new Response(JSON.stringify(result), {
+      status: result.ok ? 200 : 500,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+http.route({ path: "/api/soul/distill", method: "OPTIONS", handler: optionsHandler() });
+
+// POST /api/soul/review — human approve/reject a soul version
+http.route({
+  path: "/api/soul/review",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    if (!body.id || !body.decision || !body.reviewedBy) {
+      return new Response(
+        JSON.stringify({ error: "id, decision, and reviewedBy are required" }),
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+    const result = await ctx.runMutation(api.soulDistillation.reviewVersion, {
+      id: body.id,
+      decision: body.decision,
+      reviewedBy: body.reviewedBy,
+      reviewNote: body.reviewNote,
+    });
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+http.route({ path: "/api/soul/review", method: "OPTIONS", handler: optionsHandler() });
 
 // POST /api/usage
 http.route({
@@ -1173,6 +1369,94 @@ http.route({
 });
 
 // ============================================================
+// FIGMA PLUGIN COMMAND QUEUE
+// ============================================================
+
+// POST /api/figma-plugin/push — Agent pushes a design spec
+http.route({
+  path: "/api/figma-plugin/push",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const { createdBy, fileKey, label, spec } = body;
+    if (!createdBy || !fileKey || !label || !spec) {
+      return new Response(
+        JSON.stringify({ error: "createdBy, fileKey, label, spec required" }),
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+    const result = await ctx.runMutation(api.figmaPlugin.push, { createdBy, fileKey, label, spec });
+    return new Response(JSON.stringify(result), { status: 201, headers: corsHeaders() });
+  }),
+});
+
+http.route({ path: "/api/figma-plugin/push", method: "OPTIONS", handler: optionsHandler() });
+
+// GET /api/figma-plugin/poll?fileKey=xxx — Plugin polls for next pending command
+http.route({
+  path: "/api/figma-plugin/poll",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const fileKey = url.searchParams.get("fileKey");
+    if (!fileKey) {
+      return new Response(JSON.stringify({ error: "fileKey required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const cmd = await ctx.runQuery(api.figmaPlugin.poll, { fileKey });
+    return new Response(JSON.stringify({ command: cmd }), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// POST /api/figma-plugin/ack — Plugin acknowledges it started executing
+http.route({
+  path: "/api/figma-plugin/ack",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { id } = await request.json();
+    if (!id) return new Response(JSON.stringify({ error: "id required" }), { status: 400, headers: corsHeaders() });
+    const result = await ctx.runMutation(api.figmaPlugin.ack, { id });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+http.route({ path: "/api/figma-plugin/ack", method: "OPTIONS", handler: optionsHandler() });
+
+// POST /api/figma-plugin/complete — Plugin reports result
+http.route({
+  path: "/api/figma-plugin/complete",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const { id, success, resultNodeIds, resultError } = await request.json();
+      if (!id || success === undefined) {
+        return new Response(JSON.stringify({ error: "id and success required" }), { status: 400, headers: corsHeaders() });
+      }
+      const result = await ctx.runMutation(api.figmaPlugin.complete, { id, success, resultNodeIds: resultNodeIds || [], resultError: resultError || undefined });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 200, headers: corsHeaders() });
+    }
+  }),
+});
+
+http.route({ path: "/api/figma-plugin/complete", method: "OPTIONS", handler: optionsHandler() });
+
+// GET /api/figma-plugin/status?id=xxx — Agent checks if design is done
+http.route({
+  path: "/api/figma-plugin/status",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const id = url.searchParams.get("id");
+    if (!id) return new Response(JSON.stringify({ error: "id required" }), { status: 400, headers: corsHeaders() });
+    const cmd = await ctx.runQuery(api.figmaPlugin.get, { id: id as any });
+    return new Response(JSON.stringify(cmd), { status: 200, headers: corsHeaders() });
+  }),
+});
+
+// ============================================================
 // WEBHOOK RECEIVERS
 // ============================================================
 
@@ -1468,8 +1752,6 @@ http.route({ path: "/api/activity", method: "OPTIONS", handler: optionsHandler()
 http.route({ path: "/api/notifications", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/notifications/read", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/notifications/read-all", method: "OPTIONS", handler: optionsHandler() });
-http.route({ path: "/api/documents", method: "OPTIONS", handler: optionsHandler() });
-http.route({ path: "/api/documents/update", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/usage", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/agents/config", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/ssh/config", method: "OPTIONS", handler: optionsHandler() });
@@ -1502,6 +1784,11 @@ http.route({ path: "/api/webhooks/tasks", method: "OPTIONS", handler: optionsHan
 // Email Finder CORS handlers
 http.route({ path: "/api/email-finder/single", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/email-finder/batch", method: "OPTIONS", handler: optionsHandler() });
+// Memory System CORS handlers
+http.route({ path: "/api/agents/memory", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/agents/memory/confirm", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/agents/memory/contradict", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/agents/handoff", method: "OPTIONS", handler: optionsHandler() });
 
 // POST /api/agents/wake - Wake up agents with pending tasks
 http.route({
