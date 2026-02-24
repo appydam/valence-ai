@@ -11,18 +11,20 @@
 3. [Architecture Overview](#3-architecture-overview)
 4. [The Agent Squad](#4-the-agent-squad)
 5. [Universal Integration Engine](#5-universal-integration-engine)
-6. [Webhook & Automation System](#6-webhook--automation-system)
-7. [Security & Encryption](#7-security--encryption)
-8. [The Most Complex Problems We Solve](#8-the-most-complex-problems-we-solve)
-9. [How We're Building Autonomous AI](#9-how-were-building-autonomous-ai)
-10. [Tech Stack & Infrastructure](#10-tech-stack--infrastructure)
-11. [Database Schema](#11-database-schema)
-12. [API Surface](#12-api-surface)
-13. [Frontend Pages & Components](#13-frontend-pages--components)
-14. [Current Integrations](#14-current-integrations)
-15. [What Makes Us Different](#15-what-makes-us-different)
-16. [Future Vision & Roadmap](#16-future-vision--roadmap)
-17. [Key File Reference](#17-key-file-reference)
+6. [Agent Memory & Learning System](#6-agent-memory--learning-system)
+7. [Task Dependencies & Quality Loops](#7-task-dependencies--quality-loops)
+8. [Webhook & Automation System](#8-webhook--automation-system)
+9. [Security & Encryption](#9-security--encryption)
+10. [The Most Complex Problems We Solve](#10-the-most-complex-problems-we-solve)
+11. [How We're Building Autonomous AI](#11-how-were-building-autonomous-ai)
+12. [Tech Stack & Infrastructure](#12-tech-stack--infrastructure)
+13. [Database Schema](#13-database-schema)
+14. [API Surface](#14-api-surface)
+15. [Frontend Pages & Components](#15-frontend-pages--components)
+16. [Current Integrations](#16-current-integrations)
+17. [What Makes Us Different](#17-what-makes-us-different)
+18. [Future Vision & Roadmap](#18-future-vision--roadmap)
+19. [Key File Reference](#19-key-file-reference)
 
 ---
 
@@ -36,6 +38,7 @@ Every enterprise runs on workflows — sales pipelines, customer onboarding, cod
 - **Manual** at the glue points (copy-pasting between Slack, Jira, Salesforce, GitHub)
 - **Expensive** to automate (Workato, Paragon, Zapier = $1k-10k/month)
 - **Brittle** when things change (a single API update breaks everything)
+- **Stateless** — no memory of what worked before, no learning
 
 ### Our Thesis
 
@@ -44,11 +47,12 @@ Every enterprise runs on workflows — sales pipelines, customer onboarding, cod
 1. **Understand context** — read tasks, understand priorities, know the business
 2. **Take action** — call real APIs, write code, create deliverables
 3. **Coordinate** — delegate to each other, track dependencies, report progress
-4. **Learn** — adapt to the enterprise's specific patterns over time
+4. **Learn** — build episodic memory across sessions, distill lessons into identity
+5. **Improve** — quality feedback loops, rejection rework cycles, SOUL file evolution
 
 ### The Outcome
 
-Mission Control is the **command center for autonomous AI workforces**. It's where humans set objectives and AI agents execute them — across any tool, any workflow, any enterprise.
+Mission Control is the **command center for autonomous AI workforces**. It's where humans set objectives and AI agents execute them — across any tool, any workflow, any enterprise. And unlike any other system, our agents **remember, learn, and get better** over time.
 
 ---
 
@@ -58,7 +62,7 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| **Agent Orchestration** | Live | 4-agent squad (Kaze, Scout, Forge, Ghost) with real-time status, heartbeats, and task assignment |
+| **Agent Orchestration** | Live | 5-agent squad (Kaze, Scout, Forge, Ghost, Sentinel) with real-time status, heartbeats, and task assignment |
 | **Task Management** | Live | Full lifecycle: Inbox → Assigned → In Progress → In Review → Done, with dependencies, priorities, deliverables |
 | **Mission Board** | Live | Kanban board with drag-drop, mission filtering, bulk operations |
 | **Missions** | Live | Group tasks into missions with completion tracking |
@@ -76,92 +80,134 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 | **Integration Blueprints** | Live | Define any API integration (REST, GraphQL, SOAP, JSON-RPC) as a reusable blueprint |
 | **AI Doc Scraper** | Live | Paste API docs URL → Claude reads docs and generates tool definitions automatically |
 | **OpenAPI Import** | Live | Deterministic parsing of OpenAPI/Swagger specs into blueprints |
-| **OAuth2 Flow** | Live | Full OAuth popup flow with HMAC-signed state, auto token refresh |
+| **OAuth2 Flow** | Live | Full OAuth popup flow with HMAC-signed state, dual-channel completion (postMessage + localStorage), auto token refresh |
 | **API Key Auth** | Live | Encrypted storage + auto-injection for API key integrations |
-| **Execution Engine** | Live | Retry logic, rate limit handling, response mapping, timeout management |
+| **Execution Engine** | Live | Retry logic (jittered backoff), rate limit handling, response mapping, timeout management |
 | **Encrypted Credentials** | Live | AES-256-GCM encryption for all tokens at rest |
 | **Tool Execution** | Live | Agents call real APIs via HTTP with full request building + auth injection |
-| **100+ Integration Templates** | Live | Pre-defined templates for common SaaS tools |
+| **30+ Integration Seeds** | Live | Pre-seeded blueprints: GitHub, Slack, Jira, Salesforce, Zendesk, Airtable, Shopify, ServiceNow, and more |
+| **100+ Template Catalog** | Live | Discovery catalog for any integration category |
+| **City View Visualization** | Live | 2D spatial layout — blueprints as buildings, agents as walkers navigating the integration landscape |
+
+### Agent Memory & Learning
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **Episodic Memory** | Live | Agents write structured memories (api_quirk, user_preference, pattern, decision, failure, shortcut) during work |
+| **Relevance Scoring** | Live | Memories scored by importance + recency + human endorsement + confirmations/contradictions |
+| **Memory Surfacing** | Live | Top 10 relevant memories injected into agent context at heartbeat |
+| **Human Endorsement** | Live | Users can endorse/flag memories from the Memory Bank UI |
+| **Session Handoffs** | Live | End-of-session summaries with open questions, task titles completed, hints for next session |
+| **SOUL File Distillation** | Live | Memories automatically distilled into SOUL file changelogs → pending human review → agent identity evolves |
+| **Memory Bank UI** | Live | Browse, search, filter, endorse memories per agent |
+| **SOUL Review UI** | Live | Diff-based review of proposed SOUL file changes with approve/reject workflow |
+
+### Agent Coordination
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| **Task Dependencies** | Live | dependsOn[] graph with automatic chain reactions when tasks complete |
+| **Parallel Work Orchestration** | Live | getReadyTasks() returns all tasks whose deps are met — agents work in parallel |
+| **Dependency Context Injection** | Live | Deliverables from upstream tasks injected into downstream agent context at heartbeat |
+| **Quality Feedback Loops** | Live | Rejection/rework cycles: iterationCount, maxIterations, rejectionReason fed back to agent |
+| **Notification System** | Live | @mention notifications for agents, unread count at heartbeat, UI bell |
+| **Agent-to-Human Messaging** | Live | Direct message threads between agents and humans |
 
 ### Infrastructure
 
 | Feature | Status | Description |
 |---------|--------|-------------|
 | **OpenClaw Agent Runtime** | Live | Self-hosted on Lightsail, managed via SSH proxy on Railway |
-| **Agent Wakeup System** | Live | Webhook-triggered agent startup with task queue |
+| **Agent Wakeup System** | Live | Webhook-triggered agent startup with task queue, HMAC-signed |
+| **Session Budget Tracking** | Live | sessionMaxTurns, recommendedWrapUpAt injected at heartbeat — agents know when to wrap up |
+| **Rich Heartbeat Context** | Live | Tasks + tools + memories + handoff + recent activity + notifications in a single API response |
 | **SSH Proxy** | Live | Secure command execution on Lightsail from web UI |
 | **SOUL File Sync** | Live | Edit agent personalities in UI, sync to server |
 | **Clerk Authentication** | Live | User auth with sign-in/sign-up, integrated with Convex |
 | **Real-time Subscriptions** | Live | Convex-powered live updates across all UI components |
-| **Cron Jobs** | Live | Hourly OAuth token refresh, 2-hour review sweep |
+| **Cron Jobs** | Live | Hourly OAuth token refresh, 2-hour review sweep, metric aggregation, memory distillation triggers |
+| **Figma Plugin Bridge** | Live | Agents push design specs to a command queue; Figma plugin polls and executes |
 
 ---
 
 ## 3. Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    MISSION CONTROL UI                         │
-│         React + Vite + TypeScript + Tailwind + shadcn/ui     │
-│                                                               │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐│
-│  │  Board   │ │  Agents  │ │Analytics │ │  Integrations    ││
-│  │  Tasks   │ │  Command │ │Documents │ │  Webhooks        ││
-│  │ Missions │ │  Tools   │ │ Settings │ │  Blueprint Wizard││
-│  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘│
-└────────────────────────┬────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    MISSION CONTROL UI                             │
+│         React + Vite + TypeScript + Tailwind + shadcn/ui         │
+│                                                                   │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────────┐  │
+│  │  Board   │ │  Agents  │ │Analytics │ │  Integrations      │  │
+│  │  Tasks   │ │  Command │ │Documents │ │  City View / List  │  │
+│  │ Missions │ │  Squad   │ │ Settings │ │  Blueprint Wizard  │  │
+│  └──────────┘ └──────────┘ └──────────┘ └────────────────────┘  │
+│  ┌──────────────────┐ ┌───────────────────────────────────────┐  │
+│  │  Memory Bank     │ │  SOUL Review / SOUL Distillation      │  │
+│  │  (Agent Memories)│ │  (Version Control for Agent Identity) │  │
+│  └──────────────────┘ └───────────────────────────────────────┘  │
+└────────────────────────┬────────────────────────────────────────┘
                          │ Real-time Subscriptions + HTTP
                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    CONVEX BACKEND                             │
-│         Serverless Functions + Real-time Database             │
-│                                                               │
-│  ┌──────────────────────────────────────────────────────────┐│
-│  │  Task Engine    │  Integration Engine  │  Webhook Engine ││
-│  │  - CRUD         │  - Blueprints        │  - Receivers    ││
-│  │  - Dependencies │  - OAuth/API Keys    │  - Signature    ││
-│  │  - Delegation   │  - Execution         │    Verification ││
-│  │  - Chain React. │  - Token Refresh     │  - Automation   ││
-│  └──────────────────────────────────────────────────────────┘│
-│  ┌──────────────────────────────────────────────────────────┐│
-│  │  Crypto Layer (AES-256-GCM)  │  Analytics  │  Cron Jobs ││
-│  └──────────────────────────────────────────────────────────┘│
-└────────────────────────┬────────────────────────────────────┘
-                         │ HTTP API (Heartbeat, Tasks, Tools)
+┌─────────────────────────────────────────────────────────────────┐
+│                    CONVEX BACKEND                                 │
+│         Serverless Functions + Real-time Database                 │
+│                                                                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  Task Engine       │  Integration Engine  │  Webhook Engine│  │
+│  │  - CRUD            │  - Blueprints        │  - Receivers   │  │
+│  │  - Dependencies    │  - OAuth/API Keys    │  - Signature   │  │
+│  │  - Delegation      │  - Execution         │    Verification│  │
+│  │  - Chain Reactions │  - Token Refresh     │  - Automation  │  │
+│  │  - Quality Loops   │  - Response Mapping  │  - Rules       │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  Memory Engine     │  Analytics  │  Cron Jobs              │  │
+│  │  - Episodic Memory │  - Metrics  │  - Token Refresh        │  │
+│  │  - Distillation    │  - Usage    │  - Distillation Trigger │  │
+│  │  - SOUL Versioning │  - Period   │  - Metric Aggregation   │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  Crypto Layer (AES-256-GCM) │  OpenAPI Parser  │  Doc Scraper    │
+└────────────────────────┬────────────────────────────────────────┘
+                         │ HTTP API (Heartbeat, Tasks, Tools, Memory)
                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  OPENCLAW AGENT RUNTIME                       │
-│            Lightsail Server (Self-Hosted)                     │
-│                                                               │
-│   ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐                   │
-│   │ Kaze │  │Scout │  │Forge │  │Ghost │                    │
-│   │ 🌀   │  │ 🔭   │  │ 🔨   │  │ 👻   │                    │
-│   │Chief │  │Intel │  │Engi- │  │Cont- │                    │
-│   │of    │  │ligence│  │neer  │  │ent & │                    │
-│   │Staff │  │      │  │      │  │Dist. │                    │
-│   └──────┘  └──────┘  └──────┘  └──────┘                   │
-│                                                               │
-│   Model: Claude Opus 4.5  │  Skills: mission-control         │
-│   Sessions: 20-30 turns   │  Timeout: 300-600s               │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                  OPENCLAW AGENT RUNTIME                           │
+│            Lightsail Server (Self-Hosted)                         │
+│                                                                   │
+│   ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────────┐        │
+│   │ Kaze │  │Scout │  │Forge │  │Ghost │  │Sentinel  │        │
+│   │ 🌀   │  │ 🔭   │  │ 🔨   │  │ 👻   │  │ 🛡️       │        │
+│   │Chief │  │Intel │  │Engi- │  │Cont- │  │Monitor   │        │
+│   │of    │  │ligence│  │neer  │  │ent & │  │& Audit   │        │
+│   │Staff │  │      │  │      │  │Dist. │  │          │        │
+│   └──────┘  └──────┘  └──────┘  └──────┘  └──────────┘        │
+│                                                                   │
+│   Each agent has: SOUL file + Episodic Memory + Session Budget   │
+│   Model: Claude Opus 4.5  │  Skills: mission-control             │
+│   Sessions: 20-30 turns   │  Timeout: 300-600s                   │
+└─────────────────────────────────────────────────────────────────┘
                          │
                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│              EXTERNAL WORLD                                   │
-│  GitHub  │  Slack  │  Jira  │  Salesforce  │  Any API        │
-│  Linear  │  Gmail  │  HubSpot  │  Intercom  │  Custom...     │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│              EXTERNAL WORLD                                       │
+│  GitHub  │  Slack  │  Jira  │  Salesforce  │  Airtable           │
+│  Linear  │  Gmail  │  HubSpot  │  Zendesk  │  Shopify            │
+│  ServiceNow  │  Stripe  │  Any API via Doc Scraper / OpenAPI     │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flow
 
 1. **Human sets objective** → Creates mission + tasks in UI
 2. **Task assigned to agent** → Convex triggers agent wakeup webhook
-3. **Agent wakes up** → Sends heartbeat, discovers tasks
-4. **Agent works** → Reads task, calls integration tools, creates deliverables
-5. **Agent completes** → Posts deliverables, marks task done
-6. **Chain reaction** → Dependent tasks unblock, next agents wake up
-7. **Human reviews** → Analytics show progress, documents capture output
+3. **Agent wakes up** → Sends heartbeat, receives rich context (tasks + tools + memories + handoff + notifications)
+4. **Agent works** → Reads task, calls integration tools, creates deliverables, writes memories
+5. **Agent completes** → Posts deliverables, marks task done, saves session handoff
+6. **Chain reaction** → Dependent tasks unblock, downstream agents receive deliverables as context
+7. **Memory persists** → Episodic memories scored and stored; distillation runs on schedule
+8. **SOUL evolves** → Distilled lessons proposed as SOUL file changes; human reviews/approves
+9. **Human reviews** → Analytics show progress, Memory Bank shows what agents learned
 
 ---
 
@@ -171,7 +217,7 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 - **Role**: Orchestrator and decision-maker
 - **Responsibilities**: Task triage, delegation, approval/rejection, final review
 - **Superpower**: Understands the full mission context, breaks down complex objectives into sub-tasks
-- **Delegates to**: Scout (research), Forge (engineering), Ghost (content)
+- **Delegates to**: Scout (research), Forge (engineering), Ghost (content), Sentinel (monitoring)
 
 ### Scout 🔭 — Market Intelligence
 - **Role**: Research and analysis specialist
@@ -188,6 +234,11 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 - **Responsibilities**: Writing, messaging, social content, email drafts, documentation
 - **Superpower**: Creates polished, publication-ready content across formats
 
+### Sentinel 🛡️ — Monitor & Auditor
+- **Role**: System health and compliance monitoring
+- **Responsibilities**: Track integration failures, audit agent decisions, flag anomalies
+- **Superpower**: Watches everything, never misses a failure, keeps the system healthy
+
 ### How They Coordinate
 
 ```
@@ -200,17 +251,24 @@ Kaze (Chief of Staff):
   ├── Creates subtask: "Write launch copy + tweets" → Ghost
   └── Reviews all deliverables, approves or sends back
 
-Scout completes research → Kaze reviews → Unblocks Ghost (who needs research for copy)
+Scout completes research → Kaze reviews → Deliverables injected into Ghost's context
 Forge finishes code → Kaze reviews → Marks mission complete
 Ghost finishes content → Kaze reviews → Schedules distribution
 ```
+
+What makes this powerful now:
+- Scout's deliverables **automatically flow into** Ghost's context (dependency injection)
+- Agents **remember** what they learned about this product from previous sessions
+- If Ghost's work is rejected, the rejection reason + iteration count guide the next attempt
+- Session handoffs tell the next agent instance exactly where to pick up
 
 ### Agent Configuration
 Each agent is independently configurable:
 - **Model**: Claude Opus 4.5 / Sonnet / Haiku (cost optimization)
 - **Skills**: 10+ toggleable capabilities (mission-control, web-search, code-execution, etc.)
-- **Session Limits**: Max turns (20-30) and timeout (300-600s)
+- **Session Limits**: Max turns (20-30) and timeout (300-600s), with recommended wrap-up point
 - **SOUL File**: Markdown personality/instruction file editable from UI, synced to server
+- **Memory**: Persistent episodic memories that evolve with experience
 
 ---
 
@@ -223,13 +281,15 @@ Paragon costs **$2,500/month** for managed integrations. We replaced it with a c
 - Supports **any API** (not just pre-built connectors)
 - Lets **AI generate integrations** from docs (no developer needed)
 - Gives agents **direct API access** (no middleware)
+- Has **30+ pre-seeded blueprints** ready to connect today
 
 ### How It Works
 
 ```
-Step 1: User pastes API docs URL
+Step 1: User pastes API docs URL (or selects from template catalog)
     ↓
-Step 2: Claude reads the docs, generates structured tool definitions
+Step 2: System detects OpenAPI spec → deterministic parse
+        OR: Claude analyzes HTML docs → generates tool definitions
     ↓
 Step 3: User reviews, edits, saves as "Integration Blueprint"
     ↓
@@ -246,22 +306,30 @@ Blueprint {
   name: "GitHub"                          // Display name
   baseUrl: "https://api.github.com"       // API base URL
   authType: "oauth2"                      // oauth2 | api_key | bearer_token | basic_auth | none
-  authConfig: { clientId, scopes, ... }   // Auth-specific configuration
+  authConfig: {                           // JSON config (provider-specific)
+    clientId: "Ov23li...",
+    scopes: ["repo", "user"],
+    scopeSeparator: " ",
+    tokenEndpointAuth: "body",
+    extraAuthParams: {}
+  }
   apiProtocol: "rest"                     // rest | graphql | soap | jsonrpc
-  tools: [                               // Individual API actions
+  tools: [                                // Individual API actions
     {
       name: "list_repos",
       method: "GET",
       path: "/user/repos",
-      parameters: [{ name: "sort", in: "query", type: "string" }],
-      aiDescription: "List repositories for the authenticated user"
+      queryParams: [{ name: "sort", type: "string" }],
+      aiUsageHint: "List repositories for the authenticated user",
+      exampleArgs: { sort: "updated" }
     },
     {
       name: "create_issue",
       method: "POST",
       path: "/repos/{owner}/{repo}/issues",
-      parameters: [...],
-      requestBodySchema: { title: "string", body: "string" }
+      pathParams: ["owner", "repo"],
+      bodySchema: { title: "string", body: "string" },
+      paginationConfig: { type: "cursor", pageParam: "page" }
     }
   ]
 }
@@ -273,36 +341,196 @@ Blueprint {
 |-----------|---------|
 | **Protocol Support** | REST, GraphQL, SOAP, JSON-RPC |
 | **Auth Methods** | OAuth2 (authorization code), API key (header/query), Bearer token, Basic auth |
-| **Auto Token Refresh** | Detects tokens expiring within 5 minutes, auto-refreshes |
-| **Retry Logic** | Exponential backoff with jitter on 429/408/502/503/504 |
-| **Rate Limit Handling** | Respects Retry-After headers |
+| **Auto Token Refresh** | Detects tokens expiring within 5 minutes, auto-refreshes before call |
+| **Retry Logic** | Jittered exponential backoff on 429/408/502/503/504 |
+| **Rate Limit Handling** | Respects Retry-After headers; parses numeric and HTTP-date formats |
 | **Request Building** | Path params, query params, headers, JSON/form/XML bodies |
-| **Response Mapping** | JSON path extraction for nested responses |
+| **Response Mapping** | JSON path extraction for nested responses, field-level transforms |
 | **Timeout Management** | Per-tool configurable (default 30s) |
 | **Execution Logging** | Every call logged with method, URL, status, duration, retries |
+| **Role-Based Filtering** | Tools filtered per agent role; heavy blueprints (Stripe) capped to top 20 |
 
 ### Doc Scraper Intelligence
 
 The doc scraper isn't a simple web scraper — it's an AI-powered API analyst:
 
 1. **Fetches URL content** (handles redirects, JavaScript-rendered pages)
-2. **Detects OpenAPI specs** → deterministic parsing (no AI needed)
-3. **For HTML docs** → sends to Claude Sonnet with structured extraction prompt
+2. **Detects OpenAPI specs** → deterministic parsing via `openApiParser.ts` (no AI needed)
+3. **For HTML docs** → creates analysis task for an agent (Claude Sonnet reads the content)
 4. **Generates**: Blueprint metadata + tool definitions + auth configuration
 5. **User reviews**: Edit generated tools before saving
 6. **Job tracking**: pending → fetching → analyzing → completed/failed
 
+### OAuth2 Popup Flow — Technical Details
+
+The OAuth flow has a critical complexity: many providers (Atlassian, Jira) route through **multiple intermediate pages** before hitting the callback URL. This causes `window.opener` to become null, breaking the standard `postMessage` approach.
+
+**Our solution — dual-channel completion:**
+1. OAuth popup window opens
+2. On callback, Convex writes result to `localStorage` key `oauth_result`
+3. Parent window polls `localStorage` every 300ms (via `useOAuthPopup.ts`)
+4. Parent also listens for `postMessage` (works for simple providers)
+5. First channel to complete wins; popup closes
+6. Result checked for staleness (5-minute timestamp validation)
+
+This works for **any provider** regardless of redirect complexity.
+
+### Pre-Seeded Blueprints (30+)
+
+Ready to connect from day one:
+- **Dev Tools**: GitHub, GitLab, Bitbucket, Vercel, CircleCI
+- **Project Management**: Jira, Linear, Asana, Monday, ClickUp, Notion
+- **Communication**: Slack, Microsoft Teams, Discord, Twilio, SendGrid
+- **CRM**: Salesforce, HubSpot, Pipedrive, Intercom, Zendesk
+- **Commerce**: Shopify, Stripe
+- **Data**: Airtable, Google Sheets, Snowflake
+- **Enterprise**: ServiceNow, SAP
+- **AI/ML**: OpenAI, Anthropic, Replicate
+
 ---
 
-## 6. Webhook & Automation System
+## 6. Agent Memory & Learning System
+
+This is one of the most powerful features of the platform — agents are not stateless. They build up **episodic memories** across sessions and **distill them into their identity** over time.
+
+### Memory Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `api_quirk` | Unexpected API behavior discovered | "GitHub's search API requires 1s delay between calls" |
+| `user_preference` | How this user/team likes things done | "Arpit prefers bullet points over prose in reports" |
+| `pattern` | Recurring workflow or decision pattern | "Whenever a PR is merged to main, Kaze creates a release task" |
+| `decision` | A significant decision made and why | "Chose Stripe over Braintree because team already has account" |
+| `env_fact` | A persistent environmental fact | "Production DB is on RDS instance db-prod-1" |
+| `workflow` | A multi-step process that works well | "Deploy flow: build → test → staging → manual approve → prod" |
+| `failure` | What went wrong and why | "Jira rate limit hit during bulk import — need to batch to 50/sec" |
+| `shortcut` | A faster way to accomplish something | "Use /api/bulk-create instead of looping individual creates" |
+
+### Memory Lifecycle
+
+```
+1. Agent works on task
+    ↓
+2. Agent writes memories (structured via tool call)
+    ↓
+3. Memory stored with importanceScore, tags, evidence
+    ↓
+4. Next session: top 10 memories by relevance surfaced at heartbeat
+    ↓
+5. Cron / manual trigger: distillation job runs
+    ↓
+6. Claude analyzes top memories → generates SOUL file changelog
+    ↓
+7. Version created with status = pending_review
+    ↓
+8. Human reviews in SOUL Review UI → approve / reject
+    ↓
+9. If approved → SOUL file updated → next agent session has evolved identity
+```
+
+### Relevance Scoring Formula
+
+```
+relevanceScore = importanceScore * 0.5
+               + recency * 0.2
+               + (humanEndorsed ? 0.3 : 0)
+               + confirmations * 0.05
+               - contradictions * 0.1
+```
+
+- `importanceScore` — agent self-assessed (0.0–1.0)
+- `recency` — normalized decay from last access time
+- `humanEndorsed` — user explicitly marked as important (+30%)
+- `confirmations/contradictions` — other agents or tasks that support/contradict this memory
+
+### Session Handoffs
+
+At the end of every session, agents write a structured handoff:
+
+```typescript
+SessionHandoff {
+  sessionSummary: "Completed competitive analysis for Q1 product roadmap"
+  tasksCompleted: [taskId1, taskId2]
+  taskTitles: ["Market Research: SaaS Pricing", "Competitor Feature Matrix"]
+  newMemoriesCreated: [memoryId1, memoryId2]
+  openQuestions: ["Is HubSpot still the right CRM benchmark?"]
+  nextSessionHint: "Start with Scout's deliverables on pricing — they're ready"
+}
+```
+
+This handoff is injected into the next agent session at heartbeat, so agents always know exactly where to continue.
+
+### SOUL File Distillation
+
+The SOUL file is each agent's identity — their personality, decision framework, and learned patterns. It evolves:
+
+1. **Distillation job triggers** (end of session, or manually)
+2. Claude reads the top memories + current SOUL file
+3. Generates a proposed changelog (what to add/update/remove)
+4. Creates a `soulFileVersion` record with `status = pending_review`
+5. Human sees it in **SOUL Review UI** — shows diff, memory sources, changelog
+6. Human **approves** → SOUL file updated; **rejects** → version discarded
+7. Agent's next session reflects the approved identity changes
+
+---
+
+## 7. Task Dependencies & Quality Loops
+
+### Dependency Graph
+
+Every task can declare `dependsOn: [taskId, ...]`. This creates a directed dependency graph:
+
+```
+Task A (Research)
+    ├── Task B depends on A (Write Report)
+    └── Task C depends on A (Create Slides)
+
+Task B + Task C can run in parallel once A is done
+Task D depends on B and C → only unlocks when both complete
+```
+
+Key behaviors:
+- `areDependenciesMet(taskId)` — checks if all deps are done or cancelled
+- `getReadyTasks()` — returns all tasks whose deps are met (agents claim these)
+- `blocks[]` — auto-computed reverse of dependsOn (for UI rendering, not manually set)
+- When a task completes → downstream tasks automatically unblock
+- **Deliverables inject into context** — upstream task deliverables are surfaced in the heartbeat response for downstream agents (capped at 3 deps per task, 2 tasks max to prevent N+1)
+
+### Quality Feedback Loop
+
+When an agent's work isn't good enough, humans (or Kaze) can reject it with feedback:
+
+```typescript
+Task {
+  iterationCount: 2,        // How many times this has been rejected+reworked
+  maxIterations: 3,         // Maximum allowed (optional — unlimited if not set)
+  rejectionReason: "Report lacks quantitative data. Add market size numbers.",
+  status: "in_progress",    // Reset to in_progress on rejection
+}
+```
+
+On the next heartbeat, the agent receives:
+- `rejectionReason` injected into task context
+- `iterationCount` so the agent knows how many attempts remain
+- The original task description so nothing is lost
+
+If `iterationCount >= maxIterations`, the system escalates to human rather than sending back to the agent.
+
+---
+
+## 8. Webhook & Automation System
 
 ### Webhook Receivers
-- **Signature Verification**: HMAC-SHA256, HMAC-SHA1, JWT
+
+Generic endpoint: `/api/webhooks/{blueprintSlug}/{userId}/{endpointName}`
+
+- **Signature Verification**: HMAC-SHA256, HMAC-SHA1, JWT, or none
 - **Event Types**: Configurable per endpoint (push, pull_request, issue, message, etc.)
 - **Statistics**: Received, Processed, Failed counts per endpoint
 - **Pause/Resume**: Temporarily disable endpoints without deletion
 
 ### Automation Rules
+
 Event-driven task creation and agent triggering:
 
 ```
@@ -315,10 +543,12 @@ THEN: Create task "Review latest push to main"
 ```
 
 Supported actions:
-- **create_task** — Auto-create tasks from webhook events
+- **create_task** — Auto-create tasks from webhook events (template variables: `{{payload.repo}}`, `{{payload.author}}`)
 - **send_notification** — Notify agents of external events
 - **trigger_agent** — Wake specific agent for immediate action
 - **execute_tool** — Call integration tool in response to event
+
+Conditions use **JSONPath expressions** for flexible event filtering.
 
 ### Built-in Webhook Handlers
 - **Slack**: Mentions, DMs, reactions → task creation
@@ -328,21 +558,23 @@ Supported actions:
 
 ---
 
-## 7. Security & Encryption
+## 9. Security & Encryption
 
 ### Credential Storage
 - **Algorithm**: AES-256-GCM (NIST-approved authenticated encryption)
 - **IV**: 12 bytes (96 bits), randomly generated per encryption
 - **Auth Tag**: 16 bytes (128 bits) — prevents tampering
 - **Format**: Base64(IV + Ciphertext + AuthTag)
-- **Master Key**: 32-byte hex string stored as Convex environment variable
+- **Master Key**: 32-byte hex string stored as Convex environment variable (`INTEGRATION_ENCRYPTION_KEY`)
 - **Scope**: All OAuth tokens, API keys, refresh tokens encrypted at rest
 
 ### OAuth Security
 - **State Parameter**: HMAC-SHA256 signed with encrypted JSON payload (blueprintSlug, userId, timestamp)
 - **CSRF Protection**: State verified on callback — prevents authorization code interception
-- **Client Secrets**: Stored as environment variables, never in database
+- **Timestamp Validation**: OAuth state expires after 10 minutes
+- **Client Secrets**: Stored as environment variables (`OAUTH_SECRET_<SLUG>`), never in database
 - **Token Refresh**: Hourly cron job refreshes tokens expiring within 5 minutes
+- **Popup Channel**: Dual-channel completion (postMessage + localStorage) handles providers with intermediate redirects
 
 ### Webhook Security
 - **Signature Verification**: HMAC-SHA256, HMAC-SHA1, or JWT per endpoint
@@ -353,10 +585,11 @@ Supported actions:
 - **SSH Proxy**: Railway-hosted, no direct Lightsail access from frontend
 - **Clerk Auth**: All routes behind authentication, user-scoped data access
 - **CORS**: Configured for known origins only
+- **Agent Wakeup**: HMAC-signed requests from Convex to wakeup server
 
 ---
 
-## 8. The Most Complex Problems We Solve
+## 10. The Most Complex Problems We Solve
 
 ### 1. Multi-Agent Dependency Orchestration
 
@@ -368,6 +601,7 @@ Supported actions:
 - Deliverables from upstream tasks are injected as context into downstream tasks
 - Kaze (Chief of Staff) monitors the entire chain and intervenes if something stalls
 - 2-hour cron sweep catches anything that falls through the cracks
+- Quality loops ensure outputs meet standards before unblocking dependents
 
 **Example**: "Prepare Q1 board presentation"
 ```
@@ -386,37 +620,49 @@ Kaze: Review everything, compile final deck, flag gaps
 
 **Our Solution**:
 - User pastes an API docs URL
-- Claude reads the documentation and generates structured tool definitions
-- OpenAPI specs detected and parsed deterministically
+- System detects OpenAPI spec → deterministic parse; or Claude reads HTML docs
 - User reviews generated blueprint, edits if needed, saves
 - OAuth/API key auth managed automatically
 - Agents can now call that API like it was always available
 - Cost: $0/month vs Paragon's $2,500/month
 
-### 3. Real-Time Agent Coordination Across External APIs
+### 3. Agents That Learn Across Sessions
+
+**Problem**: Standard AI agents are stateless — every session starts from zero. They repeat mistakes, forget user preferences, and never improve.
+
+**Our Solution**:
+- Agents write episodic memories during work (api quirks, patterns, preferences, failures)
+- Memories scored by relevance (importance + recency + human endorsement)
+- Top 10 memories surfaced at every heartbeat — agents always have their best knowledge
+- Session handoffs tell the next instance exactly where to continue
+- Periodic distillation evolves the SOUL file — agents literally become better over time
+- Human endorsement loop ensures quality memories rise to the top
+
+### 4. Real-Time Agent Coordination Across External APIs
 
 **Problem**: Agents need to call external APIs (GitHub, Slack, Jira) as part of their work, but each API has different auth, rate limits, error handling, and response formats.
 
 **Our Solution**:
 - Execution engine abstracts all complexity behind a single `executeTool(blueprintSlug, toolName, args)` call
 - Auto-injects correct auth headers (OAuth bearer, API key, basic auth)
-- Retries with exponential backoff on transient failures (429, 502, 503)
+- Retries with jittered exponential backoff on transient failures (429, 502, 503)
 - Respects Retry-After headers for rate limiting
 - Response mapping extracts relevant data from nested API responses
 - All calls logged for debugging and analytics
 
-### 4. Event-Driven Workflow Automation
+### 5. Event-Driven Workflow Automation
 
 **Problem**: Business events happen in external tools (Slack message, GitHub PR, Linear issue). These should automatically trigger agent workflows without human intervention.
 
 **Our Solution**:
 - Webhook endpoints with signature verification (no spoofed events)
 - Automation rules map events to actions (create task, trigger agent, execute tool)
+- JSONPath condition evaluation for precise event filtering
 - Template-based task creation with variable interpolation from event payloads
 - Agents wake up automatically when tasks are assigned
 - Full event history for audit trail
 
-### 5. Secure Multi-Tenant Credential Management
+### 6. Secure Multi-Tenant Credential Management
 
 **Problem**: Each user connects their own accounts (GitHub, Slack, etc.). Storing tokens securely while making them available to agents at runtime is a hard problem.
 
@@ -428,23 +674,20 @@ Kaze: Review everything, compile final deck, flag gaps
 - Automatic degradation (connected → expired → error states)
 - Master key never leaves server environment
 
-### 6. AI-Powered API Understanding
+### 7. Quality Assurance at Scale
 
-**Problem**: Most API documentation is written for humans (HTML pages, code examples, tutorials). Converting this into machine-callable tool definitions is tedious and error-prone.
+**Problem**: When agents produce outputs autonomously, how do you ensure quality without reviewing every single piece of work?
 
 **Our Solution**:
-- Doc scraper fetches and parses API documentation
-- OpenAPI spec detection for deterministic, accurate parsing
-- For HTML docs, Claude Sonnet analyzes the content and extracts:
-  - Base URL and authentication requirements
-  - Individual endpoints with methods, paths, parameters
-  - Request body schemas and response formats
-  - Rate limits and error handling patterns
-- Human review step ensures accuracy before deployment
+- Rejection/rework cycles with feedback injection (iterationCount, rejectionReason)
+- Agents receive their rejection reason + previous output on the next wake — they know exactly what to fix
+- maxIterations cap prevents infinite loops; escalates to human when limit is hit
+- SOUL distillation means agents that produce bad work repeatedly will have that pattern distilled into a lesson
+- Human endorsement of memories creates a quality signal loop
 
 ---
 
-## 9. How We're Building Autonomous AI
+## 11. How We're Building Autonomous AI
 
 ### The Autonomy Spectrum
 
@@ -475,6 +718,7 @@ Level 5: Enterprise AI   → Runs entire business functions without human oversi
 - Agents call real APIs (not mock/simulated ones)
 - Integration engine provides unified access to any connected tool
 - Agents choose which tools to use based on task requirements
+- Role-based tool filtering: each agent sees the tools relevant to their specialty
 
 **4. Coordination Without Human Intermediaries**
 - Task dependencies create implicit coordination
@@ -482,9 +726,15 @@ Level 5: Enterprise AI   → Runs entire business functions without human oversi
 - Comments and activity logs maintain shared context
 - No human needs to manually transfer outputs between agents
 
-**5. Quality Control Loops**
+**5. Persistent Memory**
+- Agents remember api quirks, user preferences, patterns, and failures
+- Session handoffs mean agents never lose context between sessions
+- SOUL files evolve — agents literally get better at their jobs over time
+
+**6. Quality Control Loops**
 - In-review status allows human oversight of agent output
 - Kaze reviews other agents' work before marking missions complete
+- Rejection/rework cycles ensure outputs improve with feedback
 - Review sweep cron catches stale tasks
 - Metrics track quality over time
 
@@ -492,31 +742,42 @@ Level 5: Enterprise AI   → Runs entire business functions without human oversi
 
 ```
 1. WAKE: Webhook triggers agent startup
-2. HEARTBEAT: Agent reports status, discovers tasks
-3. PLAN: Agent reads task + context + dependencies
+2. HEARTBEAT: Agent receives rich context:
+   - Assigned tasks with dependency deliverables
+   - Available integration tools (role-filtered)
+   - Top 10 relevant episodic memories
+   - Session handoff from previous session
+   - Recent activity feed
+   - Unread notifications
+   - Session budget (turns remaining)
+3. PLAN: Agent reads task + context + memories + handoff
 4. CHECK: Verify required integrations are connected
 5. EXECUTE: Call APIs, write code, create content
 6. DELIVER: Post deliverables + comments to task
-7. COMPLETE: Mark task done → triggers chain reactions
-8. IDLE: Wait for next task or shut down after timeout
+7. MEMORIZE: Write episodic memories about discoveries/failures
+8. COMPLETE: Mark task done → triggers chain reactions
+9. HANDOFF: Write session summary with open questions + next hints
+10. IDLE: Wait for next task or shut down after session budget exhausted
 ```
 
 ### Why OpenClaw + Mission Control
 
 **OpenClaw** provides the agent runtime — the ability to run Claude with tools, memory, and sessions on a server. Think of it as the "body" of the agent.
 
-**Mission Control** provides the brain — task understanding, coordination, integration access, quality control. Think of it as the "nervous system" connecting multiple bodies into a team.
+**Mission Control** provides the brain — task understanding, coordination, integration access, quality control, and persistent memory. Think of it as the "nervous system" connecting multiple bodies into a team that learns.
 
 Together, they create agents that:
-- Have persistent identity (SOUL files)
+- Have persistent identity (SOUL files that evolve)
+- Have growing knowledge (episodic memory across sessions)
 - Have configurable capabilities (skills, model, session limits)
-- Have access to the real world (integration engine)
-- Work as a team (task dependencies, delegation)
-- Are observable (analytics, activity logs, metrics)
+- Have access to the real world (integration engine, 30+ blueprints)
+- Work as a team (task dependencies, delegation, dependency injection)
+- Are observable (analytics, activity logs, metrics, memory bank)
+- Get better over time (memory distillation, SOUL file versioning)
 
 ---
 
-## 10. Tech Stack & Infrastructure
+## 12. Tech Stack & Infrastructure
 
 ### Frontend
 | Technology | Purpose |
@@ -525,28 +786,27 @@ Together, they create agents that:
 | Vite 5 | Build tool + dev server (port 8080) |
 | TypeScript | Type safety |
 | Tailwind CSS 3 | Utility-first styling |
-| shadcn/ui (51 components) | Component library |
-| React Router 6 | Client-side routing (16 routes) |
+| shadcn/ui (50+ components) | Component library |
+| React Router 6 | Client-side routing (18+ routes) |
 | Framer Motion | Animations |
 | Recharts | Analytics charts |
 | Clerk React | Authentication |
-| TanStack React Query | Server state management |
 | Lucide React | Icons |
 
 ### Backend
 | Technology | Purpose |
 |-----------|---------|
 | Convex | Serverless backend + real-time database |
-| Convex HTTP Actions | REST API endpoints |
-| Convex Crons | Scheduled jobs (token refresh, review sweep) |
+| Convex HTTP Actions | REST API endpoints (100+) |
+| Convex Crons | Scheduled jobs (token refresh, review sweep, metric agg, distillation) |
 | AES-256-GCM | Credential encryption |
-| HMAC-SHA256 | OAuth state signing, webhook verification |
+| HMAC-SHA256 | OAuth state signing, webhook verification, agent wakeup signing |
 
 ### Infrastructure
 | Component | Platform |
 |-----------|----------|
-| Frontend + Backend | Convex (serverless) |
-| SSH Proxy | Railway (Node.js) |
+| Frontend + Backend | Convex (serverless, dev: beloved-squirrel-599) |
+| SSH Proxy | Railway (Node.js, ssh-proxy-service-production.up.railway.app) |
 | Agent Runtime | AWS Lightsail (self-hosted OpenClaw) |
 | Authentication | Clerk |
 | Source Code | GitHub (appydam/agent-orchestrator) |
@@ -557,64 +817,83 @@ Together, they create agents that:
 | OpenClaw | Agent framework |
 | Claude Opus 4.5 | LLM model |
 | SSH2 (Node.js) | Server management |
-| SOUL files | Agent personality/instructions |
+| SOUL files | Agent personality/instructions (versioned, human-reviewed) |
+
+### Environment Variables (Convex)
+| Variable | Purpose |
+|----------|---------|
+| `INTEGRATION_ENCRYPTION_KEY` | AES-256-GCM master key for credential encryption |
+| `OAUTH_SECRET_GITHUB` | GitHub OAuth client secret |
+| `OAUTH_SECRET_<SLUG>` | Per-provider OAuth secrets (resolved at runtime) |
+| `ANTHROPIC_API_KEY` | For doc scraper Claude calls |
+| `AGENT_WAKEUP_SERVER_URL` | Railway agent wakeup server URL |
+| `CONVEX_SITE_URL` | OAuth callback base URL |
 
 ---
 
-## 11. Database Schema
+## 13. Database Schema
 
 ### Core Tables
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
 | `agents` | Agent status tracking | name, status, currentTask, tasksCompleted, lastHeartbeat |
-| `tasks` | Work items | title, status, priority, assignee, missionId, dependencies, deliverables |
+| `tasks` | Work items | title, status, priority, assignee, missionId, dependsOn, deliverables, iterationCount, maxIterations, rejectionReason |
 | `missions` | Task groups | title, description, status, taskCount, completedTaskCount |
 | `comments` | Task discussions | taskId, author, content, mentions |
 | `activity` | System event log | action, agentName, details, timestamp |
-| `messages` | Agent-to-agent messaging | from, to, content |
-| `notifications` | Agent mentions/threads | agentName, type, taskId, read |
+| `messages` | Agent-to-human messaging | from, to, content |
+| `notifications` | Agent @mentions | agentName, type, taskId, fromAuthor, contentPreview, read |
 | `documents` | Agent-created artifacts | title, type, content, author, tags |
 
 ### Integration Engine Tables
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `blueprints` | Integration definitions | slug, name, baseUrl, authType, authConfig, apiProtocol, status |
-| `blueprintTools` | API actions per blueprint | blueprintId, name, method, path, parameters, requestBodySchema |
-| `connections` | User auth credentials | userId, blueprintId, encryptedAccessToken, encryptedRefreshToken, status |
-| `scraperJobs` | Doc scraping tracking | userId, docsUrl, status, generatedBlueprintId |
-| `integrationActivity` | Execution logs | userId, blueprintId, toolId, httpStatus, durationMs, retryCount |
+| `blueprints` | Integration definitions | slug, name, baseUrl, authType, authConfig (JSON), apiProtocol, status |
+| `blueprintTools` | API actions per blueprint | blueprintId, name, method, path, pathParams, queryParams, bodySchema, responseMapping, paginationConfig, aiUsageHint |
+| `connections` | User auth credentials | userId, blueprintId, credentialsEncrypted, status, expiresAt, consecutiveFailures |
+| `scraperJobs` | Doc scraping tracking | userId, docsUrl, status, blueprintId, toolCount, error |
+| `integrationActivity` | Execution logs | userId, agentName, blueprintId, toolName, httpStatus, durationMs, retryCount |
+
+### Memory & Learning Tables
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `agentMemory` | Episodic memories | agentName, memoryType, title, body, evidence, tags, importanceScore, confirmations, contradictions, humanEndorsed, status, expiresAt |
+| `sessionHandoffs` | End-of-session summaries | agentName, sessionSummary, tasksCompleted, newMemoriesCreated, openQuestions, nextSessionHint |
+| `soulFileVersions` | SOUL file version control | agentName, content, version, changeLog, memoriesDistilled, status (pending_review/approved/rejected) |
+| `memoryDistillationJobs` | Distillation tracking | agentName, status, memoriesAnalyzed, sourceMemoryIds, soulVersionId, triggeredBy |
+| `soulFiles` | Active SOUL files | agentName, content, updatedAt, syncedToServer |
 
 ### Webhook & Automation Tables
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `webhookEndpoints` | Webhook receivers | userId, url, secret, signatureType, eventTypes |
-| `webhookEvents` | Received events | endpointId, payload, verified, processed |
-| `automationRules` | Event-to-action mapping | eventType, conditions, action, taskTemplate |
+| `webhookEndpoints` | Webhook receivers | userId, urlPath, signatureMethod, eventTypes, status, stats (received/processed/failed) |
+| `webhookEvents` | Received events | endpointId, payload, verified, processed, taskId |
+| `automationRules` | Event-to-action mapping | eventType, conditions (JSONPath), actionType, actionConfig, taskTemplate |
 
 ### Analytics & Config Tables
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `taskMetrics` | Task timing | taskId, createdAt, assignedAt, startedAt, completedAt |
-| `agentMetrics` | Agent performance | agentName, period, tasksCompleted, avgCompletionTime |
-| `systemMetrics` | System health | timestamp, activeTasks, activeAgents, integrationCalls |
+| `taskMetrics` | Task timing | taskId, timeToAssign, timeToStart, timeToComplete, source (manual/webhook/agent/integration) |
+| `agentMetrics` | Agent performance | agentName, period, tasksCompleted, completionRate, avgTimeToComplete, integrationCallCount |
+| `systemMetrics` | System health | periodType, totalTasksCreated, totalTasksCompleted, totalIntegrationCalls, totalWebhooksReceived, totalCost |
 | `usage` | Cost tracking | agentName, model, inputTokens, outputTokens, cost |
 | `agentConfigs` | Agent settings | agentName, model, skills, maxTurns, timeout |
-| `soulFiles` | SOUL file storage | agentName, content, lastSyncedAt |
 | `sshConfig` | SSH credentials | host, port, username, encryptedPrivateKey |
 | `users` | Clerk user profiles | clerkId, email, name |
+| `figmaPluginCommands` | Figma plugin queue | createdBy, fileKey, label, spec (JSON), status, resultNodeIds |
 
 ---
 
-## 12. API Surface
+## 14. API Surface
 
 ### Task Management
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/heartbeat` | Agent heartbeat (status + task discovery + available tools) |
+| POST | `/api/heartbeat` | Agent heartbeat — returns tasks + tools + memories + handoff + notifications + session budget |
 | GET | `/api/tasks` | List tasks with filtering |
 | POST | `/api/tasks` | Create task |
 | POST | `/api/tasks/update` | Update task properties |
-| POST | `/api/tasks/claim` | Agent claims a task |
+| POST | `/api/tasks/claim` | Agent claims a task (checks dep readiness) |
 | POST | `/api/tasks/complete` | Complete task with deliverables + comment |
 | POST | `/api/tasks/delegate` | Create multiple subtasks with dependencies |
 | POST | `/api/tasks/deliverable` | Add deliverable to task |
@@ -628,70 +907,113 @@ Together, they create agents that:
 | POST | `/api/integration-engine/tools` | List available tools for user |
 | POST | `/api/integration-engine/execute` | Execute a tool against real API |
 | POST | `/api/integration-engine/oauth/start` | Start OAuth flow |
-| GET | `/api/integration-engine/oauth/callback` | OAuth redirect handler |
+| GET | `/api/integrations/oauth/callback` | OAuth redirect handler (dual-channel: postMessage + localStorage) |
 | POST | `/api/integration-engine/connections` | Manage user connections |
+| POST | `/api/integration-engine/scrape` | Start doc scraping job |
+| GET | `/api/integration-engine/scrape/status` | Poll scraping job status |
+
+### Memory & Learning
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/memory/write` | Agent writes a new memory |
+| POST | `/api/memory/surface` | Get top relevant memories for agent |
+| POST | `/api/session/handoff` | Save session handoff |
+| POST | `/api/soul/distill` | Trigger SOUL file distillation |
 
 ### Webhooks
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/webhooks/*` | Generic webhook receiver |
-| POST | `/api/integrations/webhooks` | Create/update webhooks |
-| GET | `/api/integrations/webhooks` | List webhooks |
+| POST | `/api/webhooks/{blueprintSlug}/{userId}/{name}` | Generic webhook receiver |
+| POST | `/api/integrations/webhooks` | Create/update webhook endpoint |
+| GET | `/api/integrations/webhooks` | List webhook endpoints |
+
+### Agent Management
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/agents/wake` | Trigger agent wakeup via Railway server |
+| POST | `/api/agents/config` | Update agent configuration |
+| POST | `/api/soul/sync` | Sync SOUL file to server |
 
 ---
 
-## 13. Frontend Pages & Components
+## 15. Frontend Pages & Components
 
-### Pages (16 routes)
+### Pages (18+ routes)
 
 | Route | Page | Description |
 |-------|------|-------------|
 | `/` | Activity Feed | Dashboard with agent status cards, task stats, recent activity |
 | `/board` | Mission Board | 5-column Kanban with mission filtering, task detail panel |
 | `/missions` | Missions | Active/Completed/Archived missions with progress tracking |
-| `/agents` | Agents | 2-column grid of agent cards with config panels, metrics, cost |
+| `/squad` | Squad View | Agent squad visualization with status, current tasks, roles |
+| `/agents` | Agents | Agent config panels, metrics, cost, SOUL file editing |
 | `/command` | Command Center | Direct chat with agents, color-coded messages |
 | `/documents` | Documents | Grid of agent reports/code/analysis with filters |
 | `/tools` | OpenClaw Skills | Available skills catalog with install capability |
-| `/integrations` | Integrations | Custom blueprints + 100+ template catalog |
-| `/integrations/blueprint/new` | Blueprint Wizard | AI doc scraper or manual integration builder |
-| `/integrations/blueprint/:id` | Blueprint Detail | Tools, execution history, auth setup |
-| `/webhooks` | Webhooks | Endpoint management + event history |
-| `/analytics` | Analytics | Charts: trends, performance, completion times |
+| `/integrations` | Integrations | City View (spatial) + List View, 30+ blueprints + 100+ templates |
+| `/integrations/blueprint/new` | Blueprint Wizard | 3-step: paste URL → AI scrape / manual form → review → save |
+| `/integrations/blueprint/:id` | Blueprint Detail | Tools list, execution history, connection settings |
+| `/webhooks` | Webhooks | Endpoint management + event history + automation rules |
+| `/analytics` | Analytics | Charts: trends, performance, completion times, source tracking |
+| `/memory` | Memory Bank | Browse, search, filter agent memories; endorse/flag |
+| `/memory/:id` | Memory Detail | Single memory with evidence, related agents, vote UI |
+| `/soul-review` | SOUL Review | Pending SOUL file versions — diff view, approve/reject |
 | `/settings` | Settings | SSH server configuration |
 | `/login` | Login | Clerk auth with gradient UI |
 
 ### Key Components
-- **AppSidebar** — Collapsible navigation (11 items)
-- **TaskCard / TaskDetailPanel** — Task CRUD with comments, deliverables, dependencies
+
+**Core UI:**
+- **AppSidebar** — Collapsible navigation (13+ items)
+- **TaskCard / TaskDetailPanel** — Task CRUD with comments, deliverables, dependencies, rejection feedback UI
 - **AgentStatusCard / AgentConfigPanel** — Agent monitoring and configuration
-- **IntegrationCard / BlueprintWizard** — Integration management
-- **WebhookEndpointDialog** — Webhook CRUD
-- **NotificationBell** — Agent mention notifications
-- **51 shadcn/ui primitives** — Button, Card, Dialog, Select, Tabs, Table, etc.
+- **NotificationBell** — @mention notifications with unread count
+
+**Integration Engine:**
+- **CityView** — 2D spatial layout: blueprints as buildings (sized by tool count), agents as walkers navigating between them
+- **IntegrationCard** — Blueprint card with logo, description, status badge, connect button
+- **BlueprintWizard** — 3-step wizard with doc scraper integration
+- **ApiKeyEntry** — Config-driven API key input form
+- **OAuthSetupGuide** — Provider-specific OAuth setup instructions
+
+**Memory & Learning:**
+- **MemoryCard** — Single memory display with type, importance, endorsement button
+- **MemoryBank** — Searchable, filterable memory browser per agent
+- **SOULReviewPanel** — Diff-based SOUL file review with approve/reject
+
+**Squad & Agent Views:**
+- **SquadMemberCard** — Agent card with role, status, current task, memory snapshot
+- **SquadActivityFeed** — Real-time team activity across all agents
+
+**shadcn/ui Primitives (50+):** Button, Card, Dialog, Select, Tabs, Table, Tooltip, Sidebar, Collapsible, Accordion, Badge, Progress, Checkbox, Radio, Switch, Separator, Skeleton, Alert, etc.
 
 ### Design System
 - **Theme**: Dark mode default (deep blue-gray background)
-- **Agent Colors**: Kaze (blue), Scout (green), Forge (orange), Ghost (purple)
+- **Agent Colors**: Kaze (blue), Scout (green), Forge (orange), Ghost (purple), Sentinel (red)
 - **Fonts**: Inter (UI) + JetBrains Mono (code)
 - **Patterns**: Card-based layouts, right-side detail panels, modal dialogs, activity feeds
-- **Animations**: Slide-in panels, pulse effects on live indicators, smooth transitions
+- **Animations**: Slide-in panels, pulse effects on live indicators, smooth transitions, City View walker animations
 
 ---
 
-## 14. Current Integrations
+## 16. Current Integrations
 
-### Built-in Blueprint Seeds
-| Integration | Auth Type | Capabilities |
-|-------------|-----------|--------------|
-| GitHub | OAuth2 | Repos, issues, PRs, commits, actions |
-| Slack | OAuth2 | Messages, channels, users, files |
-| Jira | OAuth2 | Issues, projects, sprints, boards |
-| Salesforce | OAuth2 | Contacts, leads, opportunities, accounts |
-| Intercom | OAuth2 | Conversations, contacts, companies |
+### Pre-Seeded Blueprints (30+)
+Ready to connect — OAuth or API key, no setup needed:
+
+| Category | Integrations |
+|----------|-------------|
+| **Dev Tools** | GitHub, GitLab, Bitbucket, CircleCI, Vercel |
+| **Project Management** | Jira, Linear, Asana, Monday, ClickUp, Notion |
+| **Communication** | Slack, Microsoft Teams, Discord, Twilio, SendGrid |
+| **CRM** | Salesforce, HubSpot, Pipedrive, Intercom, Zendesk |
+| **Commerce** | Shopify, Stripe |
+| **Data** | Airtable, Google Sheets |
+| **Enterprise** | ServiceNow, SAP |
+| **AI/ML** | OpenAI, Anthropic, Replicate |
 
 ### Template Catalog (100+)
-Organized by category:
+Organized by category for discovery:
 - **Dev Tools**: GitHub, GitLab, Bitbucket, CircleCI, Vercel, Netlify
 - **Project Management**: Jira, Linear, Asana, Monday, Trello, Notion, ClickUp
 - **Communication**: Slack, Discord, Microsoft Teams, Twilio, SendGrid
@@ -703,20 +1025,21 @@ Organized by category:
 - **And more**: 100+ total templates
 
 ### Any API via Doc Scraper
-Beyond templates, users can connect **any API** by pasting its documentation URL. The AI doc scraper handles the rest.
+Beyond templates, users can connect **any API** by pasting its documentation URL. The AI doc scraper handles the rest — OpenAPI specs parsed deterministically, HTML docs analyzed by Claude.
 
 ---
 
-## 15. What Makes Us Different
+## 17. What Makes Us Different
 
 ### vs. ChatGPT / Claude (Single Agent Chat)
 | Them | Us |
 |------|-----|
-| One agent, one conversation | Four specialized agents working as a team |
+| One agent, one conversation | Five specialized agents working as a team |
 | No persistent task tracking | Full task lifecycle with Kanban board |
-| No real API access | Universal integration engine (any API) |
-| No coordination | Task dependencies, delegation, chain reactions |
-| Stateless conversations | Persistent missions, deliverables, history |
+| No real API access | Universal integration engine (any API, 30+ blueprints) |
+| No coordination | Task dependencies, delegation, dependency injection |
+| Stateless conversations | Persistent missions, deliverables, history, memory |
+| Never improves | Agents learn via episodic memory + SOUL file distillation |
 
 ### vs. Zapier / Make / Workato (Workflow Automation)
 | Them | Us |
@@ -726,6 +1049,7 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 | No intelligence in the workflow | Claude Opus 4.5 reasoning at every step |
 | $50-500/month for basic plans | Self-hosted, $0 platform cost |
 | Human builds every workflow | AI generates integrations from docs |
+| Workflows don't learn | Agents improve from experience |
 
 ### vs. Paragon / Merge (Integration Platforms)
 | Them | Us |
@@ -740,14 +1064,16 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 | Them | Us |
 |------|-----|
 | Framework/library (build it yourself) | Complete product with UI, backend, deployment |
-| No built-in integrations | Universal Integration Engine with 100+ templates |
+| No built-in integrations | Universal Integration Engine with 30+ live blueprints |
 | No task management | Full Kanban, missions, dependencies, deliverables |
 | No analytics | Performance tracking, cost monitoring, completion metrics |
 | Demo-grade reliability | Production-grade: encrypted creds, retry logic, error handling |
+| Stateless agents | Agents with episodic memory, session handoffs, SOUL evolution |
+| No quality loops | Rejection/rework cycles, iteration tracking, feedback injection |
 
 ---
 
-## 16. Future Vision & Roadmap
+## 18. Future Vision & Roadmap
 
 ### Near-Term (Building Now)
 
@@ -756,6 +1082,7 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 - Identify patterns in failed/slow tasks
 - Suggest SOUL file improvements and skill additions
 - Human approves, system deploys
+- *(Foundation complete: memory + distillation + SOUL versioning are live)*
 
 **Advanced Task Planning**
 - Kaze generates entire project plans from a single objective
@@ -777,15 +1104,15 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 - Document extraction and summarization
 - Chart/graph generation from data
 
-**Memory & Learning**
-- Long-term memory across sessions
-- Enterprise knowledge base that agents reference
-- Pattern recognition from completed tasks
-- Continuous improvement without retraining
+**Cross-Agent Memory**
+- Memories confirmed by multiple agents become team knowledge
+- Agents share discoveries about API quirks, user preferences
+- Memory graph links related memories across agents
+- Team knowledge base that all agents reference
 
 **Human-in-the-Loop Workflows**
 - Approval gates at critical decision points
-- Escalation rules when agents are uncertain
+- Escalation rules when agents are uncertain (already have maxIterations → escalate)
 - Collaborative editing of agent outputs
 - Feedback loops that improve future performance
 
@@ -804,7 +1131,7 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 - Budget-aware execution (agents consider cost vs. value)
 
 **Agent Marketplace**
-- Custom agent roles beyond the core four
+- Custom agent roles beyond the core five
 - Industry-specific agents (healthcare compliance, financial analysis, legal review)
 - Pre-configured agent teams for common enterprise workflows
 - Agent templates with proven SOUL files
@@ -836,62 +1163,86 @@ Every company has a "mission control" where:
 - Business objectives are defined by humans
 - AI agent squads execute autonomously
 - Any tool, any API, any workflow is accessible
+- Agents remember, learn, and improve continuously
 - Performance is measured and optimized continuously
 - Humans focus on strategy; agents handle execution
 
-We're not building a chatbot. We're not building a workflow tool. We're building the **command center for the future of work** — where human intent is translated into autonomous execution across every tool in the enterprise stack.
+We're not building a chatbot. We're not building a workflow tool. We're building the **command center for the future of work** — where human intent is translated into autonomous execution across every tool in the enterprise stack, and the agents get smarter with every task they complete.
 
 ---
 
-## 17. Key File Reference
+## 19. Key File Reference
 
 ### Backend (convex/)
-| File | Purpose | Lines |
-|------|---------|-------|
-| `schema.ts` | Database schema | ~18K |
-| `http.ts` | HTTP API endpoints | ~52K |
-| `tasks.ts` | Task management | ~926 |
-| `executionEngine.ts` | Integration tool execution | ~600 |
-| `blueprints.ts` | Blueprint CRUD | ~200 |
-| `blueprintTools.ts` | Tool CRUD | ~250 |
-| `connections.ts` | Connection management | ~200 |
-| `connectionActions.ts` | OAuth + API key actions | ~400 |
-| `docScraper.ts` | AI doc scraper | ~300 |
-| `webhookReceiver.ts` | Webhook processing | ~200 |
-| `automationRules.ts` | Automation engine | ~200 |
-| `analytics.ts` | Analytics computation | ~300 |
-| `agentWakeup.ts` | Agent startup trigger | ~150 |
-| `lib/crypto.ts` | AES-256-GCM encryption | ~100 |
-| `lib/requestBuilder.ts` | HTTP request construction | ~300 |
-| `lib/openApiParser.ts` | OpenAPI spec parsing | ~200 |
+| File | Purpose |
+|------|---------|
+| `schema.ts` | Database schema (30+ tables) |
+| `http.ts` | HTTP API endpoints (100+) |
+| `tasks.ts` | Task management + dependency logic |
+| `taskDeps.ts` | Dependency graph: areDependenciesMet, getReadyTasks |
+| `executionEngine.ts` | Integration tool execution (retry, auth, response mapping) |
+| `blueprints.ts` | Blueprint CRUD |
+| `blueprintTools.ts` | Tool CRUD per blueprint |
+| `connections.ts` | Connection management |
+| `connectionActions.ts` | OAuth start/callback + API key connections |
+| `docScraper.ts` | AI doc scraper (OpenAPI detection + HTML parsing) |
+| `agentMemory.ts` | Episodic memory writes, reads, relevance scoring |
+| `sessionHandoffs.ts` | Session handoff save + retrieve |
+| `soulDistillation.ts` | Memory → SOUL file distillation |
+| `soulFileVersions.ts` | SOUL file version control (pending_review, approve/reject) |
+| `heartbeat.ts` | Rich heartbeat: tasks + tools + memories + handoff + notifications + budget |
+| `webhookReceiver.ts` | Generic webhook receiver |
+| `webhookReceiverActions.ts` | Signature verification + automation rule execution |
+| `automationRules.ts` | Automation engine (JSONPath conditions, action templates) |
+| `analytics.ts` | Dashboard metrics computation |
+| `agentWakeup.ts` | Agent startup trigger (HMAC-signed) |
+| `crons.ts` | Scheduled jobs (token refresh, metric aggregation, distillation) |
+| `figmaPlugin.ts` | Figma plugin command queue |
+| `lib/crypto.ts` | AES-256-GCM encryption/decryption |
+| `lib/requestBuilder.ts` | HTTP request construction (auth, path params, bodies) |
+| `lib/openApiParser.ts` | OpenAPI spec parsing |
+| `lib/agentToolRecommendations.ts` | Role-based tool filtering |
+| `seed*.ts` (30+ files) | Pre-seeded blueprints for all major integrations |
 
 ### Frontend (src/)
 | File | Purpose |
 |------|---------|
-| `App.tsx` | Root router (16 routes) |
+| `App.tsx` | Root router (18+ routes) |
 | `pages/Board.tsx` | Kanban task board |
-| `pages/Agents.tsx` | Agent monitoring |
-| `pages/Integrations.tsx` | Integration blueprints |
-| `pages/BlueprintWizard.tsx` | AI-powered integration builder |
-| `pages/BlueprintDetail.tsx` | Blueprint editor + testing |
-| `pages/Webhooks.tsx` | Webhook management |
+| `pages/Agents.tsx` | Agent monitoring + config |
+| `pages/Squad.tsx` | Squad overview |
+| `pages/Integrations.tsx` | Integration hub (City View + List View) |
+| `pages/BlueprintWizard.tsx` | AI-powered integration builder (3-step wizard) |
+| `pages/BlueprintDetail.tsx` | Blueprint editor + testing + execution history |
+| `pages/MemoryBank.tsx` | Agent memory browser |
+| `pages/AgentMemoryDetail.tsx` | Single memory detail + voting |
+| `pages/SoulReview.tsx` | SOUL file version review (approve/reject) |
+| `pages/Webhooks.tsx` | Webhook management + automation rules |
 | `pages/Analytics.tsx` | Performance dashboard |
 | `pages/Command.tsx` | Agent chat |
-| `hooks/useIntegrationEngine.ts` | Integration CRUD + OAuth |
-| `hooks/useDocScraper.ts` | Doc scraping state |
-| `hooks/useOAuthPopup.ts` | OAuth popup flow |
-| `lib/api.ts` | HTTP client |
-| `types/mission.ts` | TypeScript types |
+| `hooks/useIntegrationEngine.ts` | Integration CRUD + OAuth + API key connection |
+| `hooks/useDocScraper.ts` | Doc scraping state + polling |
+| `hooks/useOAuthPopup.ts` | OAuth popup flow (postMessage + localStorage dual-channel) |
+| `components/CityView/` | 2D spatial integration visualization |
+| `components/SquadView/` | Squad member cards + activity feed |
+| `lib/api.ts` | HTTP client (apiPost, apiGet) |
+| `lib/integrationLogos.ts` | Blueprint slug → logo URL mapping |
+| `data/integrations.ts` | 100+ integration template catalog |
+| `types/mission.ts` | Core TypeScript types + AGENT_CONFIG + color helpers |
 
 ### Server Files
 | File | Purpose |
 |------|---------|
-| `ssh-proxy-server.js` | SSH proxy on Railway |
-| `agent-wakeup-server.js` | Agent startup webhook |
-| `openclaw-config.json` | Agent configuration |
-| `SOUL.md` | Kaze agent personality |
+| `server-files/ssh-proxy-server.js` | SSH proxy on Railway |
+| `server-files/agent-wakeup-server.js` | Agent startup webhook |
+| `server-files/openclaw-config.json` | Agent configuration |
+| `server-files/agents/kaze/SOUL.md` | Kaze agent identity |
+| `server-files/agents/scout/SOUL.md` | Scout agent identity |
+| `server-files/agents/forge/SOUL.md` | Forge agent identity |
+| `server-files/agents/ghost/SOUL.md` | Ghost agent identity |
+| `server-files/agents/sentinel/SOUL.md` | Sentinel agent identity |
 
 ---
 
-*Last updated: 2026-02-20*
+*Last updated: 2026-02-24*
 *This document is the single source of truth for the Mission Control project.*
