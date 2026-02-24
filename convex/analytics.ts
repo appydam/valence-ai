@@ -12,7 +12,8 @@ const agentNameValidator = v.union(
   v.literal("Kaze"),
   v.literal("Scout"),
   v.literal("Forge"),
-  v.literal("Ghost")
+  v.literal("Ghost"),
+  v.literal("Sentinel")
 );
 
 const periodTypeValidator = v.union(
@@ -405,7 +406,7 @@ export const computeAgentMetrics = action({
   },
   handler: async (ctx, args) => {
     // Get all agents
-    const agents = ["Kaze", "Scout", "Forge", "Ghost"] as const;
+    const agents = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"] as const;
 
     for (const agentName of agents) {
       // Get task metrics for this period

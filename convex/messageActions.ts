@@ -16,7 +16,7 @@ export const wakeupForMessage = internalAction({
     }
 
     const slugMap: Record<string, string> = {
-      Kaze: "kaze", Scout: "scout", Forge: "forge", Ghost: "ghost",
+      Kaze: "kaze", Scout: "scout", Forge: "forge", Ghost: "ghost", Sentinel: "sentinel",
     };
     const slug = slugMap[args.agentName];
     if (!slug) return;

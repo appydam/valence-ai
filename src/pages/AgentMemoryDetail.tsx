@@ -26,7 +26,7 @@ const MEMORY_TYPES = Object.keys(MEMORY_TYPE_LABELS);
 
 type TabKey = "memories" | "history" | "soul";
 
-const VALID_AGENTS: AgentName[] = ["Kaze", "Scout", "Forge", "Ghost"];
+const VALID_AGENTS: AgentName[] = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"];
 
 export default function AgentMemoryDetail() {
   const { agentName } = useParams<{ agentName: string }>();

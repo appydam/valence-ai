@@ -26,6 +26,9 @@ export function useOAuthPopup() {
 
       const authorizeUrl = response.authorizeUrl;
 
+      // Clear any stale oauth_result from a previous flow
+      try { localStorage.removeItem("oauth_result"); } catch (e) {}
+
       // Step 2: Open OAuth popup
       const width = 600;
       const height = 700;
@@ -42,38 +45,66 @@ export function useOAuthPopup() {
         throw new Error("Popup blocked. Please allow popups for this site.");
       }
 
-      // Step 3: Listen for OAuth completion message
+      // Step 3: Listen for OAuth completion via postMessage OR localStorage polling.
+      // Atlassian (and some other providers) redirect through their own pages before
+      // returning to our callback URL, which breaks window.opener in the popup.
+      // localStorage polling is a reliable cross-origin fallback.
       return new Promise<void>((resolve, reject) => {
-        const handleMessage = (event: MessageEvent) => {
-          // Validate origin for security
-          if (!event.origin.includes("convex.site")) {
-            return;
-          }
-
-          if (event.data.type === "oauth_success") {
-            window.removeEventListener("message", handleMessage);
-            clearInterval(popupCheck);
-            setIsConnecting(false);
+        const finish = (type: "success" | "error", errorMsg?: string) => {
+          window.removeEventListener("message", handleMessage);
+          clearInterval(pollInterval);
+          clearInterval(popupCheck);
+          try { localStorage.removeItem("oauth_result"); } catch (e) {}
+          setIsConnecting(false);
+          if (type === "success") {
             resolve();
-          } else if (event.data.type === "oauth_error") {
-            window.removeEventListener("message", handleMessage);
-            clearInterval(popupCheck);
-            setIsConnecting(false);
-            const errorMsg = event.data.error || "OAuth authentication failed";
-            setError(errorMsg);
-            reject(new Error(errorMsg));
+          } else {
+            const msg = errorMsg || "OAuth authentication failed";
+            setError(msg);
+            reject(new Error(msg));
           }
         };
 
-        // Also check if popup was closed manually
+        // Primary: postMessage from popup (works when window.opener is intact)
+        const handleMessage = (event: MessageEvent) => {
+          if (!event.origin.includes("convex.site")) return;
+          if (event.data.type === "oauth_success") finish("success");
+          else if (event.data.type === "oauth_error") finish("error", event.data.error);
+        };
+
+        // Fallback: poll localStorage (works when window.opener is null,
+        // e.g. after Atlassian's multi-hop redirect)
+        const pollInterval = setInterval(() => {
+          try {
+            const raw = localStorage.getItem("oauth_result");
+            if (!raw) return;
+            const result = JSON.parse(raw);
+            // Ignore stale results older than 5 minutes
+            if (Date.now() - result.ts > 300000) {
+              localStorage.removeItem("oauth_result");
+              return;
+            }
+            if (result.type === "oauth_success") finish("success");
+            else if (result.type === "oauth_error") finish("error", result.error);
+          } catch (e) {}
+        }, 300);
+
+        // Detect manual popup close
         const popupCheck = setInterval(() => {
           if (popup.closed) {
-            window.removeEventListener("message", handleMessage);
+            // Give localStorage poll one last chance before declaring failure
+            setTimeout(() => {
+              try {
+                const raw = localStorage.getItem("oauth_result");
+                if (raw) {
+                  const result = JSON.parse(raw);
+                  if (result.type === "oauth_success") { finish("success"); return; }
+                  if (result.type === "oauth_error") { finish("error", result.error); return; }
+                }
+              } catch (e) {}
+              finish("error", "OAuth window closed without completing authentication");
+            }, 500);
             clearInterval(popupCheck);
-            setIsConnecting(false);
-            const errorMsg = "OAuth window closed without completing authentication";
-            setError(errorMsg);
-            reject(new Error(errorMsg));
           }
         }, 500);
 

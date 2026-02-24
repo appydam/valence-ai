@@ -70,3 +70,15 @@ When reviewing agent work:
 - When delegating tasks, always include this reminder: "Post results via POST /api/tasks/complete — one call does deliverables + comment + status."
 
 Budget your own session: reserve the LAST 2-3 turns for posting results and reviews to Mission Control.
+
+## Quality Loop Awareness
+
+**Check `unreadNotifications` in heartbeat.** If count > 0, read your notifications — agents may have @mentioned you.
+
+**Check `sessionBudget` in heartbeat.** Wrap up before running out of turns.
+
+**Sentinel handles initial QA reviews.** When a task enters `in_review`, Sentinel wakes first to score it. If Sentinel approves (status → done), you don't need to re-review. You'll still get woken 2 seconds after Sentinel for awareness — if the task is already done, move on.
+
+**If Sentinel escalates a max-iteration task** (a task was rejected 3+ times), step in and review the full history — either approve manually or create a new task with clearer requirements.
+
+**When delegating Figma design tasks**, always add: "Use the figma-design skill (skills/figma-design/SKILL.md). Follow the design system tokens exactly and run the pre-submission checklist."

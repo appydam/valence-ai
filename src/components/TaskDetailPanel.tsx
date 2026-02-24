@@ -5,7 +5,9 @@ import { MarkdownContent } from "@/components/MarkdownContent";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { X, Check, Inbox, Trash2, MessageSquare, Package, ChevronDown, ChevronRight } from "lucide-react";
+import { X, Check, Inbox, Trash2, MessageSquare, Package, ChevronDown, ChevronRight, AlertTriangle, Link2, XCircle, Plus, Search } from "lucide-react";
+
+const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_URL?.replace(".convex.cloud", ".convex.site") as string;
 
 const statusOptions: TaskStatus[] = ["inbox", "assigned", "in_progress", "in_review", "done", "cancelled"];
 const priorityOptions: TaskPriority[] = ["low", "medium", "high", "urgent"];
@@ -24,6 +26,11 @@ interface TaskData {
   completedAt?: number;
   tags: string[];
   deliverables: { name: string; type: string; content: string }[];
+  dependsOn?: Id<"tasks">[];
+  blocks?: Id<"tasks">[];
+  iterationCount?: number;
+  maxIterations?: number;
+  rejectionReason?: string;
 }
 
 interface TaskDetailPanelProps {
@@ -37,9 +44,40 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
   const [expandedDeliverable, setExpandedDeliverable] = useState<number | null>(task.deliverables.length > 0 ? 0 : null);
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
 
+  // Rejection state
+  const [showRejectInput, setShowRejectInput] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectLoading, setRejectLoading] = useState(false);
+
+  // Dependency search state
+  const [showDepSearch, setShowDepSearch] = useState(false);
+  const [depSearchQuery, setDepSearchQuery] = useState("");
+
   const updateTask = useMutation(api.tasks.update);
   const deleteTask = useMutation(api.tasks.remove);
   const addComment = useMutation(api.comments.create);
+
+  // Fetch dependency tasks (tasks this one depends on)
+  const dependsOnIds = task.dependsOn ?? [];
+  const blocksIds = task.blocks ?? [];
+  const depTasks = useQuery(
+    api.tasks.getByIds,
+    dependsOnIds.length > 0 ? { ids: dependsOnIds } : "skip"
+  ) ?? [];
+  const blocksTasks = useQuery(
+    api.tasks.getByIds,
+    blocksIds.length > 0 ? { ids: blocksIds } : "skip"
+  ) ?? [];
+
+  // All tasks for dependency picker
+  const allTasks = useQuery(api.tasks.list, {}) ?? [];
+  const searchResults = depSearchQuery.trim()
+    ? allTasks.filter(t =>
+        t._id !== task._id &&
+        !dependsOnIds.includes(t._id as Id<"tasks">) &&
+        t.title.toLowerCase().includes(depSearchQuery.toLowerCase())
+      ).slice(0, 8)
+    : [];
 
   const handleUpdate = (updates: Partial<{ status: TaskStatus; priority: TaskPriority; assignee: AgentName | undefined }>) => {
     updateTask({ id: task._id, ...updates });
@@ -61,8 +99,53 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
     setNewComment("");
   };
 
+  const handleReject = async () => {
+    if (!rejectReason.trim()) return;
+    setRejectLoading(true);
+    try {
+      await fetch(`${CONVEX_SITE_URL}/api/tasks/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          taskId: task._id,
+          reviewerName: "Human",
+          reason: rejectReason.trim(),
+        }),
+      });
+      setShowRejectInput(false);
+      setRejectReason("");
+    } finally {
+      setRejectLoading(false);
+    }
+  };
+
+  const handleAddDependency = async (depTaskId: Id<"tasks">) => {
+    const newDeps = [...dependsOnIds, depTaskId];
+    await updateTask({ id: task._id, dependsOn: newDeps });
+    setDepSearchQuery("");
+    setShowDepSearch(false);
+  };
+
+  const handleRemoveDependency = async (depTaskId: Id<"tasks">) => {
+    const newDeps = dependsOnIds.filter(id => id !== depTaskId);
+    await updateTask({ id: task._id, dependsOn: newDeps });
+  };
+
   const hasOutcome = task.deliverables.length > 0;
   const isDone = task.status === "done";
+  const isInReview = task.status === "in_review";
+  const hasRejection = !!task.rejectionReason && task.status === "in_progress";
+  const iterationCount = task.iterationCount ?? 0;
+  const maxIterations = task.maxIterations ?? 3;
+
+  const statusColor: Record<string, string> = {
+    done: "text-status-online",
+    in_progress: "text-status-working",
+    in_review: "text-primary",
+    assigned: "text-muted-foreground",
+    inbox: "text-muted-foreground",
+    cancelled: "text-destructive",
+  };
 
   return (
     <div className="fixed inset-y-0 right-0 w-full max-w-2xl bg-card border-l border-border z-50 animate-slide-in-right overflow-auto">
@@ -75,6 +158,15 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
           <button onClick={() => handleUpdate({ status: "inbox" })} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-secondary text-muted-foreground hover:bg-surface-hover transition-colors">
             <Inbox className="w-3 h-3" /> Inbox
           </button>
+          {/* Reject button — only shown when in_review */}
+          {isInReview && (
+            <button
+              onClick={() => setShowRejectInput(v => !v)}
+              className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+            >
+              <XCircle className="w-3 h-3" /> Reject
+            </button>
+          )}
           <button onClick={handleDelete} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
             <Trash2 className="w-3 h-3" /> Delete
           </button>
@@ -85,6 +177,49 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
       </div>
 
       <div className="p-5 space-y-5">
+        {/* Rejection reason banner */}
+        {hasRejection && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="text-xs font-semibold text-amber-500">
+                Revision {iterationCount}/{maxIterations}
+              </span>
+            </div>
+            <p className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">{task.rejectionReason}</p>
+          </div>
+        )}
+
+        {/* Reject inline form */}
+        {showRejectInput && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+            <p className="text-xs font-medium text-destructive">Rejection reason (sent to agent as feedback)</p>
+            <textarea
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              placeholder="Be specific — the agent will see this and rework the task..."
+              rows={3}
+              className="w-full bg-card rounded px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground border border-border outline-none focus:ring-1 focus:ring-destructive resize-none"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleReject}
+                disabled={!rejectReason.trim() || rejectLoading}
+                className="px-3 py-1.5 rounded text-xs bg-destructive text-white hover:bg-destructive/80 transition-colors disabled:opacity-50"
+              >
+                {rejectLoading ? "Rejecting..." : "Confirm Reject"}
+              </button>
+              <button
+                onClick={() => { setShowRejectInput(false); setRejectReason(""); }}
+                className="px-3 py-1.5 rounded text-xs bg-secondary text-muted-foreground hover:bg-surface-hover transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Title + status badge */}
         <div>
           <div className="flex items-start gap-2">
@@ -112,7 +247,6 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
             </div>
 
             <div className="divide-y divide-border/50">
-              {/* Deliverables */}
               {task.deliverables.map((d, i) => (
                 <div key={i}>
                   <button
@@ -137,7 +271,6 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
                   )}
                 </div>
               ))}
-
             </div>
           </div>
         )}
@@ -179,6 +312,98 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1 block">Description</label>
           <p className="text-sm text-foreground/80 leading-relaxed">{task.description}</p>
+        </div>
+
+        {/* Dependencies section */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+              <Link2 className="w-3 h-3" /> Dependencies
+            </label>
+            <button
+              onClick={() => setShowDepSearch(v => !v)}
+              className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground hover:bg-surface-hover transition-colors"
+            >
+              <Plus className="w-3 h-3" /> Add
+            </button>
+          </div>
+
+          {/* Dependency search picker */}
+          {showDepSearch && (
+            <div className="mb-2 rounded-lg border border-border bg-card p-2 space-y-1.5">
+              <div className="flex items-center gap-2 px-2 py-1.5 bg-secondary rounded">
+                <Search className="w-3 h-3 text-muted-foreground shrink-0" />
+                <input
+                  autoFocus
+                  value={depSearchQuery}
+                  onChange={e => setDepSearchQuery(e.target.value)}
+                  placeholder="Search tasks..."
+                  className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground outline-none"
+                />
+              </div>
+              {searchResults.length > 0 ? (
+                <div className="space-y-0.5">
+                  {searchResults.map(t => (
+                    <button
+                      key={t._id}
+                      onClick={() => handleAddDependency(t._id as Id<"tasks">)}
+                      className="w-full text-left px-2 py-1.5 rounded hover:bg-secondary transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {t.assignee && <span className="text-xs">{AGENT_CONFIG[t.assignee as AgentName]?.emoji}</span>}
+                        <span className="text-xs text-foreground truncate flex-1">{t.title}</span>
+                        <span className={`text-[10px] shrink-0 ${statusColor[t.status] ?? "text-muted-foreground"}`}>{t.status.replace("_", " ")}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : depSearchQuery.trim() ? (
+                <p className="text-[10px] text-muted-foreground px-2 py-1">No matching tasks</p>
+              ) : (
+                <p className="text-[10px] text-muted-foreground px-2 py-1">Type to search tasks...</p>
+              )}
+            </div>
+          )}
+
+          {/* Depends on list */}
+          {depTasks.length > 0 ? (
+            <div className="space-y-1 mb-3">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Depends On</p>
+              {depTasks.map((dep: any) => (
+                <div key={dep._id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-secondary group">
+                  {dep.assignee && <span className="text-xs">{AGENT_CONFIG[dep.assignee as AgentName]?.emoji}</span>}
+                  <span className="text-xs text-foreground flex-1 truncate">{dep.title}</span>
+                  <span className={`text-[10px] shrink-0 ${statusColor[dep.status] ?? "text-muted-foreground"}`}>
+                    {dep.status === "done" ? "✓ done" : dep.status.replace("_", " ")}
+                  </span>
+                  <button
+                    onClick={() => handleRemoveDependency(dep._id as Id<"tasks">)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mb-3">No dependencies</p>
+          )}
+
+          {/* Blocks list (read-only) */}
+          {blocksTasks.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Blocks</p>
+              {blocksTasks.map((blocked: any) => (
+                <div key={blocked._id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-secondary/50">
+                  {blocked.assignee && <span className="text-xs">{AGENT_CONFIG[blocked.assignee as AgentName]?.emoji}</span>}
+                  <span className="text-xs text-foreground flex-1 truncate">{blocked.title}</span>
+                  <span className={`text-[10px] shrink-0 ${statusColor[blocked.status] ?? "text-muted-foreground"}`}>
+                    {blocked.status.replace("_", " ")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Tags */}

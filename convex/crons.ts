@@ -58,4 +58,15 @@ crons.weekly(
   internal.soulDistillation.distillAllAgents
 );
 
+/**
+ * Inbox auto-delegation: wake Kaze if tasks have been sitting in inbox for >30 min.
+ * Prevents inbox from growing indefinitely without human intervention.
+ * Runs every 30 minutes.
+ */
+crons.interval(
+  "inbox-triage-sweep",
+  { minutes: 30 },
+  internal.tasks.inboxTriageSweep
+);
+
 export default crons;

@@ -83,6 +83,11 @@ export const AGENT_TOOL_RECOMMENDATIONS: Record<
     ],
     priority: 1,
   },
+  Sentinel: {
+    categories: [],
+    blueprintSlugs: [],
+    priority: 3,
+  },
 };
 
 /**
@@ -92,7 +97,7 @@ export function filterToolsByAgentRole(
   allTools: any[],
   agentName: AgentName
 ): { recommended: any[]; other: any[] } {
-  const recommendations = AGENT_TOOL_RECOMMENDATIONS[agentName];
+  const recommendations = AGENT_TOOL_RECOMMENDATIONS[agentName] ?? { blueprintSlugs: [] };
 
   const recommended = allTools.filter((tool) =>
     recommendations.blueprintSlugs.includes(tool.blueprintSlug)

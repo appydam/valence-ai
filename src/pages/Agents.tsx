@@ -52,9 +52,9 @@ const AgentsPage = () => {
 
       // Sync agent configs from openclaw.json (agents.list is an array)
       if (data.openclawConfig?.agents?.list) {
-        const validAgents = ["kaze", "scout", "forge", "ghost"];
-        const agentMap: Record<string, "Kaze" | "Scout" | "Forge" | "Ghost"> = {
-          kaze: "Kaze", scout: "Scout", forge: "Forge", ghost: "Ghost",
+        const validAgents = ["kaze", "scout", "forge", "ghost", "sentinel"];
+        const agentMap: Record<string, "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel"> = {
+          kaze: "Kaze", scout: "Scout", forge: "Forge", ghost: "Ghost", sentinel: "Sentinel",
         };
         const skillKeys = data.openclawConfig.skills?.entries
           ? Object.keys(data.openclawConfig.skills.entries)
@@ -78,7 +78,7 @@ const AgentsPage = () => {
       if (data.soulFiles && Object.keys(data.soulFiles).length > 0) {
         const soulFiles = Object.entries(data.soulFiles).map(
           ([agentName, content]) => ({
-            agentName: agentName as "Kaze" | "Scout" | "Forge" | "Ghost",
+            agentName: agentName as "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel",
             content: content as string,
           })
         );

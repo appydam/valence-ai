@@ -11,11 +11,17 @@ interface TaskData {
   tags: string[];
   updatedAt: number;
   deliverables: { name: string; type: string; content: string }[];
+  iterationCount?: number;
+  maxIterations?: number;
+  dependsOn?: string[];
 }
 
 export function TaskCard({ task, onClick, commentCount = 0 }: { task: TaskData; onClick: () => void; commentCount?: number }) {
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
   const hasDeliverables = task.deliverables.length > 0;
+  const isBlocked = task.status !== "done" && task.status !== "cancelled" && task.dependsOn && task.dependsOn.length > 0;
+  const hasIterations = (task.iterationCount ?? 0) > 0;
+  const maxIter = task.maxIterations ?? 3;
 
   return (
     <button
@@ -34,6 +40,20 @@ export function TaskCard({ task, onClick, commentCount = 0 }: { task: TaskData; 
           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: `hsl(var(--priority-${task.priority}))` }} />
           {task.priority}
         </span>
+
+        {/* Blocked pill */}
+        {isBlocked && (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/15 text-destructive">
+            Blocked
+          </span>
+        )}
+
+        {/* Revision badge */}
+        {hasIterations && (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-500">
+            {task.iterationCount}/{maxIter}
+          </span>
+        )}
 
         {/* Outcome badge */}
         {hasDeliverables && (

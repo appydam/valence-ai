@@ -6,7 +6,8 @@ const agentNameValidator = v.union(
   v.literal("Kaze"),
   v.literal("Scout"),
   v.literal("Forge"),
-  v.literal("Ghost")
+  v.literal("Ghost"),
+  v.literal("Sentinel")
 );
 
 const memoryTypeValidator = v.union(
@@ -174,8 +175,8 @@ export const write = mutation({
     expiresAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const relatedAgents: ("Kaze" | "Scout" | "Forge" | "Ghost")[] = args.isSquadWide
-      ? ["Kaze", "Scout", "Forge", "Ghost"]
+    const relatedAgents: ("Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel")[] = args.isSquadWide
+      ? ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"]
       : [args.agentName];
 
     const id = await ctx.db.insert("agentMemory", {

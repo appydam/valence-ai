@@ -81,6 +81,14 @@ export const getById = query({
   },
 });
 
+export const getByIds = query({
+  args: { ids: v.array(v.id("tasks")) },
+  handler: async (ctx, args) => {
+    const results = await Promise.all(args.ids.map((id) => ctx.db.get(id)));
+    return results.filter(Boolean);
+  },
+});
+
 export const create = mutation({
   args: {
     title: v.string(),
@@ -267,6 +275,7 @@ export const update = mutation({
       )
     ),
     missionId: v.optional(v.id("missions")),
+    dependsOn: v.optional(v.array(v.id("tasks"))),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
@@ -277,6 +286,31 @@ export const update = mutation({
     for (const [key, value] of Object.entries(fields)) {
       if (value !== undefined) {
         updates[key] = value;
+      }
+    }
+
+    // If dependsOn changed, sync the blocks arrays on affected tasks
+    if (updates.dependsOn !== undefined) {
+      const oldDeps: Id<"tasks">[] = existing.dependsOn ?? [];
+      const newDeps: Id<"tasks">[] = updates.dependsOn ?? [];
+      // Added deps: add this task to their blocks array
+      const added = newDeps.filter((d) => !oldDeps.includes(d));
+      for (const depId of added) {
+        const depTask = await ctx.db.get(depId);
+        if (depTask) {
+          const existingBlocks = depTask.blocks ?? [];
+          if (!existingBlocks.includes(id)) {
+            await ctx.db.patch(depId, { blocks: [...existingBlocks, id] });
+          }
+        }
+      }
+      // Removed deps: remove this task from their blocks array
+      const removed = oldDeps.filter((d) => !newDeps.includes(d));
+      for (const depId of removed) {
+        const depTask = await ctx.db.get(depId);
+        if (depTask) {
+          await ctx.db.patch(depId, { blocks: (depTask.blocks ?? []).filter((b) => b !== id) });
+        }
       }
     }
 
@@ -342,6 +376,14 @@ export const update = mutation({
           );
 
           if (allMet && blockedTask.assignee) {
+            // Auto-claim: move from assigned → in_progress so agent doesn't waste a turn claiming
+            if (blockedTask.status === "assigned") {
+              await ctx.db.patch(blockedTaskId, {
+                status: "in_progress",
+                updatedAt: Date.now(),
+              });
+            }
+
             await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
               agentName: blockedTask.assignee,
               taskId: blockedTaskId as string,
@@ -351,7 +393,7 @@ export const update = mutation({
             await ctx.db.insert("comments", {
               taskId: blockedTaskId,
               author: "System",
-              content: `All dependencies resolved. Task "${existing.title}" is complete — check its deliverables for context. You can now start this task.`,
+              content: `All dependencies resolved. Task "${existing.title}" is complete — check its deliverables for context. Task auto-claimed and moved to in_progress — you can start immediately.`,
               mentions: [blockedTask.assignee],
               createdAt: Date.now(),
             });
@@ -360,9 +402,19 @@ export const update = mutation({
       }
     }
 
-    // Auto-wake Kaze when any agent submits work for review
+    // Auto-wake Sentinel (QA) when any agent submits work for review
+    // Sentinel reviews first — if it passes, Kaze does final approval
     if (updates.status === "in_review" && existing.assignee !== "Kaze") {
       await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: "Sentinel",
+        taskId: id as string,
+        reason: "task_ready_for_review",
+      });
+    }
+
+    // Also wake Kaze for awareness (but Sentinel reviews first)
+    if (updates.status === "in_review" && existing.assignee !== "Kaze") {
+      await ctx.scheduler.runAfter(2000, internal.agentWakeup.triggerWakeup, {
         agentName: "Kaze",
         taskId: id as string,
         reason: "task_ready_for_review",
@@ -747,12 +799,8 @@ export const delegateTask = mutation({
 export const completeTask = mutation({
   args: {
     taskId: v.id("tasks"),
-    agentName: v.union(
-      v.literal("Kaze"),
-      v.literal("Scout"),
-      v.literal("Forge"),
-      v.literal("Ghost")
-    ),
+    agentName: v.string(), // Accept any agent name including Sentinel
+
     deliverables: v.optional(
       v.array(
         v.object({
@@ -798,7 +846,7 @@ export const completeTask = mutation({
     if (args.activityDetails) {
       await ctx.db.insert("activity", {
         timestamp: now,
-        agentName: args.agentName,
+        agentName: args.agentName as any,
         action: "task_completed",
         details: args.activityDetails,
         taskId: args.taskId as unknown as string,
@@ -816,21 +864,22 @@ export const completeTask = mutation({
     await ctx.db.patch(args.taskId, statusUpdates);
 
     // 5. Update agent: increment tasksCompleted, check if still has active tasks
+    // Note: Sentinel is not in the agents table, so this safely returns null for Sentinel
     const agent = await ctx.db
       .query("agents")
-      .withIndex("by_name", (q) => q.eq("name", args.agentName))
+      .withIndex("by_name", (q) => q.eq("name", args.agentName as any))
       .unique();
     if (agent) {
       const otherActiveTasks = await ctx.db
         .query("tasks")
         .withIndex("by_assignee_status", (q) =>
-          q.eq("assignee", args.agentName).eq("status", "in_progress")
+          q.eq("assignee", args.agentName as any).eq("status", "in_progress")
         )
         .take(5);
       const otherAssigned = await ctx.db
         .query("tasks")
         .withIndex("by_assignee_status", (q) =>
-          q.eq("assignee", args.agentName).eq("status", "assigned")
+          q.eq("assignee", args.agentName as any).eq("status", "assigned")
         )
         .take(5);
       const stillWorking = [...otherActiveTasks, ...otherAssigned].some(
@@ -869,6 +918,14 @@ export const completeTask = mutation({
           );
 
           if (allMet && blockedTask.assignee) {
+            // Auto-claim: move from assigned → in_progress so agent doesn't waste a turn claiming
+            if (blockedTask.status === "assigned") {
+              await ctx.db.patch(blockedTaskId, {
+                status: "in_progress",
+                updatedAt: now,
+              });
+            }
+
             await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
               agentName: blockedTask.assignee,
               taskId: blockedTaskId as string,
@@ -878,7 +935,7 @@ export const completeTask = mutation({
             await ctx.db.insert("comments", {
               taskId: blockedTaskId,
               author: "System",
-              content: `All dependencies resolved. Task "${task.title}" is complete — check its deliverables for context. You can now start this task.`,
+              content: `All dependencies resolved. Task "${task.title}" is complete — check its deliverables for context. Task auto-claimed and moved to in_progress — you can start immediately.`,
               mentions: [blockedTask.assignee],
               createdAt: now,
             });
@@ -887,9 +944,19 @@ export const completeTask = mutation({
       }
     }
 
-    // 6c. Auto-wake Kaze when any agent submits work for review
-    if (targetStatus === "in_review" && args.agentName !== "Kaze") {
+    // 6c. Auto-wake Sentinel (QA) when any agent submits work for review
+    // Sentinel reviews first; Kaze does final approval if needed
+    if (targetStatus === "in_review" && args.agentName !== "Kaze" && args.agentName !== "Sentinel") {
       await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: "Sentinel",
+        taskId: args.taskId as string,
+        reason: "task_ready_for_review",
+      });
+    }
+
+    // Also wake Kaze for awareness (2s delay so Sentinel goes first)
+    if (targetStatus === "in_review" && args.agentName !== "Kaze") {
+      await ctx.scheduler.runAfter(2000, internal.agentWakeup.triggerWakeup, {
         agentName: "Kaze",
         taskId: args.taskId as string,
         reason: "task_ready_for_review",
@@ -897,6 +964,108 @@ export const completeTask = mutation({
     }
 
     return { ok: true, taskId: args.taskId, status: targetStatus };
+  },
+});
+
+/**
+ * Reject a task that's in_review — send it back to in_progress with specific feedback.
+ * Called by Sentinel (QA agent) or Kaze when output quality is below threshold.
+ * Increments iterationCount. If maxIterations reached, escalates to human instead.
+ */
+export const rejectTask = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    reviewerName: v.string(),
+    reason: v.string(), // Specific, actionable feedback for the assigned agent
+  },
+  handler: async (ctx, args) => {
+    const task = await ctx.db.get(args.taskId);
+    if (!task) throw new Error("Task not found");
+    if (task.status !== "in_review") {
+      throw new Error(`Task is not in_review (current status: ${task.status})`);
+    }
+
+    const now = Date.now();
+    const currentIterations = task.iterationCount || 0;
+    const maxIterations = task.maxIterations || 3;
+    const newIterationCount = currentIterations + 1;
+
+    if (newIterationCount > maxIterations) {
+      // Max iterations reached — escalate to human, keep in_review
+      await ctx.db.insert("comments", {
+        taskId: args.taskId,
+        author: "System",
+        content: `⚠️ **Max iterations reached** (${maxIterations}/${maxIterations}). This task has been rejected ${maxIterations} times. Escalating to human operator for review.\n\nLast rejection from ${args.reviewerName}: ${args.reason}`,
+        mentions: ["Kaze"],
+        createdAt: now,
+      });
+      await ctx.db.patch(args.taskId, {
+        rejectionReason: args.reason,
+        iterationCount: newIterationCount,
+        updatedAt: now,
+      });
+      return { ok: true, escalated: true, iterationCount: newIterationCount };
+    }
+
+    // Send back to in_progress with rejection reason
+    await ctx.db.patch(args.taskId, {
+      status: "in_progress",
+      rejectionReason: args.reason,
+      iterationCount: newIterationCount,
+      updatedAt: now,
+    });
+
+    // Post a comment with the rejection details
+    await ctx.db.insert("comments", {
+      taskId: args.taskId,
+      author: args.reviewerName,
+      content: `**Quality review failed** (iteration ${newIterationCount}/${maxIterations}). Task sent back for revision.\n\n${args.reason}\n\nFix the issues above and resubmit via \`POST /api/tasks/complete\`.`,
+      mentions: task.assignee ? [task.assignee] : [],
+      createdAt: now,
+    });
+
+    // Wake up the assigned agent with the rejection context
+    if (task.assignee) {
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: task.assignee,
+        taskId: args.taskId as string,
+        reason: "task_rejected",
+      });
+    }
+
+    return { ok: true, escalated: false, iterationCount: newIterationCount };
+  },
+});
+
+/**
+ * Inbox triage sweep: find tasks sitting in "inbox" for >30 min with no assignee.
+ * Wakes Kaze to delegate them. Called by cron every 30 min.
+ */
+export const inboxTriageSweep = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
+
+    const inboxTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", "inbox"))
+      .collect();
+
+    const staleTasks = inboxTasks.filter(
+      (t) => !t.assignee && t.createdAt && t.createdAt < thirtyMinutesAgo
+    );
+
+    if (staleTasks.length > 0) {
+      // Wake Kaze with the oldest unassigned inbox task
+      const oldest = staleTasks.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))[0];
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: "Kaze",
+        taskId: oldest._id as string,
+        reason: "stale_inbox",
+      });
+    }
+
+    return { staleInboxCount: staleTasks.length };
   },
 });
 

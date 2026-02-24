@@ -22,6 +22,7 @@ const AGENT_SLUGS: Record<string, string> = {
   Scout: "scout",
   Forge: "forge",
   Ghost: "ghost",
+  Sentinel: "sentinel",
 };
 
 export const triggerWakeup = internalAction({

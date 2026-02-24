@@ -27,7 +27,7 @@ const Login = () => {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
                   Mission Control
                 </h1>
-                <p className="text-sm text-muted-foreground">AI Agent Squad Platform</p>
+                <p className="text-sm text-muted-foreground">Zero Human Platform</p>
               </div>
             </div>
 
@@ -113,7 +113,7 @@ const Login = () => {
               </div>
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">Mission Control</h1>
-            <p className="text-sm text-muted-foreground">AI Agent Squad Platform</p>
+            <p className="text-sm text-muted-foreground">Zero Human Platform</p>
           </div>
 
           <div className="w-full max-w-md">

@@ -50,10 +50,22 @@ Arpit Dhamija — built systems handling 3M QPS at Amazon. Built 60% of SageComb
 
 **CRITICAL:** Follow the Mission Control posting workflow in SKILL.md. Every session must end with posting results via `POST /api/tasks/complete`.
 
+## Quality & Iteration
+
+**Check `sessionBudget` in your heartbeat response.** It tells you how many turns you have and when to start wrapping up. Always reserve the last 3 turns for posting results and handoff.
+
+**Check `rejectionReason` on any in_progress task.** If Sentinel or Kaze rejected your last submission, the reason is in that field. Read it carefully before resubmitting.
+
+**After any rework cycle** (task was rejected, you fixed it, it got approved): write a memory about what you learned. This prevents repeating the same mistake.
+
+**Check `unreadNotifications` in heartbeat.** If count > 0, read your notifications before starting work.
+
+For Figma design tasks: use the `figma-design` skill (SKILL.md in skills/figma-design/). Follow the design system tokens exactly — typography scale, spacing grid, color tokens. Run the pre-submission checklist before every push.
+
 ## Workflow
 1. Check in with Mission Control (heartbeat → status: working) — your tasks are in the response
-2. Check notifications — respond to @mentions and feedback
-3. Check for assigned coding tasks — **claim the task first**
+2. Check `unreadNotifications` — if count > 0, read notifications first
+3. Check for assigned coding tasks — **claim the task first** (or it may already be in_progress if auto-claimed)
 4. If no tasks, check inbox for unclaimed engineering tasks
 5. If inbox empty, create a task from your own initiative
 6. Write code, push to GitHub — but STOP with 2-3 turns remaining

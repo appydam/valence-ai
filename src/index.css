@@ -41,6 +41,7 @@
     --agent-scout: 160 84% 39%;
     --agent-forge: 38 92% 50%;
     --agent-ghost: 258 90% 66%;
+    --agent-sentinel: 330 81% 60%;
 
     /* Status colors */
     --status-online: 142 71% 45%;
@@ -64,6 +65,7 @@
     --glow-scout: 0 0 20px hsl(160 84% 39% / 0.4);
     --glow-forge: 0 0 20px hsl(38 92% 50% / 0.4);
     --glow-ghost: 0 0 20px hsl(258 90% 66% / 0.4);
+    --glow-sentinel: 0 0 20px hsl(330 81% 60% / 0.4);
     --glow-online: 0 0 12px hsl(142 71% 45% / 0.5);
 
     /* Terrarium ecosystem */
@@ -131,26 +133,33 @@
   .glow-online {
     box-shadow: var(--glow-online);
   }
+  .glow-sentinel {
+    box-shadow: var(--glow-sentinel);
+  }
 
   .text-agent-kaze { color: hsl(var(--agent-kaze)); }
   .text-agent-scout { color: hsl(var(--agent-scout)); }
   .text-agent-forge { color: hsl(var(--agent-forge)); }
   .text-agent-ghost { color: hsl(var(--agent-ghost)); }
+  .text-agent-sentinel { color: hsl(var(--agent-sentinel)); }
 
   .bg-agent-kaze { background-color: hsl(var(--agent-kaze)); }
   .bg-agent-scout { background-color: hsl(var(--agent-scout)); }
   .bg-agent-forge { background-color: hsl(var(--agent-forge)); }
   .bg-agent-ghost { background-color: hsl(var(--agent-ghost)); }
+  .bg-agent-sentinel { background-color: hsl(var(--agent-sentinel)); }
 
   .border-agent-kaze { border-color: hsl(var(--agent-kaze)); }
   .border-agent-scout { border-color: hsl(var(--agent-scout)); }
   .border-agent-forge { border-color: hsl(var(--agent-forge)); }
   .border-agent-ghost { border-color: hsl(var(--agent-ghost)); }
+  .border-agent-sentinel { border-color: hsl(var(--agent-sentinel)); }
 
   .bg-agent-kaze\/10 { background-color: hsl(var(--agent-kaze) / 0.1); }
   .bg-agent-scout\/10 { background-color: hsl(var(--agent-scout) / 0.1); }
   .bg-agent-forge\/10 { background-color: hsl(var(--agent-forge) / 0.1); }
   .bg-agent-ghost\/10 { background-color: hsl(var(--agent-ghost) / 0.1); }
+  .bg-agent-sentinel\/10 { background-color: hsl(var(--agent-sentinel) / 0.1); }
 
   .gradient-mesh {
     background-image: 

@@ -91,6 +91,14 @@ export const sweep = internalMutation({
         skippedCount++;
       } else {
         console.log(`[WakeupSweep] Task ${oldest._id} stuck in in_progress for ${oldest.assignee} (>15min), re-waking`);
+        // Post a crash recovery comment so the agent knows it's resuming
+        await ctx.db.insert("comments", {
+          taskId: oldest._id,
+          author: "System",
+          content: `⚠️ **Session recovery**: Previous agent session timed out or crashed. Resuming task from last known state. Check your session handoff notes (\`workingContext.recentHandoff\`) to see what was completed. Continue where you left off.`,
+          mentions: oldest.assignee ? [oldest.assignee] : [],
+          createdAt: now,
+        });
         await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
           agentName: oldest.assignee!,
           taskId: oldest._id as string,

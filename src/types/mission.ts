@@ -1,4 +1,4 @@
-export type AgentName = "Kaze" | "Scout" | "Forge" | "Ghost";
+export type AgentName = "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel";
 export type AgentStatus = "online" | "working" | "idle" | "offline";
 export type TaskStatus = "inbox" | "assigned" | "in_progress" | "in_review" | "done" | "cancelled";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
@@ -54,6 +54,7 @@ export const AGENT_CONFIG: Record<AgentName, { emoji: string; color: string; rol
   Scout: { emoji: "🔭", color: "scout", role: "Market Intelligence", description: "Researches trends, finds opportunities, competitive analysis" },
   Forge: { emoji: "🔨", color: "forge", role: "Engineer", description: "Writes code, prototypes, builds automations" },
   Ghost: { emoji: "👻", color: "ghost", role: "Content & Distribution", description: "Drafts tweets, LinkedIn posts, blog content" },
+  Sentinel: { emoji: "🔍", color: "sentinel", role: "Quality Reviewer", description: "Reviews every deliverable, enforces quality standards, approves or rejects work" },
 };
 
 export const AGENT_COLORS: Record<string, string> = {
@@ -61,6 +62,7 @@ export const AGENT_COLORS: Record<string, string> = {
   scout: "agent-scout",
   forge: "agent-forge",
   ghost: "agent-ghost",
+  sentinel: "agent-sentinel",
 };
 
 export function getAgentColorClass(name: AgentName, type: "text" | "bg" | "border" | "glow" = "text"): string {

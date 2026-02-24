@@ -5,10 +5,11 @@ const agentNameValidator = v.union(
   v.literal("Kaze"),
   v.literal("Scout"),
   v.literal("Forge"),
-  v.literal("Ghost")
+  v.literal("Ghost"),
+  v.literal("Sentinel")
 );
 
-const VALID_AGENTS = ["Kaze", "Scout", "Forge", "Ghost"];
+const VALID_AGENTS = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"];
 
 export const createForMentions = internalMutation({
   args: {
@@ -134,7 +135,7 @@ export const countUnread = query({
 export const getAllUnread = query({
   args: {},
   handler: async (ctx) => {
-    const agents = ["Kaze", "Scout", "Forge", "Ghost"] as const;
+    const agents = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"] as const;
     const result: Record<string, any[]> = {};
     let totalUnread = 0;
 

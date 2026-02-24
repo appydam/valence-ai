@@ -1,15 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const agentNameValidator = v.union(
-  v.literal("Kaze"),
-  v.literal("Scout"),
-  v.literal("Forge"),
-  v.literal("Ghost")
-);
+// Using v.string() to avoid Convex type instantiation depth errors with 5+ literals
+// Validation is enforced at the application layer in individual mutations/queries
+const agentNameValidator = v.string();
 
 // Export AgentName type for use in other files
-export type AgentName = "Kaze" | "Scout" | "Forge" | "Ghost";
+export type AgentName = "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel";
 
 const agentStatusValidator = v.union(
   v.literal("online"),
@@ -89,6 +86,10 @@ export default defineSchema({
     // Integration requirements for agent-to-integration wiring
     requiredIntegrations: v.optional(v.array(v.string())), // Blueprint slugs required to complete this task
     requiredUserId: v.optional(v.string()), // Clerk user ID whose credentials should be used
+    // Quality loop: iteration tracking for rejection/rework cycles
+    iterationCount: v.optional(v.number()),    // How many times this task has been rejected and reworked
+    maxIterations: v.optional(v.number()),     // Max allowed iterations before escalating to human (default 3)
+    rejectionReason: v.optional(v.string()),   // Specific feedback from last rejection (shown to agent on re-wake)
   })
     .index("by_status", ["status"])
     .index("by_assignee", ["assignee"])
@@ -708,6 +709,7 @@ export default defineSchema({
     resultError: v.optional(v.string()),
     createdAt: v.number(),
     executedAt: v.optional(v.number()),
+    replaceFrameName: v.optional(v.string()), // If set, replace existing frame with this name instead of creating new
   })
     .index("by_status", ["status"])
     .index("by_file", ["fileKey"]),

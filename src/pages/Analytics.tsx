@@ -42,11 +42,12 @@ const AGENT_COLORS = {
   Scout: "#8b5cf6", // purple
   Forge: "#f97316", // orange
   Ghost: "#10b981", // green
+  Sentinel: "#ec4899", // pink
 };
 
 export default function Analytics() {
   const [timePeriod, setTimePeriod] = useState<"7" | "30" | "90">("30");
-  const [selectedAgent, setSelectedAgent] = useState<"all" | "Kaze" | "Scout" | "Forge" | "Ghost">("all");
+  const [selectedAgent, setSelectedAgent] = useState<"all" | "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel">("all");
 
   // Fetch dashboard overview
   const overview = useQuery(api.analytics.getDashboardOverview);
@@ -125,6 +126,7 @@ export default function Analytics() {
                 <SelectItem value="Scout">Scout 🔭</SelectItem>
                 <SelectItem value="Forge">Forge 🔨</SelectItem>
                 <SelectItem value="Ghost">Ghost 👻</SelectItem>
+                <SelectItem value="Sentinel">Sentinel 🔍</SelectItem>
               </SelectContent>
             </Select>
             <Select value={timePeriod} onValueChange={(v: any) => setTimePeriod(v)}>

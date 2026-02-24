@@ -5,7 +5,7 @@ import { IntegrationActivityFeed } from "@/components/IntegrationActivityFeed";
 import { INTEGRATIONS, INTEGRATION_CATEGORIES, CATEGORY_CONFIG, Integration } from "@/data/integrations";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Search, Plug, ExternalLink, Sparkles, Activity, Plus, Code, ChevronRight, Wrench, Building2, LayoutGrid } from "lucide-react";
+import { Search, Plug, Sparkles, Activity, Plus, Code, ChevronRight, Wrench, Building2, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
@@ -533,19 +533,16 @@ const Integrations = () => {
             {/* Help section */}
             <div className="rounded-lg border border-border bg-card p-4">
               <h3 className="text-sm font-semibold text-foreground mb-3">About Integrations</h3>
-              <div className="space-y-2 text-xs text-muted-foreground">
+              <div className="space-y-3 text-xs text-muted-foreground">
                 <p>
-                  <strong>Custom Blueprints</strong> are API integrations you create manually, import from OpenAPI specs, or generate via AI doc scraping.
-                  <strong> Connected</strong> blueprints have active credentials stored and can be used by agents.
+                  <strong className="text-foreground">Blueprints</strong> define how Mission Control talks to an external API — the base URL, authentication method, and a set of callable tools (endpoints). Create one manually, import an OpenAPI/Swagger spec, or let AI scrape a docs page and generate one automatically.
                 </p>
                 <p>
-                  When connected, agents like Scout can pull data from APIs, Forge can create tickets,
-                  and Ghost can post to social media — all automatically through the Universal Integration Engine.
+                  <strong className="text-foreground">Connections</strong> store your credentials for a given blueprint. Once connected, auth tokens are encrypted at rest and automatically refreshed — agents never handle raw secrets.
                 </p>
-                <a href="https://docs.convex.dev" target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-primary hover:underline">
-                  Learn more about integrations <ExternalLink className="w-3 h-3" />
-                </a>
+                <p>
+                  <strong className="text-foreground">Agents use blueprints at runtime.</strong> Scout can query REST APIs for live data, Forge can open or update tickets, Ghost can publish to social platforms — all without manual intervention, resolved and executed through the Universal Integration Engine.
+                </p>
               </div>
             </div>
           </div>

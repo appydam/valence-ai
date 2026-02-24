@@ -4,25 +4,26 @@ import { v } from "convex/values";
 /**
  * Check if a task's dependencies are all completed
  */
+// @ts-ignore TS2589 - Convex type depth with v.string() agentName
 export const areDependenciesMet = query({
   args: { taskId: v.id("tasks") },
   handler: async (ctx, args) => {
-    const task = await ctx.db.get(args.taskId);
+    const task = await ctx.db.get(args.taskId) as any;
     if (!task) return { ready: false, reason: "Task not found" };
-    
+
     if (!task.dependsOn || task.dependsOn.length === 0) {
       return { ready: true, reason: "No dependencies" };
     }
 
     const depStatuses = await Promise.all(
-      task.dependsOn.map(async (depId) => {
-        const dep = await ctx.db.get(depId);
+      task.dependsOn.map(async (depId: any) => {
+        const dep = await ctx.db.get(depId) as any;
         return { id: depId, status: dep?.status, title: dep?.title };
       })
     );
 
     const incomplete = depStatuses.filter(
-      (d) => d.status !== "done" && d.status !== "cancelled"
+      (d: any) => d.status !== "done" && d.status !== "cancelled"
     );
 
     if (incomplete.length > 0) {
@@ -40,14 +41,15 @@ export const areDependenciesMet = query({
 /**
  * Get all tasks that depend on (are blocked by) a given task
  */
+// @ts-ignore TS2589 - Convex type depth with v.string() agentName
 export const getBlockedTasks = query({
   args: { taskId: v.id("tasks") },
   handler: async (ctx, args) => {
-    const task = await ctx.db.get(args.taskId);
+    const task = await ctx.db.get(args.taskId) as any;
     if (!task || !task.blocks) return [];
 
     const blockedTasks = await Promise.all(
-      task.blocks.map((id) => ctx.db.get(id))
+      task.blocks.map((id: any) => ctx.db.get(id))
     );
 
     return blockedTasks.filter((t) => t !== null);
@@ -57,22 +59,16 @@ export const getBlockedTasks = query({
 /**
  * Get tasks that are ready to be claimed (all dependencies met)
  */
+// @ts-ignore TS2589 - Convex type depth with v.string() agentName
 export const getReadyTasks = query({
   args: {
-    assignee: v.optional(
-      v.union(
-        v.literal("Kaze"),
-        v.literal("Scout"),
-        v.literal("Forge"),
-        v.literal("Ghost")
-      )
-    ),
+    assignee: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let tasks = await ctx.db.query("tasks").collect();
+    let tasks = await ctx.db.query("tasks").collect() as any[];
 
     if (args.assignee) {
-      tasks = tasks.filter((t) => t.assignee === args.assignee);
+      tasks = tasks.filter((t: any) => t.assignee === args.assignee);
     }
 
     // Filter to tasks in inbox or assigned status
@@ -87,11 +83,11 @@ export const getReadyTasks = query({
       }
 
       const deps = await Promise.all(
-        task.dependsOn.map((id) => ctx.db.get(id))
+        task.dependsOn.map((id: any) => ctx.db.get(id))
       );
 
-      const allComplete = deps.every(
-        (d) => d && (d.status === "done" || d.status === "cancelled")
+      const allComplete = (deps as any[]).every(
+        (d: any) => d && (d.status === "done" || d.status === "cancelled")
       );
 
       if (allComplete) {

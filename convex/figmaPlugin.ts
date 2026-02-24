@@ -96,6 +96,32 @@ export const get = query({
 });
 
 /**
+ * Push a replace command — updates an existing frame by name instead of creating a new one.
+ * Used for iterative design refinement: push v1, get feedback, push v2 on same frame.
+ */
+export const pushReplace = mutation({
+  args: {
+    createdBy: v.string(),
+    fileKey: v.string(),
+    label: v.string(),
+    spec: v.string(), // JSON string
+    replaceFrameName: v.string(), // Name of the existing Figma frame to replace
+  },
+  handler: async (ctx, args) => {
+    const id = await ctx.db.insert("figmaPluginCommands", {
+      createdBy: args.createdBy,
+      fileKey: args.fileKey,
+      label: args.label,
+      spec: args.spec,
+      replaceFrameName: args.replaceFrameName,
+      status: "pending",
+      createdAt: Date.now(),
+    });
+    return { id };
+  },
+});
+
+/**
  * List recent commands for a file
  */
 export const listByFile = query({

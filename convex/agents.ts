@@ -1,8 +1,9 @@
+// v2 - includes Sentinel agent
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 const AGENT_DEFAULTS: {
-  name: "Kaze" | "Scout" | "Forge" | "Ghost";
+  name: "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel";
   emoji: string;
   role: string;
   description: string;
@@ -12,6 +13,7 @@ const AGENT_DEFAULTS: {
   { name: "Scout", emoji: "🔭", role: "Market Intelligence", description: "Researches trends, finds opportunities, competitive analysis", color: "scout" },
   { name: "Forge", emoji: "🔨", role: "Engineer", description: "Writes code, prototypes, builds automations", color: "forge" },
   { name: "Ghost", emoji: "👻", role: "Content & Distribution", description: "Drafts tweets, LinkedIn posts, blog content", color: "ghost" },
+  { name: "Sentinel", emoji: "🔍", role: "Quality Reviewer", description: "Reviews every deliverable, enforces quality standards, approves or rejects work", color: "sentinel" },
 ];
 
 export const list = query({
@@ -54,12 +56,7 @@ export const seed = mutation({
 
 export const getByName = query({
   args: {
-    name: v.union(
-      v.literal("Kaze"),
-      v.literal("Scout"),
-      v.literal("Forge"),
-      v.literal("Ghost")
-    ),
+    name: v.string(),
   },
   handler: async (ctx, args) => {
     return await ctx.db

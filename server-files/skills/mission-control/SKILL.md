@@ -395,6 +395,10 @@ Response includes:
 - **Ghost** 👻: Slack, LinkedIn, Gmail, Twitter, Mailchimp
 - **Kaze** 🌀: Slack, Google Calendar, notifications
 
+**Notion API quirk — all write tools require nested objects (NOT flat strings):**
+`parent` must be `{"database_id":"..."}` or `{"page_id":"..."}`. Properties/rich_text must be arrays.
+Check `exampleArgs` in your heartbeat `availableTools` for the exact structure of each tool.
+
 You see ALL tools the user has connected, but `recommended` highlights tools most relevant to your role.
 
 **Key fields to understand:**
@@ -939,3 +943,88 @@ When a memory is outdated or wrong. Providing `newBody` creates a corrected repl
 11. **@mention Kaze** in your completion comment if you need a decision or review
 12. **Check your config** from the heartbeat response — note if the operator changed your model or settings
 13. **Before ending session:** Call `POST /api/agents/handoff` with your session summary, open questions, and a hint for your next session
+
+---
+
+## Pre-Submission Quality Check (MANDATORY for ALL agents)
+
+**Do NOT submit your first attempt as final.** Quality comes from iteration. Before marking ANY task `in_review`, you MUST spend at least 2-3 turns reviewing and improving your work.
+
+### Universal Pre-Submission Steps
+
+1. **Re-read the original task description** — Did you actually answer what was asked?
+2. **Review your deliverable critically** — What's weak, missing, or could be clearer?
+3. **Improve it** — Fix the weaknesses you identified
+4. **Check completeness** — Is everything requested actually delivered?
+5. **THEN submit** via `POST /api/tasks/complete`
+
+### By Task Type
+
+**Design tasks (Figma):**
+- Run through the full checklist in the Figma Design Skill (figma-design/SKILL.md)
+- Verify: typography scale, spacing grid, color tokens, touch targets, 16px margins
+- Verify: consistent style across all screens, realistic content, one primary CTA per screen
+- Ask yourself: "Would a senior designer at Linear/Stripe approve this?" If not, revise.
+
+**Research tasks:**
+- Do you have at least 3 credible sources?
+- Are recommendations actionable (specific steps, not vague suggestions)?
+- Is there quantified data (numbers, percentages, timeframes)?
+- Is the output structured (headers, bullet points, not walls of text)?
+- Would Arpit be able to make a decision based on this? If not, add more.
+
+**Content tasks:**
+- Read your draft out loud — does it sound natural?
+- Does it match Arpit's voice (direct, fast, no fluff)?
+- Is the CTA clear and specific?
+- Is it the right length for the platform?
+- Would this get engagement? If not, revise the hook/opening.
+
+**Engineering tasks:**
+- Does the code actually run/work?
+- Are edge cases handled?
+- Is it readable by someone else?
+- Did you test it?
+- Is there a README or usage docs?
+
+### After a Rejection/Rework Cycle
+
+When a task is sent back to you with feedback:
+1. Read the rejection reason carefully — understand exactly what failed
+2. Fix ONLY what was flagged (don't rewrite everything)
+3. Write a memory about what you learned: `POST /api/agents/memory` with type `pattern` or `failure`
+4. Resubmit via `POST /api/tasks/complete`
+
+**Writing the rework memory:**
+```json
+{
+  "agentName": "YOUR_NAME",
+  "memoryType": "pattern",
+  "title": "Design: use consistent cornerRadius across all screens",
+  "body": "In the NovaPay task, Sentinel rejected because some cards used cornerRadius: 8 and others used 20. Always pick ONE corner radius for cards and use it everywhere.",
+  "evidence": "Task rejection on task_id_here — Sentinel score 4/10 on consistency",
+  "tags": ["design", "figma", "consistency"],
+  "importanceScore": 0.75,
+  "isSquadWide": true
+}
+```
+
+---
+
+## Task Rejection Endpoint: POST /api/tasks/reject
+
+Used by Sentinel (QA agent) and Kaze to send work back for revision.
+
+**Do not call this yourself** unless you are Sentinel or Kaze reviewing another agent's work.
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/reject \
+  -H "Content-Type: application/json" \
+  -d '{
+    "taskId": "TASK_ID",
+    "reviewerName": "Sentinel",
+    "reason": "Design rejected — 3 issues found:\n1. Font sizes not from scale (used 15px, 17px). Use 14 or 16.\n2. Inconsistent cornerRadius: some cards 8px, some 20px. Pick one.\n3. Touch targets: bottom tab items only 32px tall. Minimum 44px."
+  }'
+```
+
+Response: `{ "ok": true, "iterationCount": 1 }` — the task is back in `in_progress` and the assigned agent will be woken.

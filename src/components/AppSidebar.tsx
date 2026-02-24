@@ -44,12 +44,12 @@ export function AppSidebar() {
         collapsed ? "justify-center" : ""
       )}>
         <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 overflow-hidden shrink-0">
-          <img src="/logo.svg" alt="Mission Control" className="w-6 h-6" />
+          <img src="/logo.svg" alt="Valence AI" className="w-6 h-6" />
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <h1 className="text-sm font-bold tracking-tight text-foreground truncate">Mission Control</h1>
-            <p className="text-[10px] text-muted-foreground truncate">AI Agent Squad</p>
+            <h1 className="text-sm font-bold tracking-tight text-foreground truncate">Valence AI</h1>
+            <p className="text-[10px] text-muted-foreground truncate">Zero Human</p>
           </div>
         )}
       </div>

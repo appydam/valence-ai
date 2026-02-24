@@ -218,6 +218,38 @@ http.route({
       // Non-fatal — heartbeat still succeeds without memories
     }
 
+    // ── Notifications: inject unread mention count so agents don't have to poll ──
+    let unreadNotifications: { count: number; latestMention: { content: string; author: string; taskId: string; taskTitle: string } | null } = {
+      count: 0,
+      latestMention: null,
+    };
+    try {
+      const notifs = await ctx.runQuery(api.notifications.listForAgent, {
+        agentName: body.agentName,
+        unreadOnly: true,
+        limit: 5,
+      });
+      unreadNotifications.count = notifs.length;
+      if (notifs.length > 0) {
+        const latest = notifs[0];
+        unreadNotifications.latestMention = {
+          content: latest.contentPreview,
+          author: latest.fromAuthor,
+          taskId: latest.taskId as string,
+          taskTitle: latest.taskTitle,
+        };
+      }
+    } catch (notifErr: any) {
+      // Non-fatal — heartbeat still succeeds without notification data
+    }
+
+    // ── Session Budget: tell agents how many turns they have left ──
+    const sessionBudget = {
+      maxTurns: agentConfig?.sessionMaxTurns ?? 25,
+      recommendedWrapUpAt: (agentConfig?.sessionMaxTurns ?? 25) - 3,
+      note: "Reserve last 3 turns for POST /api/tasks/complete and POST /api/agents/handoff",
+    };
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -227,6 +259,8 @@ http.route({
         availableTools,
         workingContext,
         memories,
+        unreadNotifications,
+        sessionBudget,
       }),
       { status: 200, headers: corsHeaders() }
     );
@@ -411,6 +445,40 @@ http.route({
       );
     }
   }),
+});
+
+// POST /api/tasks/reject — Send a task back to in_progress with specific feedback
+http.route({
+  path: "/api/tasks/reject",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    if (!body.taskId || !body.reviewerName || !body.reason) {
+      return new Response(
+        JSON.stringify({ error: "taskId, reviewerName, and reason are required" }),
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+    try {
+      const result = await ctx.runMutation(api.tasks.rejectTask, {
+        taskId: body.taskId as Id<"tasks">,
+        reviewerName: body.reviewerName,
+        reason: body.reason,
+      });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ error: error.message || "Task rejection failed" }),
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
+http.route({
+  path: "/api/tasks/reject",
+  method: "OPTIONS",
+  handler: optionsHandler(),
 });
 
 // POST /api/comments
@@ -1104,10 +1172,12 @@ http.route({
           <h3>OAuth Error</h3>
           <p>Error: ${error || 'Missing required parameters (code or state)'}</p>
           <script>
+            var errMsg = "${error || 'missing_params'}";
+            try { localStorage.setItem("oauth_result", JSON.stringify({ type: "oauth_error", error: errMsg, ts: Date.now() })); } catch(e) {}
             if (window.opener) {
-              window.opener.postMessage({ type: "oauth_error", error: "${error || 'missing_params'}" }, "*");
-              setTimeout(() => window.close(), 1000);
+              try { window.opener.postMessage({ type: "oauth_error", error: errMsg }, "*"); } catch(e) {}
             }
+            setTimeout(function() { window.close(); }, 1000);
           </script>
         </body>
         </html>
@@ -1130,16 +1200,13 @@ http.route({
           <h3>✅ Authorization Successful!</h3>
           <p>This window will close automatically...</p>
           <script>
-            console.log("[OAuth Callback Page] Sending success message to opener");
+            // Write to localStorage as a fallback for when window.opener is null
+            // (happens when OAuth provider redirects through its own pages, breaking opener ref)
+            try { localStorage.setItem("oauth_result", JSON.stringify({ type: "oauth_success", ts: Date.now() })); } catch(e) {}
             if (window.opener) {
-              window.opener.postMessage({ type: "oauth_success" }, "*");
-              setTimeout(() => {
-                console.log("[OAuth Callback Page] Closing window");
-                window.close();
-              }, 500);
-            } else {
-              console.error("[OAuth Callback Page] No window.opener found!");
+              try { window.opener.postMessage({ type: "oauth_success" }, "*"); } catch(e) {}
             }
+            setTimeout(function() { window.close(); }, 500);
           </script>
         </body>
         </html>
@@ -1161,11 +1228,11 @@ http.route({
           <script>
             var errorMsg = decodeURIComponent("${safeError}");
             document.getElementById("err").textContent = errorMsg;
-            console.error("[OAuth Callback] Error:", errorMsg);
+            try { localStorage.setItem("oauth_result", JSON.stringify({ type: "oauth_error", error: errorMsg, ts: Date.now() })); } catch(e) {}
             if (window.opener) {
-              window.opener.postMessage({ type: "oauth_error", error: errorMsg }, "*");
-              setTimeout(function() { window.close(); }, 2000);
+              try { window.opener.postMessage({ type: "oauth_error", error: errorMsg }, "*"); } catch(e) {}
             }
+            setTimeout(function() { window.close(); }, 2000);
           </script>
         </body>
         </html>
@@ -1391,6 +1458,25 @@ http.route({
 });
 
 http.route({ path: "/api/figma-plugin/push", method: "OPTIONS", handler: optionsHandler() });
+
+// POST /api/figma-plugin/replace — Agent pushes a refined design spec to replace an existing frame
+http.route({
+  path: "/api/figma-plugin/replace",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const { createdBy, fileKey, label, spec, replaceFrameName } = body;
+    if (!createdBy || !fileKey || !label || !spec || !replaceFrameName) {
+      return new Response(JSON.stringify({ error: "createdBy, fileKey, label, spec, and replaceFrameName are required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    const result = await ctx.runMutation(api.figmaPlugin.pushReplace, { createdBy, fileKey, label, spec, replaceFrameName });
+    return new Response(JSON.stringify(result), { status: 201, headers: corsHeaders() });
+  }),
+});
+
+http.route({ path: "/api/figma-plugin/replace", method: "OPTIONS", handler: optionsHandler() });
 
 // GET /api/figma-plugin/poll?fileKey=xxx — Plugin polls for next pending command
 http.route({

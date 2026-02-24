@@ -28,7 +28,7 @@ const TYPE_FILTERS = [
 ] as const;
 type TypeFilter = (typeof TYPE_FILTERS)[number];
 
-const AGENTS: AgentName[] = ["Kaze", "Scout", "Forge", "Ghost"];
+const AGENTS: AgentName[] = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"];
 
 export default function MemoryBank() {
   const navigate = useNavigate();

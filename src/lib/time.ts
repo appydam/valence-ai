@@ -1,4 +1,5 @@
 export function getRelativeTime(timestamp: number): string {
+  if (!timestamp || timestamp === 0) return "Never";
   const diff = Date.now() - timestamp;
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";

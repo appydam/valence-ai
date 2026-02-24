@@ -36,7 +36,7 @@ export const send = mutation({
 
     // When a human sends a message to an agent, wake that agent up
     if (args.from === "human") {
-      const agentNames = ["Kaze", "Scout", "Forge", "Ghost"];
+      const agentNames = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"];
       if (agentNames.includes(args.to)) {
         await ctx.scheduler.runAfter(0, internal.messageActions.wakeupForMessage, {
           agentName: args.to,

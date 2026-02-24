@@ -7,10 +7,11 @@ const agentNameValidator = v.union(
   v.literal("Kaze"),
   v.literal("Scout"),
   v.literal("Forge"),
-  v.literal("Ghost")
+  v.literal("Ghost"),
+  v.literal("Sentinel")
 );
 
-type AgentName = "Kaze" | "Scout" | "Forge" | "Ghost";
+type AgentName = "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel";
 
 // ── Queries ────────────────────────────────────────────────────
 
