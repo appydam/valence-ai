@@ -158,4 +158,10 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
 
   // Sales Enablement
   "mindtickle":         LOGO_MINDTICKLE,
+
+  // Social Media
+  "instagram":          si("instagram", "E4405F"),
+  "twitter-x":          si("x", "ffffff"),
+  "tiktok":             si("tiktok", "ffffff"),
+  "youtube":            si("youtube", "FF0000"),
 };

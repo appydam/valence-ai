@@ -694,6 +694,18 @@ export default defineSchema({
     .index("by_status", ["status"]),
 
   // Figma Plugin command queue — agents push design specs, plugin polls and executes
+  pilotInterest: defineTable({
+    name: v.string(),
+    email: v.string(),
+    company: v.string(),
+    role: v.optional(v.string()),
+    useCase: v.optional(v.string()),
+    submittedAt: v.number(),
+    emailSent: v.boolean(),
+  })
+    .index("by_email", ["email"])
+    .index("by_submitted", ["submittedAt"]),
+
   figmaPluginCommands: defineTable({
     createdBy: v.string(),
     fileKey: v.string(),

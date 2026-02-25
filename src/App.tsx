@@ -42,6 +42,7 @@ const App = () => (
           <Routes>
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/dev/login" element={<Login />} />
             <Route path="*" element={<Navigate to="/landing" replace />} />
           </Routes>
         </BrowserRouter>

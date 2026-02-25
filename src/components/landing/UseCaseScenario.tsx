@@ -23,6 +23,7 @@ interface UseCaseScenarioProps {
   result: string;
   metric: string;
   accentColor: string;
+  hoursSaved?: string;
 }
 
 function ToolChipEl({ label, color }: { label: string; color: string }) {
@@ -48,6 +49,7 @@ export function UseCaseScenario({
   result,
   metric,
   accentColor,
+  hoursSaved,
 }: UseCaseScenarioProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
@@ -178,18 +180,9 @@ export function UseCaseScenario({
         }}
       >
         <span className="mt-0.5 flex-shrink-0">✓</span>
-        <div>
-          <span className="font-semibold">{result}</span>
-          {metric && (
-            <span
-              className="ml-2 font-mono text-[10px] px-1.5 py-0.5 rounded"
-              style={{ background: `${accentColor}15` }}
-            >
-              {metric}
-            </span>
-          )}
-        </div>
+        <span className="font-semibold">{result}</span>
       </motion.div>
+
 
       {/* Hover shimmer */}
       <div

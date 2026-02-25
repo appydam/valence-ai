@@ -1,6 +1,7 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { PilotModal } from "@/components/landing/PilotModal";
 import { HeroParticleField } from "@/components/landing/HeroParticleField";
 import { TypingCommand } from "@/components/landing/TypingCommand";
 import { StatsBar } from "@/components/landing/StatsBar";
@@ -60,7 +61,7 @@ function RevealSection({ children, className }: { children: React.ReactNode; cla
 }
 
 // ─── Navigation ─────────────────────────────────────────────────────────────
-function LandingNav() {
+function LandingNav({ onPilotClick }: { onPilotClick: () => void }) {
   const { scrollY } = useScroll();
   const navigate = useNavigate();
   const scrolled = useRef(false);
@@ -107,14 +108,8 @@ function LandingNav() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/login")}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5"
-          >
-            Sign In
-          </button>
           <motion.button
-            onClick={() => navigate("/login")}
+            onClick={onPilotClick}
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-all relative overflow-hidden"
@@ -123,7 +118,7 @@ function LandingNav() {
               color: "hsl(var(--primary-foreground))",
             }}
           >
-            Get Started →
+            Request Access →
           </motion.button>
         </div>
       </div>
@@ -405,10 +400,10 @@ function SavingsVisual() {
         <div className="text-sm text-muted-foreground line-through decoration-red-400/60">$2,500/mo</div>
         <div className="text-xs text-muted-foreground/50 mb-3">Paragon's monthly cost</div>
         <div className="text-5xl font-bold animate-neon-flicker" style={{ color: "hsl(142, 71%, 45%)" }}>
-          $0
+          Included
         </div>
-        <div className="text-sm text-muted-foreground">/month with Mission Control</div>
-        <div className="text-xs text-green-400/60 mt-1">Save $30,000+ per year</div>
+        <div className="text-sm text-muted-foreground">in your Valence AI pilot</div>
+        <div className="text-xs text-green-400/60 mt-1">Save $30,000+ per year vs. Paragon</div>
       </div>
       <div className="space-y-2">
         {[
@@ -427,38 +422,172 @@ function SavingsVisual() {
 }
 
 function WebhookVisual() {
-  const flow = [
-    { label: "GitHub push", emoji: "🐙", color: "hsl(217, 91%, 60%)" },
-    { label: "Sentinel detects", emoji: "🔍", color: "hsl(330, 81%, 60%)" },
-    { label: "Kaze assigns task", emoji: "🌀", color: "hsl(217, 91%, 60%)" },
-    { label: "Forge reviews PR", emoji: "🔨", color: "hsl(38, 92%, 50%)" },
+  const steps = [
+    {
+      time: "09:14:02",
+      source: "GitHub",
+      event: "push → main",
+      detail: "847 lines · 4 files changed",
+      agent: null as string | null,
+      color: "hsl(217, 91%, 60%)",
+      logo: "https://cdn.simpleicons.org/github",
+    },
+    {
+      time: "09:14:03",
+      source: "Sentinel",
+      event: "Diff scanned",
+      detail: "2 deps flagged · CVE check triggered",
+      agent: "🔍",
+      color: "hsl(330, 81%, 60%)",
+      logo: null as string | null,
+    },
+    {
+      time: "09:14:04",
+      source: "Kaze",
+      event: "Task IFR-291 created",
+      detail: "priority=high · assigned → Forge + Scout",
+      agent: "🌀",
+      color: "hsl(217, 91%, 60%)",
+      logo: null as string | null,
+    },
+    {
+      time: "09:14:07",
+      source: "Forge + Scout",
+      event: "Review running",
+      detail: "Security · perf · OSS CVE scan in parallel",
+      agent: "🔨",
+      color: "hsl(38, 92%, 50%)",
+      logo: null as string | null,
+    },
+    {
+      time: "09:14:19",
+      source: "Ghost",
+      event: "PR comment posted",
+      detail: "3 issues filed · changelog drafted → Notion",
+      agent: "👻",
+      color: "hsl(258, 90%, 66%)",
+      logo: null as string | null,
+    },
+    {
+      time: "09:14:22",
+      source: "Sentinel",
+      event: "PR approved ✓",
+      detail: "Team notified via Slack",
+      agent: "🔍",
+      color: "hsl(330, 81%, 60%)",
+      logo: null as string | null,
+    },
   ];
 
   return (
-    <div className="space-y-3 w-full max-w-sm">
-      {flow.map((item, i) => (
-        <div key={item.label} className="relative">
-          <div
-            className="flex items-center gap-3 px-4 py-3 rounded-xl"
+    <div
+      className="w-full max-w-lg rounded-2xl overflow-hidden font-mono"
+      style={{
+        background: "hsl(240 25% 5%)",
+        border: "1px solid hsl(217 91% 60% / 0.2)",
+        boxShadow: "0 0 40px hsl(217 91% 60% / 0.07), 0 24px 60px hsl(240 33% 3% / 0.8)",
+      }}
+    >
+      {/* Terminal header */}
+      <div
+        className="flex items-center gap-2 px-4 py-2.5"
+        style={{ background: "hsl(240 25% 7%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
+      >
+        <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+        <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+        <span className="ml-2 text-[10px] text-muted-foreground/40 tracking-widest">LIVE EVENT STREAM</span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+          <span className="text-[9px] text-red-400/70 tracking-widest">RECORDING</span>
+        </div>
+      </div>
+
+      {/* Trigger pill */}
+      <div className="px-4 pt-3 pb-2">
+        <div
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs"
+          style={{
+            background: "hsl(217 91% 60% / 0.08)",
+            border: "1px solid hsl(217 91% 60% / 0.3)",
+          }}
+        >
+          <img src="https://cdn.simpleicons.org/github" alt="GitHub" width="13" height="13" style={{ filter: "brightness(0) invert(1)", opacity: 0.8 }} />
+          <span style={{ color: "hsl(217, 91%, 70%)" }}>webhook received</span>
+          <span className="text-muted-foreground/40 mx-1">·</span>
+          <span className="text-muted-foreground/60">github.push on main</span>
+          <div className="ml-auto text-[10px] text-muted-foreground/30">09:14:02</div>
+        </div>
+      </div>
+
+      {/* Event rows */}
+      <div className="px-4 pb-4 space-y-px">
+        {steps.map((step, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -12 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.12, type: "spring", stiffness: 200, damping: 22 }}
+            className="flex items-start gap-3 px-3 py-2 rounded-lg group"
             style={{
-              background: `${item.color.replace("hsl(", "hsla(").replace(")", ", 0.06)")}`,
-              border: `1px solid ${item.color.replace("hsl(", "hsla(").replace(")", ", 0.25)")}`,
+              background: i === steps.length - 1
+                ? step.color.replace("hsl(", "hsla(").replace(")", ", 0.08)")
+                : "transparent",
+              border: i === steps.length - 1
+                ? `1px solid ${step.color.replace("hsl(", "hsla(").replace(")", ", 0.25)")}`
+                : "1px solid transparent",
             }}
           >
-            <span>{item.emoji}</span>
-            <span className="text-xs text-foreground/80">{item.label}</span>
-            <div
-              className="ml-auto w-1.5 h-1.5 rounded-full animate-data-packet-rise"
-              style={{ background: item.color, animationDelay: `${i * 0.4}s` }}
-            />
-          </div>
-          {i < flow.length - 1 && (
-            <div className="flex justify-center py-0.5">
-              <div className="text-muted-foreground/20 text-xs">↓</div>
+            {/* Time */}
+            <span className="text-[10px] text-muted-foreground/25 w-14 flex-shrink-0 pt-0.5">{step.time}</span>
+
+            {/* Dot + connector line */}
+            <div className="flex flex-col items-center flex-shrink-0 pt-[5px]">
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ background: step.color, boxShadow: `0 0 6px ${step.color}` }}
+              />
+              {i < steps.length - 1 && (
+                <div
+                  className="w-px mt-1"
+                  style={{ background: step.color.replace("hsl(", "hsla(").replace(")", ", 0.15)"), height: 18 }}
+                />
+              )}
             </div>
-          )}
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {step.agent && <span className="text-[11px]">{step.agent}</span>}
+                {step.logo && (
+                  <img src={step.logo} alt={step.source} width="11" height="11"
+                    style={{ filter: "brightness(0) invert(1)", opacity: 0.7 }} />
+                )}
+                <span className="text-xs font-semibold" style={{ color: step.color }}>{step.source}</span>
+                <span className="text-[11px] text-muted-foreground/60">→ {step.event}</span>
+              </div>
+              <div className="text-[10px] text-muted-foreground/35 mt-0.5">{step.detail}</div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div
+        className="px-4 py-2.5 flex items-center gap-3 text-[10px] text-muted-foreground/30"
+        style={{ borderTop: "1px solid hsl(var(--border) / 0.3)" }}
+      >
+        <span>Duration: <span className="text-muted-foreground/55">20s</span></span>
+        <span>·</span>
+        <span>4 agents</span>
+        <span>·</span>
+        <span>GitHub · Linear · Notion · Slack</span>
+        <div className="ml-auto flex items-center gap-1">
+          <div className="w-1 h-1 rounded-full bg-green-400/60" />
+          <span className="text-green-400/50">live</span>
         </div>
-      ))}
+      </div>
     </div>
   );
 }
@@ -468,148 +597,145 @@ const AGENTS: AgentName[] = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"];
 
 const USE_CASES = [
   {
-    title: "AlgoHouse Revenue Engine",
-    icon: "💹",
-    trigger: "Build AlgoHouse's competitor intelligence brief + 50-firm pipeline",
+    title: "Close pipeline 3× faster",
+    icon: "🚀",
+    trigger: "Research our top 50 Salesforce leads and book demos this week",
     accentColor: "hsl(217, 91%, 60%)",
-    metric: "6 days · $240k pipeline",
+    metric: "48 hrs · 12 demos booked · saves 14 hrs/week",
+    hoursSaved: "14 hrs/week saved · replaces 1 SDR",
     steps: [
       {
         agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Breaks mission into 12 subtasks",
-        tools: [{ label: "Linear", color: "#5E6AD2" }, { label: "Slack", color: "#4A154B" }],
-        detail: "Created 12 issues · Posted to #growth",
+        action: "Pulls 50 open leads from Salesforce",
+        tools: [{ label: "Salesforce", color: "#00A1E0" }, { label: "Slack", color: "#4A154B" }],
+        detail: "50 leads loaded · assigned to Scout + Ghost",
       },
       {
         agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
-        action: "Pulls Kaiko pricing from 3 sources",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }, { label: "Sheets", color: "#34A853" }, { label: "Notion", color: "#8B8B8B" }],
-        detail: "Kaiko $28.5k avg deal · 200+ clients",
-      },
-      {
-        agent: "Forge", emoji: "🔨", color: "hsl(38, 92%, 50%)",
-        action: "Builds benchmark notebook, pushes repo",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }, { label: "Linear", color: "#5E6AD2" }],
-        detail: "Pushed 847 lines benchmark.ipynb",
+        action: "Researches each account via Gong + HubSpot history",
+        tools: [{ label: "Gong", color: "#9B59B6" }, { label: "HubSpot", color: "#FF7A59" }, { label: "Sheets", color: "#34A853" }],
+        detail: "12 high-intent signals · 3 accounts re-opened deals",
       },
       {
         agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
-        action: "Writes 10 personalized outreach emails",
-        tools: [{ label: "Gmail", color: "#EA4335" }, { label: "HubSpot", color: "#FF7A59" }, { label: "Notion", color: "#8B8B8B" }],
-        detail: "10 drafts · 4,200-word report",
-      },
-      {
-        agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
-        action: "QA reviews all — rejects 3 emails",
-        tools: [],
-        detail: "Report: PASS 9.1/10 · Emails: REJECTED 3",
-      },
-      {
-        agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
-        action: "Reworks rejected emails (iteration 2)",
-        tools: [{ label: "Gmail", color: "#EA4335" }],
-        detail: "Sentinel re-review: PASS 8.9/10",
-      },
-      {
-        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Pipeline activated · 3 demos booked",
-        tools: [{ label: "HubSpot", color: "#FF7A59" }, { label: "Calendar", color: "#4285F4" }, { label: "Slack", color: "#4A154B" }],
-        detail: "$240k pipeline qualified",
-      },
-    ],
-    result: "Revenue engine live. 50 prospects scored. 3 demos booked.",
-  },
-  {
-    title: "MiCA Compliance Sprint",
-    icon: "⚖️",
-    trigger: "EU deadline in 47 days — get us MiCA Article 76 compliant",
-    accentColor: "hsl(160, 84%, 39%)",
-    metric: "47 days · $15k contract",
-    steps: [
-      {
-        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Creates compliance roadmap",
-        tools: [{ label: "Notion", color: "#8B8B8B" }, { label: "Linear", color: "#5E6AD2" }],
-        detail: "14 milestones · assigned to squad",
-      },
-      {
-        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
-        action: "Maps ESMA requirements to data gaps",
-        tools: [{ label: "Notion", color: "#8B8B8B" }, { label: "Sheets", color: "#34A853" }],
-        detail: "23 gaps identified across 4 domains",
-      },
-      {
-        agent: "Forge", emoji: "🔨", color: "hsl(38, 92%, 50%)",
-        action: "Builds MiCA endpoint mapping spec",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }, { label: "Jira", color: "#0052CC" }],
-        detail: "Spec PR merged, 6 endpoints mapped",
-      },
-      {
-        agent: "Forge", emoji: "🔨", color: "hsl(38, 92%, 50%)",
-        action: "Creates Stripe compliance pricing plans",
-        tools: [{ label: "Stripe", color: "#6772E5" }],
-        detail: "3 compliance tiers created",
-      },
-      {
-        agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
-        action: "Writes CCO outreach + one-pager",
+        action: "Writes 50 hyper-personalized outreach emails",
         tools: [{ label: "Gmail", color: "#EA4335" }, { label: "HubSpot", color: "#FF7A59" }],
-        detail: "12 CCOs targeted · one-pager approved",
+        detail: "Referenced last Gong call + deal history · 50 drafts",
       },
-      {
-        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Activates 2 pilot customers",
-        tools: [{ label: "Intercom", color: "#286EFA" }, { label: "Calendar", color: "#4285F4" }, { label: "Slack", color: "#4A154B" }],
-        detail: "$15k contract signed · pilots onboarded",
-      },
-    ],
-    result: "Compliance tier live. 2 pilots activated. First contract signed.",
-  },
-  {
-    title: "GitHub Push → Code Review",
-    icon: "⚡",
-    trigger: "Webhook: github.push event on main branch (847 lines)",
-    accentColor: "hsl(38, 92%, 50%)",
-    metric: "8 min · 3 issues filed",
-    steps: [
       {
         agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
-        action: "Detects push, reads diff (847 lines)",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }],
-        detail: "4 files changed · 2 new deps detected",
-      },
-      {
-        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Creates review task, priority=high",
-        tools: [{ label: "Linear", color: "#5E6AD2" }, { label: "Jira", color: "#0052CC" }],
-        detail: "Review task IFR-291 created",
-      },
-      {
-        agent: "Forge", emoji: "🔨", color: "hsl(38, 92%, 50%)",
-        action: "Deep review: security, perf, style",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }],
-        detail: "3 issues found · 2 critical",
-      },
-      {
-        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
-        action: "Checks OSS vulnerabilities in new deps",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }],
-        detail: "1 CVE found in lodash@4.17.20",
+        action: "Reviews emails — rejects 8 generic ones",
+        tools: [],
+        detail: "Quality gate: PASS 42 · REJECTED 8",
       },
       {
         agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
-        action: "Writes PR comment + changelog draft",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }, { label: "Notion", color: "#8B8B8B" }],
-        detail: "Detailed review comment posted",
+        action: "Rewrites rejected 8 · MindTickle playbook applied",
+        tools: [{ label: "Gmail", color: "#EA4335" }, { label: "MindTickle", color: "#E44D26" }],
+        detail: "Sentinel re-check: all 50 PASS",
+      },
+      {
+        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
+        action: "Sends emails · books demos · logs in Salesforce",
+        tools: [{ label: "Salesforce", color: "#00A1E0" }, { label: "Calendar", color: "#4285F4" }, { label: "Zoom", color: "#2D8CFF" }],
+        detail: "12 demos booked · Zoom links sent · CRM updated",
+      },
+    ],
+    result: "50 personalized emails sent. 12 demos booked. Salesforce + Zoom synced.",
+  },
+  {
+    title: "Weekly CEO briefing, on autopilot",
+    icon: "📊",
+    trigger: "Every Friday 6pm: prepare the Monday morning executive briefing",
+    accentColor: "hsl(38, 92%, 50%)",
+    metric: "Weekly · saves 4 hrs every Friday",
+    hoursSaved: "4 hrs/week saved · 200 hrs/year per company",
+    steps: [
+      {
+        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
+        action: "Pulls revenue + pipeline from Stripe & Salesforce",
+        tools: [{ label: "Stripe", color: "#6772E5" }, { label: "Salesforce", color: "#00A1E0" }],
+        detail: "$284k MRR · 12 deals closing · 3 churn risks flagged",
+      },
+      {
+        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
+        action: "Pulls support health from Zendesk + Intercom",
+        tools: [{ label: "Zendesk", color: "#03363D" }, { label: "Intercom", color: "#286EFA" }],
+        detail: "CSAT 4.6/5 · 8 critical tickets · avg 2.1hr response",
+      },
+      {
+        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
+        action: "Pulls ad spend + ROI from Meta Ads + Google Ads",
+        tools: [{ label: "Meta Ads", color: "#1877F2" }, { label: "Google Ads", color: "#4285F4" }, { label: "Looker", color: "#4285F4" }],
+        detail: "$42k spend · 3.2× ROAS · CPL down 18% WoW",
+      },
+      {
+        agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
+        action: "Writes executive brief with highlights + risks",
+        tools: [{ label: "Notion", color: "#8B8B8B" }, { label: "Sheets", color: "#34A853" }],
+        detail: "1,200-word brief · 3 risks · 2 opportunities flagged",
       },
       {
         agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
-        action: "Final gate: APPROVED with 3 comments",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }, { label: "Slack", color: "#4A154B" }],
-        detail: "PR approved · team notified",
+        action: "Fact-checks every number against raw source data",
+        tools: [],
+        detail: "All figures verified · 1 discrepancy corrected",
+      },
+      {
+        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
+        action: "Delivers brief via Slack + Notion + books review",
+        tools: [{ label: "Slack", color: "#4A154B" }, { label: "Notion", color: "#8B8B8B" }, { label: "Calendar", color: "#4285F4" }],
+        detail: "Brief live by 7pm Friday · review booked Monday 9am",
       },
     ],
-    result: "Full review complete in 8 min. 3 issues filed. PR approved.",
+    result: "Board-ready brief every Monday. No ops person manually pulling numbers ever again.",
+  },
+  {
+    title: "New hire fully set up before day 1",
+    icon: "🎯",
+    trigger: "Offer accepted in Greenhouse — onboard Alex Chen, Sales Engineer",
+    accentColor: "hsl(160, 84%, 39%)",
+    metric: "Day 0 · saves 6 hrs per hire",
+    hoursSaved: "6 hrs/hire saved · zero IT tickets",
+    steps: [
+      {
+        agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
+        action: "Detects offer accepted in Greenhouse",
+        tools: [{ label: "Greenhouse", color: "#24A47F" }, { label: "Slack", color: "#4A154B" }],
+        detail: "Role: Sales Engineer · Start: March 3 · #hr-ops notified",
+      },
+      {
+        agent: "Forge", emoji: "🔨", color: "hsl(38, 92%, 50%)",
+        action: "Provisions GitHub, Notion, Jira, Confluence access",
+        tools: [{ label: "GitHub", color: "#e2e8f0" }, { label: "Notion", color: "#8B8B8B" }, { label: "Jira", color: "#0052CC" }, { label: "Confluence", color: "#0052CC" }],
+        detail: "4 accounts created · permissions set by role template",
+      },
+      {
+        agent: "Forge", emoji: "🔨", color: "hsl(38, 92%, 50%)",
+        action: "Sets up payroll + benefits in Gusto + Workday",
+        tools: [{ label: "Gusto", color: "#FB4F14" }, { label: "Workday", color: "#F5820D" }],
+        detail: "Payroll enrolled · benefits portal invite sent",
+      },
+      {
+        agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
+        action: "Sends personalized welcome email + 30/60/90 plan",
+        tools: [{ label: "Gmail", color: "#EA4335" }, { label: "Notion", color: "#8B8B8B" }],
+        detail: "Role-specific plan drafted · buddy assigned",
+      },
+      {
+        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
+        action: "Books week 1 intro meetings with team",
+        tools: [{ label: "Calendar", color: "#4285F4" }, { label: "Zoom", color: "#2D8CFF" }],
+        detail: "8 intros scheduled · manager 1:1 booked day 1",
+      },
+      {
+        agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
+        action: "Confirms all systems live · logs in ServiceNow",
+        tools: [{ label: "ServiceNow", color: "#62D84E" }, { label: "Slack", color: "#4A154B" }],
+        detail: "All 6 systems green · HR confirmed · zero IT tickets",
+      },
+    ],
+    result: "New hire fully onboarded before day 1. Zero IT tickets. HR touched nothing.",
   },
 ];
 
@@ -618,10 +744,12 @@ export default function Landing() {
   const { scrollY } = useScroll();
   const heroParallax = useTransform(scrollY, [0, 600], [0, prefersReduced ? 0 : -80]);
   const navigate = useNavigate();
+  const [pilotOpen, setPilotOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      <LandingNav />
+      <PilotModal open={pilotOpen} onClose={() => setPilotOpen(false)} />
+      <LandingNav onPilotClick={() => setPilotOpen(true)} />
 
       {/* ── SECTION 1: HERO ── */}
       <section className="relative overflow-hidden pt-14 pb-0">
@@ -663,7 +791,7 @@ export default function Landing() {
 
         {/* Hero content — two-column on large screens */}
         <div className="relative z-10 max-w-7xl mx-auto px-6">
-          <div className="flex flex-col lg:flex-row items-center gap-12 pt-16 pb-0">
+          <div className="flex flex-col lg:flex-row items-center gap-12 pt-16 pb-8">
 
             {/* Left: Text content */}
             <div className="flex-1 flex flex-col items-start gap-6 text-left max-w-xl">
@@ -685,7 +813,7 @@ export default function Landing() {
 
               {/* Headline */}
               <motion.h1
-                className="text-5xl sm:text-6xl font-bold leading-[1.05] tracking-tight"
+                className="text-5xl sm:text-6xl font-bold leading-[1.08] tracking-tight"
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -693,9 +821,27 @@ export default function Landing() {
                   visible: { transition: { staggerChildren: 0.07, delayChildren: 0.3 } },
                 }}
               >
-                {["Your", "AI"].map((word, i) => (
+                {/* Line 1: "Deploy Your" */}
+                {["Deploy", "Your"].map((word, i) => (
                   <motion.span
-                    key={i}
+                    key={`l1-${i}`}
+                    className="inline-block mr-[0.25em]"
+                    variants={{
+                      hidden: { opacity: 0, y: 40, filter: "blur(8px)" },
+                      visible: {
+                        opacity: 1, y: 0, filter: "blur(0px)",
+                        transition: { type: "spring", stiffness: 120, damping: 18 },
+                      },
+                    }}
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+                <br />
+                {/* Line 2: "Autonomous AI" — gradient highlight on Autonomous */}
+                {["Autonomous", "AI"].map((word, i) => (
+                  <motion.span
+                    key={`l2-${i}`}
                     className="inline-block mr-[0.25em]"
                     variants={{
                       hidden: { opacity: 0, y: 40, filter: "blur(8px)" },
@@ -705,9 +851,15 @@ export default function Landing() {
                       },
                     }}
                     style={
-                      word === "AI"
+                      word === "Autonomous"
                         ? {
-                            background: "linear-gradient(90deg, hsl(217,91%,60%), hsl(258,90%,66%))",
+                            background: "linear-gradient(90deg, hsl(217,91%,65%), hsl(258,90%,70%), hsl(217,91%,60%))",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                          }
+                        : word === "AI"
+                        ? {
+                            background: "linear-gradient(90deg, hsl(258,90%,66%), hsl(330,81%,60%))",
                             WebkitBackgroundClip: "text",
                             WebkitTextFillColor: "transparent",
                           }
@@ -718,37 +870,19 @@ export default function Landing() {
                   </motion.span>
                 ))}
                 <br />
-                {["Workforce,"].map((word, i) => (
-                  <motion.span
-                    key={i}
-                    className="inline-block mr-[0.25em]"
-                    variants={{
-                      hidden: { opacity: 0, y: 40, filter: "blur(8px)" },
-                      visible: {
-                        opacity: 1, y: 0, filter: "blur(0px)",
-                        transition: { type: "spring", stiffness: 120, damping: 18 },
-                      },
-                    }}
-                  >
-                    {word}
-                  </motion.span>
-                ))}
-                <br />
-                {["Reporting", "for", "Duty."].map((word, i) => (
-                  <motion.span
-                    key={i}
-                    className="inline-block mr-[0.25em]"
-                    variants={{
-                      hidden: { opacity: 0, y: 40, filter: "blur(8px)" },
-                      visible: {
-                        opacity: 1, y: 0, filter: "blur(0px)",
-                        transition: { type: "spring", stiffness: 120, damping: 18 },
-                      },
-                    }}
-                  >
-                    {word}
-                  </motion.span>
-                ))}
+                {/* Line 3: "Workforce." */}
+                <motion.span
+                  className="inline-block"
+                  variants={{
+                    hidden: { opacity: 0, y: 40, filter: "blur(8px)" },
+                    visible: {
+                      opacity: 1, y: 0, filter: "blur(0px)",
+                      transition: { type: "spring", stiffness: 120, damping: 18 },
+                    },
+                  }}
+                >
+                  Workforce.
+                </motion.span>
               </motion.h1>
 
               {/* Subheadline */}
@@ -783,7 +917,7 @@ export default function Landing() {
                 className="flex items-center gap-4"
               >
                 <motion.button
-                  onClick={() => navigate("/login")}
+                  onClick={() => setPilotOpen(true)}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
                   className="px-6 py-3 rounded-xl text-sm font-bold tracking-wide relative overflow-hidden"
@@ -793,7 +927,7 @@ export default function Landing() {
                     boxShadow: "0 0 24px hsl(var(--primary) / 0.35)",
                   }}
                 >
-                  <span className="relative z-10">Get Started Free →</span>
+                  <span className="relative z-10">Request Early Access →</span>
                   <div
                     className="absolute inset-0 animate-hud-shimmer pointer-events-none"
                     style={{
@@ -831,16 +965,17 @@ export default function Landing() {
                 <span>·</span>
                 <span>847 API calls in last hour</span>
                 <span>·</span>
-                <span>$0 platform cost</span>
+                <span>Selective pilot program</span>
               </motion.div>
             </div>
 
-            {/* Right: Product screenshot */}
+            {/* Right: Product screenshot + floating chips */}
             <motion.div
               className="flex-1 relative w-full max-w-2xl"
               initial={{ opacity: 0, x: 60, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={{ delay: 0.6, duration: 0.9, type: "spring", stiffness: 70, damping: 20 }}
+              style={{ padding: "48px 56px" }}
             >
               {/* Glow behind screenshot */}
               <div
@@ -888,37 +1023,119 @@ export default function Landing() {
                 />
               </div>
 
-              {/* Floating stat chips */}
+              {/* ── Floating chips — outside the screenshot frame ── */}
+
+              {/* Top-left corner */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.2 }}
-                className="absolute -bottom-4 -left-4 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono"
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.2, type: "spring", stiffness: 120, damping: 18 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                className="absolute top-2 left-14 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
                 style={{
-                  background: "hsl(240 25% 7%)",
-                  border: "1px solid hsl(160 84% 39% / 0.4)",
+                  background: "hsl(240 25% 7% / 0.97)",
+                  border: "1px solid hsl(160 84% 39% / 0.5)",
                   color: "hsl(160, 84%, 39%)",
-                  boxShadow: "0 4px 20px hsl(240 33% 3% / 0.8)",
+                  boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 16px hsl(160 84% 39% / 0.12)",
+                  backdropFilter: "blur(10px)",
+                  animation: "float-a 4s ease-in-out infinite",
                 }}
               >
-                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                Kaze: Mission assigned · 4 agents active
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+                🌀 Kaze: 5 agents active
               </motion.div>
 
+              {/* Top-right corner */}
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.4 }}
-                className="absolute -top-4 -right-4 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono"
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.4, type: "spring", stiffness: 120, damping: 18 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                className="absolute top-2 right-0 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
                 style={{
-                  background: "hsl(240 25% 7%)",
-                  border: "1px solid hsl(38 92% 50% / 0.4)",
+                  background: "hsl(240 25% 7% / 0.97)",
+                  border: "1px solid hsl(38 92% 50% / 0.5)",
                   color: "hsl(38, 92%, 50%)",
-                  boxShadow: "0 4px 20px hsl(240 33% 3% / 0.8)",
+                  boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 16px hsl(38 92% 50% / 0.12)",
+                  backdropFilter: "blur(10px)",
+                  animation: "float-b 5s ease-in-out infinite",
                 }}
               >
                 🔨 Forge: PR reviewed · merged
               </motion.div>
+
+              {/* Bottom-left corner */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.65, type: "spring", stiffness: 120, damping: 18 }}
+                whileHover={{ scale: 1.05, y: 2 }}
+                className="absolute bottom-2 left-0 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
+                style={{
+                  background: "hsl(240 25% 7% / 0.97)",
+                  border: "1px solid hsl(258 90% 66% / 0.5)",
+                  color: "hsl(258, 90%, 66%)",
+                  boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 16px hsl(258 90% 66% / 0.12)",
+                  backdropFilter: "blur(10px)",
+                  animation: "float-a 6s ease-in-out infinite 1s",
+                }}
+              >
+                <img src="https://cdn.simpleicons.org/figma" alt="Figma" width="12" height="12" style={{ filter: "brightness(0) invert(1)", opacity: 0.85, flexShrink: 0 }} />
+                14 mobile screen designed in Figma
+              </motion.div>
+
+              {/* Bottom-right corner — two stacked chips */}
+              <div className="absolute bottom-2 right-0 flex flex-col items-end gap-2">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 1.9, type: "spring", stiffness: 120, damping: 18 }}
+                  whileHover={{ scale: 1.05, y: 2 }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
+                  style={{
+                    background: "hsl(240 25% 7% / 0.97)",
+                    border: "1px solid hsl(38 92% 50% / 0.45)",
+                    color: "hsl(38, 92%, 50%)",
+                    boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 14px hsl(38 92% 50% / 0.1)",
+                    backdropFilter: "blur(10px)",
+                    animation: "float-b 4.5s ease-in-out infinite 0.5s",
+                  }}
+                >
+                  <img src="https://cdn.simpleicons.org/hubspot" alt="HubSpot" width="12" height="12" style={{ filter: "brightness(0) invert(1)", opacity: 0.85, flexShrink: 0 }} />
+                  $240k pipeline · 12 deals
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 2.1, type: "spring", stiffness: 120, damping: 18 }}
+                  whileHover={{ scale: 1.05, y: 2 }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
+                  style={{
+                    background: "hsl(240 25% 7% / 0.97)",
+                    border: "1px solid hsl(217 91% 60% / 0.45)",
+                    color: "hsl(217, 91%, 60%)",
+                    boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 14px hsl(217 91% 60% / 0.1)",
+                    backdropFilter: "blur(10px)",
+                    animation: "float-a 5.5s ease-in-out infinite 2s",
+                  }}
+                >
+                  <img src="https://cdn.simpleicons.org/googlecalendar" alt="Calendar" width="14" height="14" style={{ filter: "brightness(0) invert(1)", opacity: 0.85, flexShrink: 0 }} />
+                  5 demo calls booked, invites sent
+                </motion.div>
+              </div>
+
+              {/* Keyframes */}
+              <style>{`
+                @keyframes float-a {
+                  0%, 100% { transform: translateY(0px); }
+                  50% { transform: translateY(-5px); }
+                }
+                @keyframes float-b {
+                  0%, 100% { transform: translateY(0px); }
+                  50% { transform: translateY(4px); }
+                }
+              `}</style>
             </motion.div>
           </div>
 
@@ -963,7 +1180,131 @@ export default function Landing() {
       {/* ── SECTION 3: STATS BAR ── */}
       <StatsBar />
 
-      {/* ── SECTION 4: LIVE WORKFLOW DEMO ── */}
+      {/* ── SECTION 4: INTEGRATIONS ── */}
+      <section className="py-16 px-6 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <RevealSection className="text-center mb-8 space-y-3">
+            <motion.div variants={itemVariants}>
+              <span
+                className="text-xs font-mono tracking-widest px-2 py-1 rounded"
+                style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
+              >
+                INTEGRATIONS
+              </span>
+            </motion.div>
+            <motion.h2 variants={itemVariants} className="text-4xl md:text-5xl font-bold">
+              Connect Everything
+            </motion.h2>
+            <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              94 integrations ready to connect. 2,400+ API actions in the catalog. Or add any API with AI — paste a URL, we generate the integration.
+            </motion.p>
+          </RevealSection>
+
+          <IntegrationGrid />
+        </div>
+      </section>
+
+      {/* ── SECTION 5: USE CASES ── */}
+      <section className="py-16 px-6">
+        <div className="max-w-7xl mx-auto">
+          <RevealSection className="text-center mb-8 space-y-3">
+            <motion.div variants={itemVariants}>
+              <span
+                className="text-xs font-mono tracking-widest px-2 py-1 rounded"
+                style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
+              >
+                REAL WORKFLOWS
+              </span>
+            </motion.div>
+            <motion.h2 variants={itemVariants} className="text-4xl md:text-5xl font-bold">
+              Complex work, done autonomously.
+            </motion.h2>
+            <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-xl mx-auto">
+              Multi-agent missions with real tool calls — across your entire stack.
+            </motion.p>
+          </RevealSection>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {USE_CASES.map((uc, i) => (
+              <UseCaseScenario
+                key={i}
+                title={uc.title}
+                icon={uc.icon}
+                trigger={uc.trigger}
+                steps={uc.steps}
+                result={uc.result}
+                metric={uc.metric}
+                accentColor={uc.accentColor}
+                hoursSaved={uc.hoursSaved}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECTION 6: FEATURE DEEP DIVES ── */}
+      <section
+        className="py-16 px-6"
+        style={{ background: "linear-gradient(180deg, hsl(240 33% 4%) 0%, hsl(240 33% 3%) 100%)" }}
+      >
+        <div className="max-w-5xl mx-auto space-y-16">
+          <FeatureBlock
+            label="MULTI-AGENT COORDINATION"
+            title="Agents that work as a team, not a chatbot."
+            description="Kaze orchestrates the entire squad. Tasks have dependencies — when Scout finishes research, Ghost automatically receives the deliverables as context. No human copy-pasting."
+            bullets={[
+              "Task dependency graph with automatic chain reactions",
+              "Deliverables from upstream agents injected into downstream context",
+              "Parallel work orchestration — agents work simultaneously",
+              "Quality loops with rejection/rework cycles",
+            ]}
+            visual={<TaskScreenshotVisual />}
+          />
+
+          <FeatureBlock
+            label="EPISODIC MEMORY"
+            title="Agents that learn across every session."
+            description="Every agent builds up episodic memories — API quirks, your preferences, patterns that work. They surface the 10 most relevant memories at each session. Over time, lessons distill into their SOUL file — their evolving identity."
+            bullets={[
+              "8 memory types: api_quirk, preference, pattern, failure, shortcut...",
+              "Relevance scoring by importance + recency + human endorsement",
+              "Session handoffs: agents never lose context between sessions",
+              "SOUL file distillation — agents literally get better at their jobs",
+            ]}
+            visual={<MemoryVisual />}
+            reverse
+          />
+
+          <FeatureBlock
+            label="INTEGRATION ENGINE"
+            title="Built in-house. No Paragon. No $2,500/month."
+            description="We replaced Paragon with a custom integration engine that costs nothing to run. It supports any API — OAuth2, API key, Bearer, Basic auth. And if your API isn't in the catalog, just paste the docs URL."
+            bullets={[
+              "94+ pre-seeded blueprints ready to connect today",
+              "AI doc scraper: paste URL → Claude generates tool definitions",
+              "OpenAPI spec import (deterministic, no AI needed)",
+              "Jittered backoff, rate limit handling, auto token refresh",
+            ]}
+            visual={<SavingsVisual />}
+          />
+
+          <FeatureBlock
+            label="EVENT-DRIVEN AUTOMATION"
+            title="Your tools talk to your agents automatically."
+            description="Any webhook from GitHub, Slack, Linear, or any other tool can trigger an agent workflow. With automation rules, JSONPath conditions, and template-based task creation — zero manual handoffs."
+            bullets={[
+              "HMAC-SHA256 signature verification (no spoofed events)",
+              "JSONPath conditions for precise event filtering",
+              "Agents wake up instantly when tasks arrive",
+              "Full event history for audit trail",
+            ]}
+            visual={<WebhookVisual />}
+            reverse
+          />
+        </div>
+      </section>
+
+      {/* ── SECTION 7b: LIVE WORKFLOW DEMO ── */}
       <section
         id="workflow-section"
         className="py-16 px-6 relative overflow-hidden"
@@ -1023,129 +1364,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── SECTION 5: INTEGRATIONS ── */}
-      <section className="py-16 px-6 overflow-hidden">
-        <div className="max-w-6xl mx-auto">
-          <RevealSection className="text-center mb-8 space-y-3">
-            <motion.div variants={itemVariants}>
-              <span
-                className="text-xs font-mono tracking-widest px-2 py-1 rounded"
-                style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
-              >
-                INTEGRATIONS
-              </span>
-            </motion.div>
-            <motion.h2 variants={itemVariants} className="text-4xl md:text-5xl font-bold">
-              Connect Everything
-            </motion.h2>
-            <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              94 integrations ready to connect. 2,400+ API actions in the catalog. Or add any API with AI — paste a URL, we generate the integration.
-            </motion.p>
-          </RevealSection>
-
-          <IntegrationGrid />
-        </div>
-      </section>
-
-      {/* ── SECTION 6: FEATURE DEEP DIVES ── */}
-      <section
-        className="py-16 px-6"
-        style={{ background: "linear-gradient(180deg, hsl(240 33% 4%) 0%, hsl(240 33% 3%) 100%)" }}
-      >
-        <div className="max-w-5xl mx-auto space-y-16">
-          <FeatureBlock
-            label="MULTI-AGENT COORDINATION"
-            title="Agents that work as a team, not a chatbot."
-            description="Kaze orchestrates the entire squad. Tasks have dependencies — when Scout finishes research, Ghost automatically receives the deliverables as context. No human copy-pasting."
-            bullets={[
-              "Task dependency graph with automatic chain reactions",
-              "Deliverables from upstream agents injected into downstream context",
-              "Parallel work orchestration — agents work simultaneously",
-              "Quality loops with rejection/rework cycles",
-            ]}
-            visual={<TaskScreenshotVisual />}
-          />
-
-          <FeatureBlock
-            label="EPISODIC MEMORY"
-            title="Agents that learn across every session."
-            description="Every agent builds up episodic memories — API quirks, your preferences, patterns that work. They surface the 10 most relevant memories at each session. Over time, lessons distill into their SOUL file — their evolving identity."
-            bullets={[
-              "8 memory types: api_quirk, preference, pattern, failure, shortcut...",
-              "Relevance scoring by importance + recency + human endorsement",
-              "Session handoffs: agents never lose context between sessions",
-              "SOUL file distillation — agents literally get better at their jobs",
-            ]}
-            visual={<MemoryVisual />}
-            reverse
-          />
-
-          <FeatureBlock
-            label="INTEGRATION ENGINE"
-            title="$0/month vs $2,500/month. Zero compromise."
-            description="We replaced Paragon with a custom integration engine that costs nothing to run. It supports any API — OAuth2, API key, Bearer, Basic auth. And if your API isn't in the catalog, just paste the docs URL."
-            bullets={[
-              "94+ pre-seeded blueprints ready to connect today",
-              "AI doc scraper: paste URL → Claude generates tool definitions",
-              "OpenAPI spec import (deterministic, no AI needed)",
-              "Jittered backoff, rate limit handling, auto token refresh",
-            ]}
-            visual={<SavingsVisual />}
-          />
-
-          <FeatureBlock
-            label="EVENT-DRIVEN AUTOMATION"
-            title="Your tools talk to your agents automatically."
-            description="Any webhook from GitHub, Slack, Linear, or any other tool can trigger an agent workflow. With automation rules, JSONPath conditions, and template-based task creation — zero manual handoffs."
-            bullets={[
-              "HMAC-SHA256 signature verification (no spoofed events)",
-              "JSONPath conditions for precise event filtering",
-              "Agents wake up instantly when tasks arrive",
-              "Full event history for audit trail",
-            ]}
-            visual={<WebhookVisual />}
-            reverse
-          />
-        </div>
-      </section>
-
-      {/* ── SECTION 7: USE CASES ── */}
-      <section className="py-16 px-6">
-        <div className="max-w-7xl mx-auto">
-          <RevealSection className="text-center mb-8 space-y-3">
-            <motion.div variants={itemVariants}>
-              <span
-                className="text-xs font-mono tracking-widest px-2 py-1 rounded"
-                style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
-              >
-                REAL WORKFLOWS
-              </span>
-            </motion.div>
-            <motion.h2 variants={itemVariants} className="text-4xl md:text-5xl font-bold">
-              Complex work, done autonomously.
-            </motion.h2>
-            <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Multi-agent missions with real tool calls — across your entire stack.
-            </motion.p>
-          </RevealSection>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {USE_CASES.map((uc, i) => (
-              <UseCaseScenario
-                key={i}
-                title={uc.title}
-                icon={uc.icon}
-                trigger={uc.trigger}
-                steps={uc.steps}
-                result={uc.result}
-                metric={uc.metric}
-                accentColor={uc.accentColor}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── SECTION 8: COMPARISON TABLE ── */}
       <section
         className="py-16 px-6"
@@ -1173,36 +1391,78 @@ export default function Landing() {
 
           {/* Agent analytics screenshot below comparison table */}
           <motion.div
-            className="mt-12 relative"
+            className="mt-16 relative"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.8, type: "spring", stiffness: 70 }}
           >
-            {/* Fade out bottom */}
+            {/* Section mini-heading */}
+            <div className="text-center mb-6 space-y-2">
+              <span
+                className="text-xs font-mono tracking-widest px-2 py-1 rounded"
+                style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
+              >
+                AGENT ANALYTICS
+              </span>
+              <p className="text-muted-foreground/60 text-sm mt-2">
+                Real-time performance across all agents — tasks completed, API calls made, quality scores.
+              </p>
+            </div>
+
+            {/* Browser chrome wrapper */}
             <div
-              className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10"
-              style={{ background: "linear-gradient(to bottom, transparent, hsl(240 33% 4%))" }}
-            />
-            {/* Top glow */}
-            <div
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px pointer-events-none"
-              style={{ background: "linear-gradient(90deg, transparent, hsl(217 91% 60% / 0.3), transparent)" }}
-            />
-            <div
-              className="rounded-2xl overflow-hidden mx-auto"
+              className="mx-auto rounded-2xl overflow-hidden relative"
               style={{
-                maxWidth: 860,
-                border: "1px solid hsl(var(--border) / 0.3)",
-                boxShadow: "0 0 60px hsl(217 91% 60% / 0.06)",
-                opacity: 0.8,
-                transform: "perspective(1000px) rotateX(4deg)",
+                maxWidth: 900,
+                border: "1px solid hsl(217 91% 60% / 0.18)",
+                boxShadow: "0 0 0 1px hsl(var(--border) / 0.3), 0 32px 80px hsl(240 33% 3% / 0.8), 0 0 60px hsl(217 91% 60% / 0.07)",
+                transform: "perspective(1200px) rotateX(3deg)",
               }}
             >
+              {/* Glow behind */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: "radial-gradient(ellipse at 50% 0%, hsl(217 91% 60% / 0.1) 0%, transparent 60%)",
+                  filter: "blur(20px)",
+                }}
+              />
+
+              {/* Fake browser chrome */}
+              <div
+                className="flex items-center gap-2 px-4 py-2.5 relative z-10"
+                style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                <div
+                  className="mx-3 flex-1 max-w-52 h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/40 font-mono"
+                  style={{ background: "hsl(240 25% 8%)" }}
+                >
+                  app.valence.ai/analytics
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-muted-foreground/30">Today</span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-[10px] text-green-400/70 font-mono">LIVE</span>
+                  </div>
+                </div>
+              </div>
+
               <img
                 src="/screenshots/agent_analytics.png"
                 alt="Valence AI Agent Analytics"
-                className="w-full block"
+                className="w-full block relative z-10"
+                style={{ opacity: 0.92 }}
+              />
+
+              {/* Fade out bottom */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-28 pointer-events-none z-20"
+                style={{ background: "linear-gradient(to bottom, transparent, hsl(240 33% 4%))" }}
               />
             </div>
           </motion.div>
@@ -1250,7 +1510,7 @@ export default function Landing() {
                 color: "hsl(var(--primary) / 0.8)",
               }}
             >
-              START FREE · NO CREDIT CARD REQUIRED
+              SELECTIVE PILOT PROGRAM · LIMITED SPOTS
             </span>
           </motion.div>
 
@@ -1263,18 +1523,18 @@ export default function Landing() {
               WebkitTextFillColor: "transparent",
             }}
           >
-            Your Autonomous Workforce Awaits.
+            Your Autonomous Workforce,<br />Built for You.
           </motion.h2>
 
           <motion.p variants={itemVariants} className="text-muted-foreground text-lg leading-relaxed">
-            Deploy five AI agents that work while you sleep. 94 integrations, zero platform cost.
+            Each pilot is a dedicated deployment — private infrastructure, your integrations, your workflows.
             <br />
-            Watch your agents learn, iterate, and get better with every mission.
+            We're onboarding a small cohort of companies. Apply and Arpit will reach out personally.
           </motion.p>
 
           <motion.div variants={itemVariants} className="flex items-center justify-center gap-4">
             <motion.button
-              onClick={() => navigate("/login")}
+              onClick={() => setPilotOpen(true)}
               whileHover={{ scale: 1.05, boxShadow: "0 0 40px hsl(var(--primary) / 0.4)" }}
               whileTap={{ scale: 0.97 }}
               className="relative px-8 py-4 rounded-xl text-base font-bold overflow-hidden"
@@ -1284,7 +1544,7 @@ export default function Landing() {
                 boxShadow: "0 0 24px hsl(var(--primary) / 0.25)",
               }}
             >
-              <span className="relative z-10">Get Started — It's Free →</span>
+              <span className="relative z-10">Apply for a Pilot Spot →</span>
               <div
                 className="absolute inset-0 rounded-xl animate-signal-ring pointer-events-none"
                 style={{ border: "1px solid hsl(var(--primary))" }}
@@ -1298,24 +1558,12 @@ export default function Landing() {
               />
             </motion.button>
 
-            <motion.button
-              onClick={() => navigate("/login")}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-8 py-4 rounded-xl text-base font-medium"
-              style={{
-                background: "transparent",
-                border: "1px solid hsl(var(--border))",
-                color: "hsl(var(--muted-foreground))",
-              }}
-            >
-              Open App ↗
-            </motion.button>
+            
           </motion.div>
 
           {/* Feature pills */}
           <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-2 pt-2">
-            {["5 AI Agents", "94 Integrations", "2,400+ API Actions", "Episodic Memory", "Quality Loops", "$0/month"].map((tag) => (
+            {["5 AI Agents", "94 Integrations", "2,400+ API Actions", "Episodic Memory", "Quality Loops", "White-Glove Setup"].map((tag) => (
               <span
                 key={tag}
                 className="text-xs px-3 py-1 rounded-full text-muted-foreground/60"
@@ -1340,9 +1588,16 @@ export default function Landing() {
             <span>·</span>
             <span>Command center for autonomous AI workforces</span>
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground/30 font-mono">
-            <span className="w-1 h-1 rounded-full bg-green-400/60 animate-pulse-glow" />
-            All agents operational
+          <div className="flex items-center gap-4 text-xs text-muted-foreground/60 font-mono">
+            <span>Questions? Mail to:</span>
+            <a href="mailto:arpitdhamija.ai@gmail.com" className="hover:text-muted-foreground/60 transition-colors">
+              arpitdhamija.ai@gmail.com
+            </a>
+            <span>·</span>
+            <span className="flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-green-400/60 animate-pulse-glow" />
+              All agents operational
+            </span>
           </div>
         </div>
       </footer>

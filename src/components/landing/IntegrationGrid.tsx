@@ -62,7 +62,6 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
       { name: "Airtable", logo: SI("airtable"), color: "#FCB400", lastCalledBy: "Scout", lastEndpoint: "POST /records", lastStatus: "200 OK", lastMs: "156ms" },
       { name: "Looker", logo: SI("looker"), color: "#4285F4", lastCalledBy: "Scout", lastEndpoint: "POST /queries/run/json", lastStatus: "200 OK", lastMs: "523ms" },
       { name: "Typeform", logo: SI("typeform"), color: "#262627", lastCalledBy: "Scout", lastEndpoint: "GET /forms/{id}/responses", lastStatus: "200 OK", lastMs: "178ms" },
-      { name: "Retool", logo: SI("retool"), color: "#FF4F00", lastCalledBy: "Forge", lastEndpoint: "POST /apps/query", lastStatus: "200 OK", lastMs: "234ms" },
     ],
   },
   {
@@ -72,7 +71,6 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
       { name: "Productboard", logo: SI("productboard"), color: "#F55050", lastCalledBy: "Kaze", lastEndpoint: "POST /features", lastStatus: "201 Created", lastMs: "213ms" },
       { name: "Google Calendar", logo: SI("googlecalendar"), color: "#4285F4", lastCalledBy: "Kaze", lastEndpoint: "POST /calendars/events", lastStatus: "200 OK", lastMs: "145ms" },
       { name: "Figma", logo: SI("figma"), color: "#F24E1E", lastCalledBy: "Ghost", lastEndpoint: "GET /files/{key}/components", lastStatus: "200 OK", lastMs: "312ms" },
-      { name: "Asana", logo: SI("asana"), color: "#F06A6A", lastCalledBy: "Kaze", lastEndpoint: "POST /tasks", lastStatus: "201 Created", lastMs: "178ms" },
     ],
   },
   {
@@ -91,11 +89,21 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
       { name: "Meta Ads", logo: SI("meta"), color: "#1877F2", lastCalledBy: "Scout", lastEndpoint: "GET /act_{id}/insights", lastStatus: "200 OK", lastMs: "412ms" },
       { name: "Google Ads", logo: SI("googleads"), color: "#4285F4", lastCalledBy: "Scout", lastEndpoint: "GET /customers/{id}/campaigns", lastStatus: "200 OK", lastMs: "378ms" },
       { name: "Zendesk", logo: SI("zendesk"), color: "#03363D", lastCalledBy: "Sentinel", lastEndpoint: "GET /tickets?status=open", lastStatus: "200 OK", lastMs: "98ms" },
-      { name: "Pipedrive", logo: SI("pipedrive"), color: "#E67E22", lastCalledBy: "Ghost", lastEndpoint: "POST /deals", lastStatus: "201 Created", lastMs: "224ms" },
-      { name: "Twilio", logo: SI("twilio"), color: "#F22F46", lastCalledBy: "Ghost", lastEndpoint: "POST /Messages.json", lastStatus: "201 Created", lastMs: "334ms" },
+    ],
+  },
+  {
+    label: "Socials",
+    integrations: [
+      { name: "Instagram", logo: SI("instagram"), color: "#E1306C", lastCalledBy: "Ghost", lastEndpoint: "POST /media/{id}/publish", lastStatus: "200 OK", lastMs: "312ms" },
+      { name: "X (Twitter)", logo: SI("x"), color: "#e2e8f0", lastCalledBy: "Ghost", lastEndpoint: "POST /2/tweets", lastStatus: "201 Created", lastMs: "198ms" },
+      { name: "TikTok", logo: SI("tiktok"), color: "#69C9D0", lastCalledBy: "Ghost", lastEndpoint: "POST /share/video/upload", lastStatus: "200 OK", lastMs: "445ms" },
+      { name: "YouTube", logo: SI("youtube"), color: "#FF0000", lastCalledBy: "Scout", lastEndpoint: "POST /videos?part=snippet", lastStatus: "200 OK", lastMs: "534ms" },
     ],
   },
 ];
+
+const ROW1_CATEGORIES = CATEGORIES.slice(0, 4);
+const ROW2_CATEGORIES = CATEGORIES.slice(4);
 
 const ALL_INTEGRATIONS = CATEGORIES.flatMap((c) => c.integrations);
 // Marquee rows
@@ -189,41 +197,59 @@ function IntegrationBadge({ item }: { item: Integration }) {
   );
 }
 
+function CategoryCard({ cat, ci, isInView }: { cat: typeof CATEGORIES[0]; ci: number; isInView: boolean }) {
+  return (
+    <motion.div
+      key={cat.label}
+      initial={{ opacity: 0, y: 24 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ delay: ci * 0.07, duration: 0.4 }}
+      className="rounded-xl p-3"
+      style={{
+        background: "hsl(240 25% 7%)",
+        border: "1px solid hsl(var(--border))",
+      }}
+    >
+      <div className="text-[10px] text-muted-foreground/50 font-mono tracking-widest mb-2.5 uppercase">
+        {cat.label}
+      </div>
+      <div className="space-y-1">
+        {cat.integrations.map((item) => (
+          <div key={item.name} className="flex items-center gap-2">
+            <BrandLogo logo={item.logo} name={item.name} color={item.color} size={14} />
+            <span className="text-xs text-muted-foreground/70 truncate">{item.name}</span>
+            <div
+              className="ml-auto flex-shrink-0 w-1 h-1 rounded-full opacity-60"
+              style={{ background: item.color }}
+            />
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 function CategoryGrid() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
   return (
-    <div ref={ref} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {CATEGORIES.map((cat, ci) => (
-        <motion.div
-          key={cat.label}
-          initial={{ opacity: 0, y: 24 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: ci * 0.07, duration: 0.4 }}
-          className="rounded-xl p-3"
-          style={{
-            background: "hsl(240 25% 7%)",
-            border: "1px solid hsl(var(--border))",
-          }}
-        >
-          <div className="text-[10px] text-muted-foreground/50 font-mono tracking-widest mb-2.5 uppercase">
-            {cat.label}
-          </div>
-          <div className="space-y-1">
-            {cat.integrations.map((item) => (
-              <div key={item.name} className="flex items-center gap-2">
-                <BrandLogo logo={item.logo} name={item.name} color={item.color} size={14} />
-                <span className="text-xs text-muted-foreground/70">{item.name}</span>
-                <div
-                  className="ml-auto w-1 h-1 rounded-full opacity-60"
-                  style={{ background: item.color }}
-                />
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      ))}
+    <div ref={ref} className="space-y-4">
+      {/* Row 1 — 4 cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {ROW1_CATEGORIES.map((cat, ci) => (
+          <CategoryCard key={cat.label} cat={cat} ci={ci} isInView={isInView} />
+        ))}
+      </div>
+      {/* Row 2 — 5 cards (compressed) */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {ROW2_CATEGORIES.map((cat, ci) => (
+          <CategoryCard key={cat.label} cat={cat} ci={ci + 4} isInView={isInView} />
+        ))}
+      </div>
+      <p className="text-center mt-2 text-xs font-mono tracking-widest uppercase text-muted-foreground/30 select-none">
+        and many more<span style={{ color: "hsl(var(--primary) / 0.6)" }}>.</span><span style={{ color: "hsl(var(--primary) / 0.35)" }}>.</span><span style={{ color: "hsl(var(--primary) / 0.15)" }}>.</span>
+      </p>
     </div>
   );
 }

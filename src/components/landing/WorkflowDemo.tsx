@@ -394,15 +394,6 @@ export function WorkflowDemo() {
             className="w-52 flex-shrink-0 flex flex-col border-l"
             style={{ borderColor: "hsl(var(--border))" }}
           >
-            {/* Mission timer */}
-            <div className="px-4 pt-3 pb-2 border-b" style={{ borderColor: "hsl(var(--border) / 0.4)" }}>
-              <div className="text-[9px] font-mono text-muted-foreground/40 tracking-widest mb-1">ELAPSED</div>
-              <div className="text-2xl font-mono font-bold tabular-nums text-foreground/80">
-                {String(Math.floor(elapsed / 60000)).padStart(2, "0")}:
-                {String(Math.floor((elapsed % 60000) / 1000)).padStart(2, "0")}
-              </div>
-            </div>
-
             {/* Live counters */}
             <div className="px-4 py-3 space-y-3 border-b" style={{ borderColor: "hsl(var(--border) / 0.4)" }}>
               {[

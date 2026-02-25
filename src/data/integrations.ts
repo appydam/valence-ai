@@ -214,6 +214,10 @@ export const INTEGRATIONS: Integration[] = [
   // Social Media
   { slug: "linkedin", name: "LinkedIn", category: "Social Media", description: "Post updates and manage LinkedIn presence", iconUrl: "https://cdn.worldvectorlogo.com/logos/linkedin-icon-2.svg", status: "available" },
   { slug: "facebook-pages", name: "Facebook Pages", category: "Social Media", description: "Manage Facebook business pages", iconUrl: "https://cdn.worldvectorlogo.com/logos/facebook-4.svg", status: "available" },
+  { slug: "instagram", name: "Instagram", category: "Social Media", description: "Post to Instagram feed, manage your media library, and read engagement insights. Requires Business or Creator account.", iconUrl: "https://cdn.simpleicons.org/instagram/E4405F", status: "available" },
+  { slug: "twitter-x", name: "Twitter / X", category: "Social Media", description: "Post tweets, search public tweets, and read user timelines. Free tier: 500 posts/month.", iconUrl: "https://cdn.simpleicons.org/x/ffffff", status: "available" },
+  { slug: "tiktok", name: "TikTok", category: "Social Media", description: "Upload TikTok videos, read your video library, and get video analytics. Public posting requires TikTok app audit.", iconUrl: "https://cdn.simpleicons.org/tiktok/ffffff", status: "available" },
+  { slug: "youtube", name: "YouTube", category: "Social Media", description: "Upload videos, search YouTube, manage your channel, and post comments. Free tier: ~6 video uploads/day.", iconUrl: "https://cdn.simpleicons.org/youtube/FF0000", status: "available" },
 
   // Payments
   { slug: "stripe", name: "Stripe", category: "Payments", description: "Access Stripe payments and customer data", iconUrl: "https://cdn.worldvectorlogo.com/logos/stripe-2.svg", status: "available" },

@@ -3,14 +3,13 @@ import { motion, useInView } from "framer-motion";
 
 const FEATURES = [
   "Multi-agent coordination",
-  "30+ live integrations",
+  "Native integrations (~100)",
   "Real API access",
   "Task dependencies + chains",
   "Episodic memory & learning",
   "Quality review loops",
   "Add any API via AI",
   "Full UI + dashboard",
-  "$0 platform cost",
   "Production reliability",
 ];
 
@@ -23,30 +22,30 @@ const PRODUCTS: {
   values: CellValue[];
 }[] = [
   {
-    name: "Mission Control",
-    short: "MC",
+    name: "Valence AI",
+    short: "us",
     highlight: true,
-    values: ["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],
+    values: ["yes","yes","yes","yes","yes","yes","yes","yes","yes"],
   },
   {
     name: "ChatGPT",
     short: "GPT",
-    values: ["no","no","partial","no","no","no","no","partial","partial","partial"],
+    values: ["no","no","partial","no","no","no","no","partial","partial"],
   },
   {
     name: "Zapier",
     short: "ZAP",
-    values: ["no","yes","yes","partial","no","no","no","yes","no","yes"],
+    values: ["partial","yes","yes","yes","no","no","no","yes","yes"],
   },
   {
-    name: "AutoGPT",
-    short: "AGT",
-    values: ["partial","no","partial","no","partial","no","no","no","yes","no"],
+    name: "n8n",
+    short: "N8N",
+    values: ["partial","yes","yes","yes","partial","no","no","yes","yes"],
   },
   {
     name: "Paragon",
     short: "PAR",
-    values: ["no","yes","yes","no","no","no","no","partial","no","yes"],
+    values: ["no","yes","yes","partial","no","no","no","partial","yes"],
   },
 ];
 
