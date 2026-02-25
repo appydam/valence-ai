@@ -52,7 +52,7 @@ export interface ActivityEntry {
 export const AGENT_CONFIG: Record<AgentName, { emoji: string; color: string; role: string; description: string }> = {
   Kaze: { emoji: "🌀", color: "kaze", role: "Chief of Staff", description: "Coordinates the squad, delegates tasks, ensures alignment" },
   Scout: { emoji: "🔭", color: "scout", role: "Market Intelligence", description: "Researches trends, finds opportunities, competitive analysis" },
-  Forge: { emoji: "🔨", color: "forge", role: "Engineer", description: "Writes code, prototypes, builds automations" },
+  Forge: { emoji: "🔨", color: "forge", role: "Software Engineer", description: "Writes code, prototypes, builds automations" },
   Ghost: { emoji: "👻", color: "ghost", role: "Content & Distribution", description: "Drafts tweets, LinkedIn posts, blog content" },
   Sentinel: { emoji: "🔍", color: "sentinel", role: "Quality Reviewer", description: "Reviews every deliverable, enforces quality standards, approves or rejects work" },
 };

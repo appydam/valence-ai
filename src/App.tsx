@@ -20,6 +20,7 @@ import AgentMemoryDetail from "./pages/AgentMemoryDetail";
 import SoulReview from "./pages/SoulReview";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Landing from "./pages/Landing";
 
 const queryClient = new QueryClient();
 
@@ -39,8 +40,9 @@ const App = () => (
       <Unauthenticated>
         <BrowserRouter>
           <Routes>
+            <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Login />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/landing" replace />} />
           </Routes>
         </BrowserRouter>
       </Unauthenticated>
@@ -61,6 +63,7 @@ const App = () => (
             <Route path="/memory/:agentName" element={<AgentMemoryDetail />} />
             <Route path="/soul/review/:versionId" element={<SoulReview />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
