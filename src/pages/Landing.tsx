@@ -592,6 +592,194 @@ function WebhookVisual() {
   );
 }
 
+// ─── Voice Command visual ────────────────────────────────────────────────────
+function VoiceCommandVisual() {
+  return (
+    <div
+      className="w-full max-w-sm rounded-2xl overflow-hidden relative"
+      style={{
+        background: "linear-gradient(180deg, hsl(240 25% 6%) 0%, hsl(240 30% 4%) 100%)",
+        border: "1px solid hsl(217 91% 60% / 0.2)",
+        boxShadow: "0 0 40px hsl(217 91% 60% / 0.07), 0 24px 60px hsl(240 33% 3% / 0.8)",
+      }}
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-5 pt-5 pb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[10px] text-white/40 font-mono tracking-widest">LIVE</span>
+        </div>
+        <span className="text-[10px] text-white/40 font-mono tabular-nums">1:42</span>
+      </div>
+
+      {/* Avatar ring */}
+      <div className="flex flex-col items-center gap-4 py-6">
+        <div className="relative">
+          <div
+            className="absolute inset-0 -m-3 rounded-full animate-ping opacity-20"
+            style={{ border: "1px solid hsl(217 91% 60%)", animationDuration: "2s" }}
+          />
+          <div
+            className="absolute inset-0 -m-6 rounded-full animate-ping opacity-10"
+            style={{ border: "1px solid hsl(217 91% 60%)", animationDuration: "3s" }}
+          />
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center"
+            style={{
+              background: "hsl(217 91% 60% / 0.12)",
+              border: "2px solid hsl(217 91% 60% / 0.35)",
+            }}
+          >
+            <span className="text-3xl font-bold" style={{ color: "hsl(217 91% 65%)" }}>K</span>
+          </div>
+        </div>
+        <div className="text-center">
+          <div className="text-base font-semibold text-white/90">Kaze</div>
+          <div className="text-xs text-white/30 mt-0.5">Speaking</div>
+        </div>
+
+        {/* Waveform bars */}
+        <div className="flex items-end gap-[2px] h-6">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-[2.5px] rounded-full"
+              style={{
+                background: "hsl(217 91% 60% / 0.5)",
+                height: `${6 + Math.sin(i * 0.7) * 10 + (i % 3) * 4}px`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Transcript area */}
+      <div className="px-5 pb-3 space-y-2">
+        <div className="rounded-lg px-3 py-2" style={{ background: "hsl(0 0% 100% / 0.03)", border: "1px solid hsl(0 0% 100% / 0.05)" }}>
+          <div className="flex items-center gap-2 text-[10px] mb-1.5">
+            <span className="text-white/30">You</span>
+          </div>
+          <p className="text-xs text-white/45 italic">"What are the agents working on right now?"</p>
+        </div>
+        <div className="rounded-lg px-3 py-2" style={{ background: "hsl(217 91% 60% / 0.06)", border: "1px solid hsl(217 91% 60% / 0.15)" }}>
+          <div className="flex items-center gap-2 text-[10px] mb-1.5">
+            <span style={{ color: "hsl(217 91% 65%)" }}>Kaze</span>
+          </div>
+          <p className="text-xs text-white/55">"Scout is finishing the competitor analysis. Forge has 2 PRs in review. Ghost is drafting the newsletter."</p>
+        </div>
+      </div>
+
+      {/* Tool call indicator */}
+      <div className="px-5 pb-4">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px]" style={{ background: "hsl(160 84% 39% / 0.08)", border: "1px solid hsl(160 84% 39% / 0.2)" }}>
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/60" />
+          <span className="text-emerald-400/70 font-mono">get_agent_status</span>
+          <span className="text-white/20 mx-0.5">&rarr;</span>
+          <span className="text-white/35">5 agents · 3 active tasks</span>
+        </div>
+      </div>
+
+      {/* End call bar */}
+      <div
+        className="flex items-center justify-center gap-3 px-5 py-3"
+        style={{ borderTop: "1px solid hsl(0 0% 100% / 0.05)" }}
+      >
+        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "hsl(0 0% 100% / 0.06)" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/40"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center" style={{ boxShadow: "0 0 16px hsl(0 80% 50% / 0.25)" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="m16 2-4 4-4-4"/><path d="m2 16 4-4 4 4"/><path d="M22 16c0-5.523-4.477-10-10-10"/><path d="M2 8c0 5.523 4.477 10 10 10"/></svg>
+        </div>
+        <div className="w-8" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Mission Autopilot visual ────────────────────────────────────────────────
+function AutopilotVisual() {
+  const phases = [
+    { label: "GOAL", color: "hsl(217, 91%, 60%)", text: "Research top 10 competitors and prepare a pitch deck", icon: "🎯" },
+    { label: "DECOMPOSE", color: "hsl(258, 90%, 66%)", text: "Claude Opus breaks into 6 subtasks with dependencies", icon: "🧠" },
+    { label: "EXECUTE", color: "hsl(38, 92%, 50%)", text: "Scout researches → Ghost writes → Forge builds slides", icon: "⚡" },
+    { label: "DELIVER", color: "hsl(160, 84%, 39%)", text: "Pitch deck in Notion, team notified on Slack", icon: "✓" },
+  ];
+
+  return (
+    <div className="w-full max-w-sm space-y-2">
+      {phases.map((phase, i) => (
+        <motion.div
+          key={phase.label}
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: i * 0.12, type: "spring", stiffness: 200, damping: 22 }}
+          className="relative rounded-xl px-4 py-3 group cursor-default"
+          style={{
+            background: `${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.06)")}`,
+            border: `1px solid ${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.2)")}`,
+          }}
+        >
+          <div className="flex items-start gap-3">
+            {/* Phase indicator */}
+            <div className="flex flex-col items-center flex-shrink-0 pt-0.5">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs"
+                style={{
+                  background: `${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.15)")}`,
+                  border: `1px solid ${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.4)")}`,
+                }}
+              >
+                {phase.icon}
+              </div>
+              {i < phases.length - 1 && (
+                <div
+                  className="w-px h-4 mt-1"
+                  style={{ background: `${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.15)")}` }}
+                />
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="text-[9px] font-mono tracking-widest mb-1" style={{ color: phase.color }}>{phase.label}</div>
+              <div className="text-xs text-muted-foreground leading-relaxed">{phase.text}</div>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+
+      {/* Stats bar */}
+      <div
+        className="flex items-center justify-between px-4 py-2.5 rounded-xl text-[10px] font-mono mt-3"
+        style={{ background: "hsl(240 25% 6%)", border: "1px solid hsl(var(--border) / 0.4)" }}
+      >
+        <span className="text-muted-foreground/40">Powered by</span>
+        <div className="flex items-center gap-1.5">
+          <img
+            src="https://cdn.simpleicons.org/claude"
+            alt="Claude"
+            width="11"
+            height="11"
+            style={{ filter: "brightness(0) saturate(100%) invert(62%) sepia(98%) saturate(400%) hue-rotate(330deg) brightness(105%)" }}
+          />
+          <span className="text-muted-foreground/60">Claude Opus 4.6</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <img
+            src="https://cdn.simpleicons.org/amazonaws"
+            alt="AWS"
+            width="11"
+            height="11"
+            style={{ filter: "brightness(0) invert(1)", opacity: 0.5 }}
+          />
+          <span className="text-muted-foreground/60">Nova Sonic</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Landing Page ───────────────────────────────────────────────────────
 const AGENTS: AgentName[] = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"];
 
@@ -808,7 +996,7 @@ export default function Landing() {
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-glow" />
-                5 AGENTS ONLINE · 94 INTEGRATIONS · 847 API CALLS TODAY
+                5 AGENTS ONLINE · VOICE COMMAND · 94 INTEGRATIONS
               </motion.div>
 
               {/* Headline */}
@@ -1301,6 +1489,33 @@ export default function Landing() {
             visual={<WebhookVisual />}
             reverse
           />
+
+          <FeatureBlock
+            label="VOICE COMMAND CENTER"
+            title="Talk to your AI squad. Out loud."
+            description="Real-time voice conversations with Kaze, powered by Amazon Nova Sonic. Ask about agent status, create tasks, get briefings — all by voice. Your agents respond with live data, not canned answers."
+            bullets={[
+              "Sub-second latency via dedicated WebSocket + HTTP/2 stream to AWS Bedrock",
+              "Tool calling mid-conversation — agents query real data while talking",
+              "Daily voice briefings: \"What happened while I was away?\"",
+              "Live transcription with speaker labels for accessibility",
+            ]}
+            visual={<VoiceCommandVisual />}
+          />
+
+          <FeatureBlock
+            label="MISSION AUTOPILOT"
+            title="Describe the goal. AI plans and executes."
+            description="Type a goal in plain English. Claude Opus decomposes it into subtasks with dependencies, assigns agents, and launches the entire mission — while you grab coffee. Review, refine by voice, or let it run."
+            bullets={[
+              "Claude Opus 4.6 mission decomposition — understands complex multi-step goals",
+              "Auto-assigns agents by capability: research, code, content, QA",
+              "Voice refinement: talk through changes instead of typing",
+              "One-click launch or manual review before execution",
+            ]}
+            visual={<AutopilotVisual />}
+            reverse
+          />
         </div>
       </section>
 
@@ -1563,7 +1778,7 @@ export default function Landing() {
 
           {/* Feature pills */}
           <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-2 pt-2">
-            {["5 AI Agents", "94 Integrations", "2,400+ API Actions", "Episodic Memory", "Quality Loops", "White-Glove Setup"].map((tag) => (
+            {["5 AI Agents", "Voice Command", "Mission Autopilot", "94 Integrations", "Episodic Memory", "White-Glove Setup"].map((tag) => (
               <span
                 key={tag}
                 className="text-xs px-3 py-1 rounded-full text-muted-foreground/60"

@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Navbar } from "@/components/Navbar";
+import { AgentStatusBar } from "@/components/AgentStatusBar";
 
 export function DashboardLayout({ children, fullBleed }: { children: ReactNode; fullBleed?: boolean }) {
   return (
@@ -8,6 +9,7 @@ export function DashboardLayout({ children, fullBleed }: { children: ReactNode; 
       <AppSidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar />
+        <AgentStatusBar />
         <main className="flex-1 overflow-hidden">
           {fullBleed ? (
             <div className="h-full">

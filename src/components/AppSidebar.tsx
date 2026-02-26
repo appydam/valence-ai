@@ -11,14 +11,17 @@ import {
   Plug,
   Webhook,
   BarChart3,
-  Brain
+  Brain,
+  Wand2,
 } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
-  { title: "Activity Feed", path: "/", icon: Activity },
+  { title: "Live Ops", path: "/", icon: Activity },
+  { title: "Autopilot", path: "/autopilot", icon: Wand2 },
+
   { title: "Mission Board", path: "/board", icon: LayoutGrid },
   { title: "Missions", path: "/missions", icon: FolderOpen },
   { title: "Agents", path: "/agents", icon: Users },

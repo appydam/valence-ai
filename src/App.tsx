@@ -8,7 +8,7 @@ import Index from "./pages/Index";
 import Board from "./pages/Board";
 import Missions from "./pages/Missions";
 import AgentsPage from "./pages/Agents";
-import CommandCenter from "./pages/Command";
+
 import Settings from "./pages/Settings";
 import Integrations from "./pages/Integrations";
 import BlueprintWizard from "./pages/BlueprintWizard";
@@ -22,6 +22,7 @@ import MissionReport from "./pages/MissionReport";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
+import Autopilot from "./pages/Autopilot";
 
 const queryClient = new QueryClient();
 
@@ -52,11 +53,12 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/autopilot" element={<Autopilot />} />
             <Route path="/board" element={<Board />} />
             <Route path="/missions" element={<Missions />} />
             <Route path="/missions/:missionId" element={<MissionReport />} />
             <Route path="/agents" element={<AgentsPage />} />
-            <Route path="/command" element={<CommandCenter />} />
+
             <Route path="/integrations" element={<Integrations />} />
             <Route path="/integrations/blueprint/new" element={<BlueprintWizard />} />
             <Route path="/integrations/blueprint/:id" element={<BlueprintDetail />} />
