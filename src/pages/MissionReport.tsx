@@ -543,6 +543,49 @@ export default function MissionReport() {
   const report = useQuery(api.missions.getReport, missionId ? { missionId: missionId as Id<"missions"> } : "skip");
   const [activeTab, setActiveTab] = useState<TabId>("outcomes");
 
+  // ── ALL hooks must be called unconditionally before any early returns ──
+  const deliverables: any[] = (report as any)?.deliverables ?? [];
+  const activity: any[]     = (report as any)?.activity ?? [];
+  const agentContributions: any[] = (report as any)?.agentContributions ?? [];
+  const integrations: any[] = (report as any)?.integrations ?? [];
+
+  const meaningfulActivity = useMemo(() => activity.filter((a: any) => isMeaningfulActivity(a.action)), [activity]);
+  const activeAgents = useMemo(() => agentContributions.filter((a: any) => a.name !== "Unassigned" && a.taskCount > 0), [agentContributions]);
+  const totalApiCalls = useMemo(() => integrations.reduce((s: number, i: any) => s + (i.total ?? 0), 0), [integrations]);
+
+  const buckets = useMemo(() => {
+    const b: Record<DeliverableCategory, any[]> = {
+      github: [], notion: [], linear: [], spreadsheet: [], link: [], document: [], code: [], content: [], crm: [], other: [],
+    };
+    for (const d of deliverables) b[categorizeDeliverable(d)].push(d);
+    return b;
+  }, [deliverables]);
+
+  const deliverableSub = useMemo(() => {
+    const parts = [
+      buckets.document.length > 0 && `${buckets.document.length} docs`,
+      buckets.github.length   > 0 && `${buckets.github.length} repos`,
+      buckets.notion.length   > 0 && `${buckets.notion.length} notion`,
+      buckets.linear.length   > 0 && `${buckets.linear.length} linear`,
+    ].filter(Boolean);
+    return parts.length ? parts.join(" · ") : "view breakdown below";
+  }, [buckets]);
+
+  const deliverablesByAgent = useMemo(() => {
+    const m: Record<string, any[]> = {};
+    for (const d of deliverables) {
+      const k = d.agentName || "Unassigned";
+      if (!m[k]) m[k] = [];
+      m[k].push(d);
+    }
+    return m;
+  }, [deliverables]);
+
+  const agentOrder = useMemo(() =>
+    Object.keys(deliverablesByAgent).sort((a, b) => (deliverablesByAgent[b]?.length || 0) - (deliverablesByAgent[a]?.length || 0))
+  , [deliverablesByAgent]);
+
+  // ── Early returns after all hooks ──
   if (report === undefined) {
     return (
       <DashboardLayout>
@@ -567,46 +610,8 @@ export default function MissionReport() {
     );
   }
 
-  const { mission, tasks, summary, quality, timing, agentContributions, deliverables, activity } = report;
-  const integrations = (report as any).integrations ?? [];
+  const { mission, tasks, summary, quality, timing } = report;
   const progressPct = summary.totalTasks > 0 ? Math.round((summary.completedTasks / summary.totalTasks) * 100) : 0;
-  const meaningfulActivity = useMemo(() => activity.filter((a: any) => isMeaningfulActivity(a.action)), [activity]);
-  const activeAgents = useMemo(() => agentContributions.filter((a: any) => a.name !== "Unassigned" && a.taskCount > 0), [agentContributions]);
-  const totalApiCalls = useMemo(() => integrations.reduce((s: number, i: any) => s + (i.total ?? 0), 0), [integrations]);
-
-  // Bucket deliverables — memoized so filters don't rerun on every render
-  const buckets = useMemo(() => {
-    const b: Record<DeliverableCategory, any[]> = {
-      github: [], notion: [], linear: [], spreadsheet: [], link: [], document: [], code: [], content: [], crm: [], other: [],
-    };
-    for (const d of deliverables) b[categorizeDeliverable(d)].push(d);
-    return b;
-  }, [deliverables]);
-
-  // Dynamic KPI sub-text
-  const deliverableSub = useMemo(() => {
-    const parts = [
-      buckets.document.length  > 0 && `${buckets.document.length} docs`,
-      buckets.github.length    > 0 && `${buckets.github.length} repos`,
-      buckets.notion.length    > 0 && `${buckets.notion.length} notion`,
-      buckets.linear.length    > 0 && `${buckets.linear.length} linear`,
-    ].filter(Boolean);
-    return parts.length ? parts.join(" · ") : "view breakdown below";
-  }, [buckets]);
-
-  // Deliverables tab: by agent
-  const deliverablesByAgent = useMemo(() => {
-    const m: Record<string, any[]> = {};
-    for (const d of deliverables) {
-      const k = d.agentName || "Unassigned";
-      if (!m[k]) m[k] = [];
-      m[k].push(d);
-    }
-    return m;
-  }, [deliverables]);
-  const agentOrder = useMemo(() =>
-    Object.keys(deliverablesByAgent).sort((a, b) => (deliverablesByAgent[b]?.length || 0) - (deliverablesByAgent[a]?.length || 0))
-  , [deliverablesByAgent]);
 
   const statusColor = mission.status === "completed" ? "#34d399" : mission.status === "active" ? "#60a5fa" : "#94a3b8";
 

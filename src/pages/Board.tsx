@@ -9,7 +9,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { TaskStatus, AgentName, TaskPriority } from "@/types/mission";
-import { Plus, List, FolderPlus, Zap, Swords, LayoutGrid, GitBranch, ChevronRight, ArrowRight } from "lucide-react";
+import { Plus, List, FolderPlus, Zap, Swords, LayoutGrid, GitBranch, ChevronRight, ArrowRight, FileText } from "lucide-react";
 import { AGENT_CONFIG } from "@/types/mission";
 import { Link, useSearchParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
@@ -239,8 +239,17 @@ const Board = () => {
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-surface-hover transition-colors text-muted-foreground"
             >
               <List className="w-4 h-4" />
-              View All Missions
+              All Missions
             </Link>
+            {missionIdToUse && (
+              <Link
+                to={`/missions/${missionIdToUse}`}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary/10 hover:bg-primary/20 transition-colors text-primary border border-primary/20"
+              >
+                <FileText className="w-4 h-4" />
+                Mission Report
+              </Link>
+            )}
           </div>
         )}
 
