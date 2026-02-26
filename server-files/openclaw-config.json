@@ -25,7 +25,7 @@
     },
     "forge": {
       "name": "Forge",
-      "description": "Engineering agent — writes code, prototypes, builds automations",
+      "description": "Engineering agent — writes code, builds interactive frontends, deploys to Vercel, prototypes, builds automations",
       "soul": "~/.openclaw/workspace/agents/forge/SOUL.md",
       "skills": ["mission-control"],
       "model": "anthropic/claude-opus-4-5",
