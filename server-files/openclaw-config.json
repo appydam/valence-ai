@@ -44,6 +44,17 @@
         "maxTurns": 20,
         "timeout": 300
       }
+    },
+    "sentinel": {
+      "name": "Sentinel",
+      "description": "QA Review agent — reviews every task before approval, enforces quality standards",
+      "soul": "~/.openclaw/workspace/agents/sentinel/SOUL.md",
+      "skills": ["mission-control"],
+      "model": "anthropic/claude-sonnet-4-6",
+      "session": {
+        "maxTurns": 20,
+        "timeout": 300
+      }
     }
   }
 }
