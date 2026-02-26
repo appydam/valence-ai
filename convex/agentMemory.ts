@@ -44,6 +44,18 @@ function relevanceScore(m: {
 
 // ── Queries ──────────────────────────────────────────────────
 
+/** Recent memories across all agents (for Live Ops Feed) */
+export const recent = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("agentMemory")
+      .withIndex("by_created")
+      .order("desc")
+      .take(args.limit ?? 20);
+  },
+});
+
 /** List active memories for an agent, sorted by composite relevance. Used by heartbeat. */
 export const listForAgent = query({
   args: {

@@ -12,6 +12,16 @@ export const listByTask = query({
   },
 });
 
+/** Recent comments across all tasks (for Live Ops Feed) */
+export const recent = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    // Comments don't have a by_created index, so we query all and sort
+    const all = await ctx.db.query("comments").order("desc").take(args.limit ?? 50);
+    return all;
+  },
+});
+
 export const create = mutation({
   args: {
     taskId: v.id("tasks"),

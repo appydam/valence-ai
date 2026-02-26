@@ -59,6 +59,17 @@ crons.weekly(
 );
 
 /**
+ * Sentinel review sweep: wake Sentinel for tasks stuck in "in_review" > 10 min.
+ * Catches missed wakeups, crashed Sentinel sessions, or tasks that slipped through.
+ * Runs every 15 minutes.
+ */
+crons.interval(
+  "sentinel-review-sweep",
+  { minutes: 15 },
+  internal.tasks.sentinelReviewSweep
+);
+
+/**
  * Inbox auto-delegation: wake Kaze if tasks have been sitting in inbox for >30 min.
  * Prevents inbox from growing indefinitely without human intervention.
  * Runs every 30 minutes.

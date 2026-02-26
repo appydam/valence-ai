@@ -822,7 +822,11 @@ export const completeTask = mutation({
     if (!task) throw new Error("Task not found");
 
     const now = Date.now();
-    const targetStatus = args.status || "in_review";
+
+    // Only Sentinel and Kaze can mark tasks directly as "done" (they are reviewers).
+    // Other agents must go through "in_review" → Sentinel reviews → marks done.
+    const isReviewer = args.agentName === "Sentinel" || args.agentName === "Kaze";
+    const targetStatus = args.status === "done" && !isReviewer ? "in_review" : (args.status || "in_review");
 
     // 1. Add deliverables
     if (args.deliverables && args.deliverables.length > 0) {
@@ -1098,5 +1102,51 @@ export const reviewSweep = internalMutation({
     }
 
     return { staleCount: staleTasks.length };
+  },
+});
+
+/**
+ * Sentinel review sweep: find tasks in "in_review" for >10 minutes that Sentinel
+ * hasn't reviewed yet, and wake Sentinel. This catches cases where the immediate
+ * wakeup webhook failed or Sentinel's session crashed before reviewing.
+ * Called by cron every 15 minutes.
+ */
+export const sentinelReviewSweep = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+
+    const inReviewTasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_status", (q) => q.eq("status", "in_review"))
+      .collect();
+
+    // Filter: tasks in_review for >10 min, not assigned to Kaze (Kaze reviews her own)
+    const unreviewedTasks = inReviewTasks.filter(
+      (t) => t.updatedAt && t.updatedAt < tenMinutesAgo && t.assignee !== "Kaze"
+    );
+
+    if (unreviewedTasks.length > 0) {
+      // Check if Sentinel is already active (heartbeated recently)
+      const sentinel = await ctx.db
+        .query("agents")
+        .withIndex("by_name", (q) => q.eq("name", "Sentinel"))
+        .unique();
+
+      const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+      const sentinelActive = sentinel && sentinel.status === "working" && sentinel.lastHeartbeat > twoMinutesAgo;
+
+      if (!sentinelActive) {
+        const oldest = unreviewedTasks.sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0))[0];
+        console.log(`[SentinelSweep] ${unreviewedTasks.length} task(s) unreviewed >10min. Waking Sentinel for ${oldest._id}`);
+        await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+          agentName: "Sentinel",
+          taskId: oldest._id as string,
+          reason: "sweep_unreviewed",
+        });
+      }
+    }
+
+    return { unreviewedCount: unreviewedTasks.length };
   },
 });

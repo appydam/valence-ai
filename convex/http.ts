@@ -2098,4 +2098,219 @@ http.route({
 
 http.route({ path: "/api/messages", method: "OPTIONS", handler: optionsHandler() });
 
+// ── Mission Autopilot ─────────────────────────────────────────
+
+// POST /api/autopilot/decompose
+http.route({
+  path: "/api/autopilot/decompose",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    if (!body.goal || !body.userId) {
+      return new Response(
+        JSON.stringify({ error: "goal and userId are required" }),
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+    try {
+      const result = await ctx.runAction(api.missionAutopilot.decomposeMission, {
+        goal: body.goal,
+        context: body.context,
+        userId: body.userId,
+      });
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        status: 200,
+        headers: corsHeaders(),
+      });
+    } catch (e: any) {
+      return new Response(
+        JSON.stringify({ ok: false, error: e.message }),
+        { status: 500, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
+http.route({ path: "/api/autopilot/decompose", method: "OPTIONS", handler: optionsHandler() });
+
+// POST /api/autopilot/launch
+http.route({
+  path: "/api/autopilot/launch",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    if (!body.sessionId || !body.plan) {
+      return new Response(
+        JSON.stringify({ error: "sessionId and plan are required" }),
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+    try {
+      const result = await ctx.runMutation(api.missionAutopilotQueries.launchMission, {
+        sessionId: body.sessionId as Id<"autopilotSessions">,
+        plan: typeof body.plan === "string" ? body.plan : JSON.stringify(body.plan),
+      });
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        status: 200,
+        headers: corsHeaders(),
+      });
+    } catch (e: any) {
+      return new Response(
+        JSON.stringify({ ok: false, error: e.message }),
+        { status: 500, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
+http.route({ path: "/api/autopilot/launch", method: "OPTIONS", handler: optionsHandler() });
+
+// POST /api/autopilot/refine
+http.route({
+  path: "/api/autopilot/refine",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    if (!body.sessionId || !body.feedback) {
+      return new Response(
+        JSON.stringify({ error: "sessionId and feedback are required" }),
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+    try {
+      const result = await ctx.runAction(api.missionAutopilot.refinePlan, {
+        sessionId: body.sessionId as Id<"autopilotSessions">,
+        feedback: body.feedback,
+      });
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        status: 200,
+        headers: corsHeaders(),
+      });
+    } catch (e: any) {
+      return new Response(
+        JSON.stringify({ ok: false, error: e.message }),
+        { status: 500, headers: corsHeaders() }
+      );
+    }
+  }),
+});
+
+http.route({ path: "/api/autopilot/refine", method: "OPTIONS", handler: optionsHandler() });
+
+// GET /api/autopilot/sessions
+http.route({
+  path: "/api/autopilot/sessions",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId");
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "userId query param required" }),
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+    const sessions = await ctx.runQuery(api.missionAutopilotQueries.listSessions, {
+      userId,
+    });
+    return new Response(JSON.stringify(sessions), {
+      status: 200,
+      headers: corsHeaders(),
+    });
+  }),
+});
+
+http.route({ path: "/api/autopilot/sessions", method: "OPTIONS", handler: optionsHandler() });
+
+// ── Nova AI Smart Routing ────────────────────────────────────
+
+// POST /api/nova/classify — Classify intent via Nova 2 Lite
+http.route({
+  path: "/api/nova/classify",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { message, context } = await request.json();
+    if (!message) {
+      return new Response(JSON.stringify({ error: "message required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    try {
+      const result = await ctx.runAction(api.novaLiteRouter.classifyIntent, { message, context });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders() });
+    }
+  }),
+});
+
+// POST /api/nova/generate-title — Generate task title from description
+http.route({
+  path: "/api/nova/generate-title",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { description } = await request.json();
+    if (!description) {
+      return new Response(JSON.stringify({ error: "description required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    try {
+      const result = await ctx.runAction(api.novaLiteRouter.generateTitle, { description });
+      return new Response(JSON.stringify({ title: result }), { status: 200, headers: corsHeaders() });
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders() });
+    }
+  }),
+});
+
+// POST /api/nova/summarize — Summarize content
+http.route({
+  path: "/api/nova/summarize",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { content, maxLength } = await request.json();
+    if (!content) {
+      return new Response(JSON.stringify({ error: "content required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    try {
+      const result = await ctx.runAction(api.novaLiteRouter.summarize, { content, maxLength });
+      return new Response(JSON.stringify({ summary: result }), { status: 200, headers: corsHeaders() });
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders() });
+    }
+  }),
+});
+
+// Nova AI CORS handlers
+http.route({ path: "/api/nova/classify", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/nova/generate-title", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/nova/summarize", method: "OPTIONS", handler: optionsHandler() });
+
+// ── Voice System ─────────────────────────────────────────────
+
+// POST /api/voice/briefing-data — Gather data for daily briefing
+http.route({
+  path: "/api/voice/briefing-data",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const { userId } = await request.json();
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "userId required" }), {
+        status: 400, headers: corsHeaders(),
+      });
+    }
+    try {
+      const data = await ctx.runAction(api.voiceBriefing.gatherBriefingData, { userId });
+      return new Response(JSON.stringify(data), { status: 200, headers: corsHeaders() });
+    } catch (e: any) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders() });
+    }
+  }),
+});
+
+http.route({ path: "/api/voice/briefing-data", method: "OPTIONS", handler: optionsHandler() });
+
 export default http;

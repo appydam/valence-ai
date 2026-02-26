@@ -24,6 +24,17 @@ export const listForAgent = query({
   },
 });
 
+/** Recent handoffs across all agents (for Live Ops Feed) */
+export const recent = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("sessionHandoffs")
+      .order("desc")
+      .take(args.limit ?? 10);
+  },
+});
+
 /** Agent writes a handoff note at end of session. Called via POST /api/agents/handoff. */
 export const write = mutation({
   args: {

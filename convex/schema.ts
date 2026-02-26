@@ -119,9 +119,11 @@ export default defineSchema({
     to: v.string(),
     content: v.string(),
     timestamp: v.number(),
+    isSquadMessage: v.optional(v.boolean()),
   })
     .index("by_conversation", ["from", "to"])
-    .index("by_timestamp", ["timestamp"]),
+    .index("by_timestamp", ["timestamp"])
+    .index("by_squad", ["isSquadMessage", "timestamp"]),
 
   notifications: defineTable({
     recipientAgent: agentNameValidator,
@@ -706,6 +708,21 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_submitted", ["submittedAt"]),
 
+  // Mission Autopilot sessions
+  autopilotSessions: defineTable({
+    userId: v.string(),
+    goal: v.string(),
+    context: v.optional(v.string()),
+    plan: v.optional(v.string()), // JSON-stringified decomposed plan
+    status: v.string(), // "planning" | "reviewing" | "launched" | "cancelled"
+    missionId: v.optional(v.id("missions")),
+    createdAt: v.number(),
+    launchedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_created", ["createdAt"]),
+
   figmaPluginCommands: defineTable({
     createdBy: v.string(),
     fileKey: v.string(),
@@ -725,4 +742,37 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_file", ["fileKey"]),
+
+  // Voice session tracking
+  voiceSessions: defineTable({
+    userId: v.string(),
+    target: v.string(),          // "squad" | agent name
+    status: v.union(
+      v.literal("active"),
+      v.literal("ended"),
+      v.literal("error")
+    ),
+    startedAt: v.number(),
+    endedAt: v.optional(v.number()),
+    durationMs: v.optional(v.number()),
+    turnCount: v.number(),
+    transcriptCount: v.number(),
+    sessionType: v.union(
+      v.literal("command"),
+      v.literal("briefing")
+    ),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_status", ["userId", "status"]),
+
+  // Voice transcripts for accessibility and history
+  voiceTranscripts: defineTable({
+    sessionId: v.id("voiceSessions"),
+    speaker: v.string(),        // "user" | agent name
+    content: v.string(),
+    timestamp: v.number(),
+    isFinal: v.boolean(),
+  })
+    .index("by_session", ["sessionId"])
+    .index("by_session_time", ["sessionId", "timestamp"]),
 });

@@ -45,6 +45,18 @@ export const list = query({
   },
 });
 
+/** Recent integration activity across all users (for Live Ops Feed) */
+export const recent = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("integrationActivity")
+      .withIndex("by_timestamp")
+      .order("desc")
+      .take(args.limit ?? 50);
+  },
+});
+
 // Get activity stats
 export const stats = query({
   args: {
