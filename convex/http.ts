@@ -66,6 +66,74 @@ http.route({
       })
     );
 
+    // ── Mission Context: inject lightweight view of ALL tasks in each mission ──
+    // Gives agents situational awareness of what the whole squad is working on,
+    // not just their own queue. Excludes done/cancelled to keep it actionable.
+    let missionContext: {
+      missionId: string;
+      missionTitle: string;
+      taskCount: number;
+      tasks: {
+        id: string;
+        title: string;
+        status: string;
+        assignee: string | null;
+        priority: string;
+        tags: string[];
+      }[];
+    }[] = [];
+    try {
+      // Collect unique missionIds from this agent's active tasks
+      const missionIds = [
+        ...new Set(
+          tasks
+            .map((t: any) => t.missionId)
+            .filter(Boolean)
+        ),
+      ] as string[];
+
+      if (missionIds.length > 0) {
+        const missionResults = await Promise.all(
+          missionIds.map(async (missionId) => {
+            const [mission, allMissionTasks] = await Promise.all([
+              ctx.runQuery(api.missions.getById, { missionId: missionId as any }),
+              ctx.runQuery(api.tasks.listByMission, { missionId: missionId as any }),
+            ]);
+            if (!mission) return null;
+
+            // Exclude done/cancelled — keep only actionable tasks
+            const activeTasks = (allMissionTasks ?? [])
+              .filter((t: any) => t.status !== "done" && t.status !== "cancelled")
+              // Sort: in_progress first, then in_review, assigned, inbox
+              .sort((a: any, b: any) => {
+                const order: Record<string, number> = { in_progress: 0, in_review: 1, assigned: 2, inbox: 3 };
+                return (order[a.status] ?? 9) - (order[b.status] ?? 9);
+              })
+              .slice(0, 50) // cap at 50 tasks per mission
+              .map((t: any) => ({
+                id: t._id,
+                title: t.title,
+                status: t.status,
+                assignee: t.assignee ?? null,
+                priority: t.priority,
+                tags: t.tags ?? [],
+              }));
+
+            return {
+              missionId,
+              missionTitle: mission.title,
+              taskCount: allMissionTasks.length,
+              tasks: activeTasks,
+            };
+          })
+        );
+        missionContext = missionResults.filter(Boolean) as typeof missionContext;
+      }
+    } catch (missionErr: any) {
+      console.error("[Heartbeat] Mission context fetch failed:", missionErr.message);
+      // Non-fatal — heartbeat still succeeds without mission context
+    }
+
     const agentConfig = await ctx.runQuery(api.agentConfigs.getByAgent, {
       agentName: body.agentName,
     });
@@ -255,6 +323,7 @@ http.route({
         ok: true,
         ...result,
         assignedTasks: tasksWithContext,
+        missionContext,
         config: agentConfig,
         availableTools,
         workingContext,

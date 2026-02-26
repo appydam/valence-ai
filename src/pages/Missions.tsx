@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Clock, Archive, ExternalLink, FolderPlus } from "lucide-react";
+import { CheckCircle2, Clock, Archive, ExternalLink, FolderPlus, FileText } from "lucide-react";
 
 const Missions = () => {
   const missions = useQuery(api.missions.list, {}) ?? [];
@@ -118,8 +118,15 @@ const Missions = () => {
                     </div>
                     <div className="flex gap-2">
                       <Link
+                        to={`/missions/${mission._id}`}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        View Report
+                      </Link>
+                      <Link
                         to={`/board?mission=${mission._id}`}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-surface-hover transition-colors"
                       >
                         Open Board
                       </Link>
@@ -180,12 +187,21 @@ const Missions = () => {
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleArchive(mission._id)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-surface-hover transition-colors"
-                    >
-                      Archive
-                    </button>
+                    <div className="flex gap-2">
+                      <Link
+                        to={`/missions/${mission._id}`}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        View Report
+                      </Link>
+                      <button
+                        onClick={() => handleArchive(mission._id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-surface-hover transition-colors"
+                      >
+                        Archive
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -230,6 +246,13 @@ const Missions = () => {
                         </span>
                       </div>
                     </div>
+                    <Link
+                      to={`/missions/${mission._id}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors shrink-0"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      View Report
+                    </Link>
                   </div>
                 </div>
               ))}

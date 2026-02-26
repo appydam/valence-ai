@@ -18,6 +18,7 @@ import Analytics from "./pages/Analytics";
 import MemoryBank from "./pages/MemoryBank";
 import AgentMemoryDetail from "./pages/AgentMemoryDetail";
 import SoulReview from "./pages/SoulReview";
+import MissionReport from "./pages/MissionReport";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/board" element={<Board />} />
             <Route path="/missions" element={<Missions />} />
+            <Route path="/missions/:missionId" element={<MissionReport />} />
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/command" element={<CommandCenter />} />
             <Route path="/integrations" element={<Integrations />} />

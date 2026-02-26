@@ -1,6 +1,5 @@
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import { getRelativeTime } from "@/lib/time";
 
 interface IntegrationActivityFeedProps {
@@ -16,61 +15,52 @@ export function IntegrationActivityFeed({ userId, limit = 20 }: IntegrationActiv
 
   if (activities.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-        <p className="text-sm">No integration activity yet</p>
-        <p className="text-xs mt-1">
-          Connect an integration and have your agents use it to see activity here
-        </p>
+      <div className="rounded-lg border border-border px-4 py-8 text-center text-muted-foreground">
+        <p className="text-xs">No executions yet — connect an integration and run an agent to see activity here.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      {activities.map((activity) => (
+    <div className="rounded-lg border border-border overflow-hidden">
+      {activities.map((activity, index) => (
         <div
           key={activity._id}
-          className="flex items-start gap-3 p-3 rounded-lg border border-border bg-card hover:bg-card/80 transition-colors"
+          className={`flex items-center gap-3 px-4 py-2.5 ${index !== 0 ? "border-t border-border" : ""}`}
         >
-          {/* Status Icon */}
-          <div className="shrink-0 mt-0.5">
-            {activity.status === "success" ? (
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-            ) : (
-              <XCircle className="w-4 h-4 text-red-500" />
-            )}
-          </div>
+          {/* Status dot */}
+          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+            activity.status === "success" ? "bg-status-online" : "bg-destructive"
+          }`} />
 
-          {/* Activity Details */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {activity.toolName.replace(/_/g, " ")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {activity.agentName ? (
-                    <>
-                      <span className="font-medium">{activity.agentName}</span>
-                      {" · "}
-                    </>
-                  ) : null}
-                  {activity.integrationType}
-                </p>
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0">
-                {getRelativeTime(activity.timestamp)}
-              </span>
-            </div>
+          {/* Tool name — mono */}
+          <span className="text-xs font-mono text-foreground flex-1 min-w-0 truncate">
+            {activity.toolName}
+          </span>
 
-            {/* Error Message */}
-            {activity.status === "error" && activity.errorMessage && (
-              <p className="text-xs text-red-500 mt-1 line-clamp-1">
-                {activity.errorMessage}
-              </p>
-            )}
-          </div>
+          {/* Agent */}
+          {activity.agentName && (
+            <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">
+              {activity.agentName}
+            </span>
+          )}
+
+          {/* Integration type */}
+          <span className="text-xs text-muted-foreground shrink-0 hidden md:block">
+            {activity.integrationType}
+          </span>
+
+          {/* Error (inline, compact) */}
+          {activity.status === "error" && activity.errorMessage && (
+            <span className="text-[11px] text-destructive shrink-0 truncate max-w-[160px] hidden lg:block">
+              {activity.errorMessage}
+            </span>
+          )}
+
+          {/* Timestamp */}
+          <span className="text-xs text-muted-foreground/60 shrink-0 tabular-nums text-right w-20">
+            {getRelativeTime(activity.timestamp)}
+          </span>
         </div>
       ))}
     </div>

@@ -29,6 +29,12 @@ const AGENT_DEFAULTS: Record<
     role: "Content & Distribution",
     description: "Drafts tweets, LinkedIn posts, blog content",
   },
+  Sentinel: {
+    emoji: "🔍",
+    color: "sentinel",
+    role: "Quality Reviewer",
+    description: "Reviews outputs, ensures quality, flags issues",
+  },
 };
 
 export const beat = mutation({
@@ -37,7 +43,8 @@ export const beat = mutation({
       v.literal("Kaze"),
       v.literal("Scout"),
       v.literal("Forge"),
-      v.literal("Ghost")
+      v.literal("Ghost"),
+      v.literal("Sentinel")
     ),
     status: v.union(
       v.literal("online"),
