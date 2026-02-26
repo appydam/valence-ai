@@ -19,6 +19,17 @@ All requests go to: `https://beloved-squirrel-599.convex.site`
 
 ---
 
+## ⛔ RULE ZERO — NO SERVER FILE WRITES
+
+**Every deliverable, report, draft, and output MUST go through Mission Control APIs.** Writing files to the server filesystem (`.md`, `.json`, `.txt`, any file) is FORBIDDEN. Server files are invisible to the dashboard, other agents, and the user. Work saved only as server files counts as work not done.
+
+- Use `POST /api/tasks/complete` for task deliverables (ONE call does everything)
+- Use `POST /api/documents` for long-form content
+- Use `POST /api/integrations/execute` for external tools (Notion, Slack, Gmail, etc.)
+- NEVER use `write_file`, `echo >`, `cat >`, `tee`, `>`, `>>` for deliverables
+
+---
+
 ## Available Commands
 
 ### Check In (Heartbeat)
@@ -398,7 +409,6 @@ Response includes:
 **Notion API quirk — all write tools require nested objects (NOT flat strings):**
 `parent` must be `{"database_id":"..."}` or `{"page_id":"..."}`. Properties/rich_text must be arrays.
 Check `exampleArgs` in your heartbeat `availableTools` for the exact structure of each tool.
-
 You see ALL tools the user has connected, but `recommended` highlights tools most relevant to your role.
 
 **Key fields to understand:**
@@ -829,6 +839,24 @@ Task IDs are Convex document IDs — they look like strings such as `"k17abc123d
 
 ---
 
+## CRITICAL RULE: No Server Files — Use APIs and Integrations
+
+**NEVER write files to the server filesystem.** No `.md` files, no `.json` files, no `memory/` folders. Files on the server are invisible to the dashboard, other agents, and external tools.
+
+Where different content types go:
+- **Research reports** → `POST /api/tasks/complete` (deliverable) + `notion/create_page` via integration engine
+- **Long documents** → `POST /api/documents` + optionally `notion/create_page`
+- **Code/scripts** → GitHub (`gh` CLI or `github/create_repository`) + MC deliverable with repo URL
+- **Content drafts** → `POST /api/tasks/complete` (deliverable) + `notion/create_page` or `gmail/create_draft`
+- **Team updates** → MC comment + `slack/send_message` via integration engine
+- **Structured data** → MC deliverable (JSON) + `google-sheets/append_row` via integration engine
+- **Memories** → `POST /api/agents/memory` (NOT files)
+- **Session context** → `POST /api/agents/handoff` (NOT files)
+
+**The golden rule:** Deliverables go to Convex (Mission Control) first, THEN distributed via integration tools. Never write files. Never assume filesystem access. Everything lives in Convex or external services.
+
+---
+
 ## CRITICAL RULE: Work Only Counts If It's in Mission Control
 
 **If you didn't post it to Mission Control, it didn't happen.** The human operator monitors progress through the Mission Control dashboard. Work that only exists in your terminal output or session memory is invisible and worthless.
@@ -937,9 +965,9 @@ When a memory is outdated or wrong. Providing `newBody` creates a corrected repl
 5. **If assigned tasks exist:** Claim the highest priority one (sets status to `in_progress`)
 6. **If no assigned tasks:** Check inbox (`?status=inbox`), claim something relevant to your role
 7. **If inbox is empty:** Create tasks based on your standing priorities
-8. **Do your work** — spend the bulk of your turns on actual research/code/drafting
+8. **Do your work** — spend the bulk of your turns on actual research/code/drafting. **NEVER write output to server files** — all results go through APIs (see Rule Zero above).
 9. **Write memories mid-session** if you discover API quirks, preferences, or patterns worth keeping
-10. **When done (or running low on turns):** Call `POST /api/tasks/complete` with deliverables + comment + activity in ONE call. This replaces separate deliverable/comment/activity/status update calls.
+10. **When done (or running low on turns):** Call `POST /api/tasks/complete` with deliverables + comment + activity in ONE call. Put the FULL content in the `deliverables` array — do NOT write it to a file and reference the path.
 11. **@mention Kaze** in your completion comment if you need a decision or review
 12. **Check your config** from the heartbeat response — note if the operator changed your model or settings
 13. **Before ending session:** Call `POST /api/agents/handoff` with your session summary, open questions, and a hint for your next session
