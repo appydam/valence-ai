@@ -1,18 +1,26 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 
+// Feature rows — chosen to show genuine differences, not stack the deck.
+// Sources for Perplexity Computer scores:
+//   venturebeat.com/2026/02 — 19 models, 400+ integrations, parallel tasks
+//   fortune.com/2026/02 — "even your mom can delegate tasks", ease of use
+//   perplexity.ai/hub/blog/introducing-perplexity-computer — official announcement
+//   karozieminski.substack.com — hands-on review: Labs, PerplexiGrid, GitHub push
+//   pcworld.com — "agentic AI like OpenClaw but safer", cloud sandbox
+//   n8n.io/make.com — event triggers require 3rd party (no native webhooks)
 const FEATURES = [
   "Multi-agent coordination",
-  "Native integrations (100+)",
+  "App integrations catalog",
   "Real API access",
-  "Task dependencies + chains",
-  "Episodic memory & learning",
-  "Agent quality review loops",
-  "Add any API via AI",
-  "Voice command interface",
-  "Event-driven automation",
-  "Mission Autopilot",
-  "Full UI + dashboard",
+  "Task decomposition graph",
+  "Persistent cross-session memory",
+  "Human quality review gates",
+  "Add any API via AI scraper",
+  "Voice command (desktop + mobile)",
+  "Native event / webhook triggers",
+  "Dedicated specialist agents",
+  "Live ops dashboard",
 ];
 
 type CellValue = "yes" | "no" | "partial";
@@ -28,38 +36,62 @@ const PRODUCTS: {
     name: "Valence AI",
     short: "us",
     highlight: true,
+    // Notes: specialist agents = Kaze/Scout/Forge/Ghost/Sentinel with SOULs + memory
+    // Human review gates = Sentinel reject/rework loop
+    // Native webhooks = HMAC-verified event triggers, no 3rd party needed
+    // AI scraper = paste URL → Claude generates blueprint
+    // Live ops = activity feed, session replay, agent analytics
     values: ["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],
   },
   {
-    // Perplexity Computer — launched Feb 25 2026
-    // Strong: 19-model orchestrator, 400+ integrations, real API calls, parallel
-    // task execution, user-level memory, sandboxed, voice on mobile, autopilot-style
-    // Gaps vs Valence: no persistent agent episodic memory, no custom API-via-AI
-    // scraper, no webhook/event triggers, no dedicated specialist agent personas,
-    // no full ops dashboard/session replay
+    // Perplexity Computer — launched Feb 25, 2026 — genuinely strong product
+    // YES: 19-model multi-agent orchestration (Claude Opus 4.6 + Gemini + Grok +
+    //      GPT-5.2 + Veo + others); routes each subtask to best-fit model
+    // YES: 400+ app integrations (more than us) — Gmail, Slack, Notion, Salesforce,
+    //      Shopify, Snowflake, Databricks, Crunchbase, GitHub, Linear etc.
+    // YES: Real API calls to connected services
+    // YES: Task decomposition — breaks goals into parallel async subtasks visible in UI;
+    //      tasks can run hours/days/months in cloud sandbox
+    // YES: Cross-session persistent memory (explicit + implicit, weeks of context)
+    // YES: Voice on desktop (⌘⇧V / Ctrl+Shift+V) AND mobile iOS/Android
+    //      with local-first audio processing
+    // YES: Autopilot-style — describe goal, system decomposes and executes
+    // PARTIAL: Quality review — multi-model redundancy reduces errors but no explicit
+    //          human reject/rework gate; relies on cloud safeguards
+    // PARTIAL: Live ops — Labs + PerplexiGrid dashboard (25+ widgets), but no
+    //          dedicated agent activity feed, session replay, or per-agent analytics
+    // NO: Add any API via AI — fixed 400+ catalog; no doc-scraper to add custom APIs
+    // NO: Native webhooks — event-driven triggers require 3rd party (n8n, Make, Pipedream)
+    // NO: Dedicated specialist agents — general orchestrator assigns to models, not
+    //     named agents with persistent identities, SOULs, and evolving memories
     name: "Perplexity Computer",
     short: "PPLX",
     subtitle: "launched Feb '26",
-    values: ["yes","yes","yes","yes","partial","partial","no","yes","no","yes","partial"],
+    values: ["yes","yes","yes","yes","yes","partial","no","yes","no","no","partial"],
   },
   {
     name: "ChatGPT",
     short: "GPT",
-    values: ["no","no","partial","no","no","no","no","partial","no","partial","partial"],
+    // Operator-configured actions; limited true multi-agent; memory on Pro;
+    // voice on mobile+desktop; no native webhooks; no specialist agents
+    values: ["partial","partial","partial","no","partial","no","no","yes","no","no","partial"],
   },
   {
     name: "Zapier",
     short: "ZAP",
-    values: ["partial","yes","yes","yes","no","no","no","no","yes","no","yes"],
+    // Strong on integrations + webhooks; no AI agents; no memory; no voice
+    values: ["no","yes","yes","partial","no","no","no","no","yes","no","yes"],
   },
   {
     name: "n8n",
     short: "N8N",
-    values: ["partial","yes","yes","yes","partial","no","no","no","yes","no","yes"],
+    // Open-source workflow engine; webhooks yes; basic AI nodes; no agents/voice
+    values: ["no","yes","yes","yes","no","no","no","no","yes","no","yes"],
   },
   {
     name: "Paragon",
     short: "PAR",
+    // Integration platform for SaaS; no AI agents; no voice; no memory
     values: ["no","yes","yes","partial","no","no","no","no","no","no","partial"],
   },
 ];
