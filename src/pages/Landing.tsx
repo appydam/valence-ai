@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { PilotModal } from "@/components/landing/PilotModal";
