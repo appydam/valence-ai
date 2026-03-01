@@ -696,71 +696,6 @@ function VoiceCommandVisual() {
   );
 }
 
-// ─── Billing & Team visual ───────────────────────────────────────────────────
-function BillingVisual() {
-  const plans = [
-    { name: "Starter", price: "$99", color: "hsl(217, 91%, 60%)", features: ["3 agents", "25 integrations", "10k API calls/mo"] },
-    { name: "Pro", price: "$299", color: "hsl(258, 90%, 66%)", features: ["5 agents", "100+ integrations", "Unlimited API calls"], highlight: true },
-    { name: "Enterprise", price: "Custom", color: "hsl(160, 84%, 39%)", features: ["Unlimited agents", "White-label UI", "Dedicated SLA"] },
-  ];
-
-  return (
-    <div className="w-full max-w-sm space-y-3">
-      {plans.map((plan, i) => (
-        <motion.div
-          key={plan.name}
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.1, type: "spring", stiffness: 200, damping: 22 }}
-          className="relative rounded-xl px-4 py-3"
-          style={{
-            background: plan.highlight
-              ? `${plan.color.replace("hsl(", "hsla(").replace(")", ", 0.08)")}`
-              : "hsl(240 25% 7%)",
-            border: `1px solid ${plan.color.replace("hsl(", "hsla(").replace(")", plan.highlight ? ", 0.4)" : ", 0.15)")}`,
-            boxShadow: plan.highlight ? `0 0 20px ${plan.color.replace("hsl(", "hsla(").replace(")", ", 0.08)")}` : "none",
-          }}
-        >
-          {plan.highlight && (
-            <div
-              className="absolute -top-2.5 right-3 text-[9px] font-mono px-2 py-0.5 rounded-full tracking-widest"
-              style={{ background: plan.color, color: "#000" }}
-            >
-              POPULAR
-            </div>
-          )}
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-foreground/80">{plan.name}</span>
-            <span className="text-sm font-bold font-mono" style={{ color: plan.color }}>{plan.price}<span className="text-[10px] text-muted-foreground/40">{plan.price !== "Custom" ? "/mo" : ""}</span></span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {plan.features.map((f) => (
-              <span key={f} className="text-[9px] px-1.5 py-0.5 rounded font-mono text-muted-foreground/60"
-                style={{ background: "hsl(240 25% 10%)", border: "1px solid hsl(var(--border) / 0.3)" }}>
-                {f}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-      ))}
-
-      <div className="flex items-center gap-3 pt-1">
-        {[
-          { label: "API Keys", icon: "🔑", color: "hsl(38, 92%, 50%)" },
-          { label: "Audit Log", icon: "📋", color: "hsl(160, 84%, 39%)" },
-          { label: "Team Roles", icon: "👥", color: "hsl(217, 91%, 60%)" },
-        ].map((item) => (
-          <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50">
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─── Mission Autopilot visual ────────────────────────────────────────────────
 function AutopilotVisual() {
   const phases = [
@@ -1570,29 +1505,31 @@ export default function Landing() {
 
           <FeatureBlock
             label="MISSION AUTOPILOT"
-            title="Describe the goal. AI plans and executes."
-            description="Type a goal in plain English. Claude Opus decomposes it into subtasks with dependencies, assigns agents, and launches the entire mission — while you grab coffee. Review, refine by voice, or let it run."
+            title="Describe the goal. AI decomposes and executes."
+            description="Type a goal in natural language — 'research our top 50 leads and book demos this week'. Claude Opus 4.6 breaks it into a dependency graph of subtasks, assigns the right agent to each, and fires them off in parallel. You review, refine by voice, or just let it run."
             bullets={[
-              "Claude Opus 4.6 mission decomposition — understands complex multi-step goals",
-              "Auto-assigns agents by capability: research, code, content, QA",
-              "Voice refinement: talk through changes instead of typing",
-              "One-click launch or manual review before execution",
+              "Claude Opus 4.6 mission decomposition: multi-step goals become structured task graphs",
+              "Auto-assigns agents by capability — Scout for research, Forge for code, Ghost for content",
+              "Parallel + sequential execution: agents work simultaneously where possible",
+              "Voice refinement mid-mission: talk through changes without retyping",
+              "One-click launch or gated review before any action is taken",
             ]}
             visual={<AutopilotVisual />}
             reverse
           />
 
           <FeatureBlock
-            label="BILLING & TEAM MANAGEMENT"
-            title="Built for teams. Ready for scale."
-            description="Valence ships with everything you need to run it as a real product — subscription plans, usage metering, team roles, API keys for agents and CI/CD, and a full audit log. No bolted-on add-ons."
+            label="LIVE OPS COMMAND CENTER"
+            title="Real-time visibility into every agent, every action."
+            description="Mission Control isn't a chat window — it's a live operations dashboard. Watch agents work in real time, inspect every tool call they make, approve or reject deliverables before they flow downstream, and replay any session in full."
             bullets={[
-              "Starter, Pro, and Enterprise plans with Stripe-powered billing",
-              "Team roles (Admin / Member / Viewer) with granular permissions",
-              "API key management — agent server keys, CI/CD keys, revocation",
-              "Audit log: every sensitive action tracked with user + timestamp",
+              "Live activity feed: every agent action, tool call, and decision streamed in real time",
+              "Deliverable review gates: Sentinel flags outputs for human approval before proceeding",
+              "Full session replay: inspect the exact context, memories, and tool calls of any session",
+              "Agent analytics: tasks completed, API calls made, quality scores, and error rates per agent",
+              "Webhook triggers: any event from GitHub, Slack, Linear, or your own system wakes agents instantly",
             ]}
-            visual={<BillingVisual />}
+            visual={<WebhookVisual />}
           />
         </div>
       </section>
@@ -1627,14 +1564,14 @@ export default function Landing() {
               Watch Your Team Execute
             </motion.h2>
             <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              One instruction triggers all 5 agents — in parallel and in sequence — calling 8 real integrations, reviewing each other's work, and delivering a complete revenue pipeline.
+              One instruction triggers all 5 agents — in parallel and in sequence — calling real integrations, reviewing each other's work, and delivering a complete revenue pipeline. Watch it live in the command center.
             </motion.p>
 
             {/* Metric pills */}
             <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-center gap-3 pt-2">
               {[
                 { label: "5 agents coordinating", color: "hsl(217, 91%, 60%)" },
-                { label: "8 integrations called", color: "hsl(38, 92%, 50%)" },
+                { label: "10 integrations called", color: "hsl(38, 92%, 50%)" },
                 { label: "$240k pipeline output", color: "hsl(160, 84%, 39%)" },
                 { label: "Sentinel QA loop", color: "hsl(330, 81%, 60%)" },
               ].map((p) => (

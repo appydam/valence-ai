@@ -7,12 +7,12 @@ const FEATURES = [
   "Real API access",
   "Task dependencies + chains",
   "Episodic memory & learning",
-  "Quality review loops",
+  "Agent quality review loops",
   "Add any API via AI",
   "Voice command interface",
-  "Billing & team management",
+  "Event-driven automation",
+  "Mission Autopilot",
   "Full UI + dashboard",
-  "Production reliability",
 ];
 
 type CellValue = "yes" | "no" | "partial";
@@ -21,6 +21,7 @@ const PRODUCTS: {
   name: string;
   short: string;
   highlight?: boolean;
+  subtitle?: string;
   values: CellValue[];
 }[] = [
   {
@@ -30,29 +31,34 @@ const PRODUCTS: {
     values: ["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],
   },
   {
+    // Perplexity Computer — launched Feb 25 2026
+    // Multi-model orchestrator (19 models), 400+ integrations, real API calls,
+    // task chains, user-level memory, sandboxed execution, voice on mobile,
+    // NO webhook triggers, NO custom skill dev, NO persistent agent memory
+    name: "Perplexity Computer",
+    short: "PPLX",
+    subtitle: "launched Feb '26",
+    values: ["partial","yes","yes","partial","partial","partial","no","partial","no","partial","partial"],
+  },
+  {
     name: "ChatGPT",
     short: "GPT",
     values: ["no","no","partial","no","no","no","no","partial","no","partial","partial"],
   },
   {
-    name: "Perplexity",
-    short: "PPLX",
-    values: ["no","no","partial","no","no","no","no","no","no","partial","partial"],
-  },
-  {
     name: "Zapier",
     short: "ZAP",
-    values: ["partial","yes","yes","yes","no","no","no","no","partial","yes","yes"],
+    values: ["partial","yes","yes","yes","no","no","no","no","yes","no","yes"],
   },
   {
     name: "n8n",
     short: "N8N",
-    values: ["partial","yes","yes","yes","partial","no","no","no","partial","yes","yes"],
+    values: ["partial","yes","yes","yes","partial","no","no","no","yes","no","yes"],
   },
   {
     name: "Paragon",
     short: "PAR",
-    values: ["no","yes","yes","partial","no","no","no","no","partial","partial","yes"],
+    values: ["no","yes","yes","partial","no","no","no","no","no","no","partial"],
   },
 ];
 
@@ -100,21 +106,28 @@ export function ComparisonTable() {
                 transition={{ delay: i * 0.08, duration: 0.4 }}
                 className="py-3 px-2 text-center"
               >
-                <div
-                  className="inline-block px-2 py-1 rounded-lg text-xs font-semibold"
-                  style={
-                    p.highlight
-                      ? {
-                          background: "hsl(var(--primary) / 0.12)",
-                          border: "1px solid hsl(var(--primary) / 0.4)",
-                          color: "hsl(var(--primary))",
-                        }
-                      : {
-                          color: "hsl(var(--muted-foreground))",
-                        }
-                  }
-                >
-                  {p.name}
+                <div className="flex flex-col items-center gap-0.5">
+                  <div
+                    className="inline-block px-2 py-1 rounded-lg text-xs font-semibold"
+                    style={
+                      p.highlight
+                        ? {
+                            background: "hsl(var(--primary) / 0.12)",
+                            border: "1px solid hsl(var(--primary) / 0.4)",
+                            color: "hsl(var(--primary))",
+                          }
+                        : {
+                            color: "hsl(var(--muted-foreground))",
+                          }
+                    }
+                  >
+                    {p.name}
+                  </div>
+                  {p.subtitle && (
+                    <span className="text-[9px] text-muted-foreground/40 font-normal tracking-wide whitespace-nowrap">
+                      {p.subtitle}
+                    </span>
+                  )}
                 </div>
               </motion.th>
             ))}

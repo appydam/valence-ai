@@ -20,6 +20,9 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
     integrations: [
       { name: "Salesforce", logo: SI("salesforce"), color: "#00A1E0", lastCalledBy: "Ghost", lastEndpoint: "POST /sobjects/Lead", lastStatus: "201 Created", lastMs: "312ms" },
       { name: "HubSpot CRM", logo: SI("hubspot"), color: "#FF7A59", lastCalledBy: "Kaze", lastEndpoint: "PATCH /crm/v3/objects/deals", lastStatus: "200 OK", lastMs: "189ms" },
+      { name: "Pipedrive", logo: SI("pipedrive"), color: "#1A3C5E", lastCalledBy: "Scout", lastEndpoint: "POST /deals", lastStatus: "201 Created", lastMs: "198ms" },
+      { name: "Apollo.io", logo: SI("apollographql"), color: "#E535AB", lastCalledBy: "Ghost", lastEndpoint: "POST /people/search", lastStatus: "200 OK", lastMs: "342ms" },
+      { name: "Hunter.io", logo: SI("hunter"), color: "#F36A24", lastCalledBy: "Scout", lastEndpoint: "GET /email-finder?domain=...", lastStatus: "200 OK", lastMs: "287ms" },
       { name: "Intercom", logo: SI("intercom"), color: "#286EFA", lastCalledBy: "Kaze", lastEndpoint: "POST /contacts", lastStatus: "201 Created", lastMs: "156ms" },
       { name: "Gong", logo: SI("gong"), color: "#7B42F6", lastCalledBy: "Scout", lastEndpoint: "GET /calls?fromDateTime=...", lastStatus: "200 OK", lastMs: "421ms" },
       { name: "MindTickle", logo: SI("mindtickle"), color: "#FF6B35", lastCalledBy: "Ghost", lastEndpoint: "POST /training/assignments", lastStatus: "201 Created", lastMs: "234ms" },
@@ -29,6 +32,7 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
     label: "Dev Tools",
     integrations: [
       { name: "GitHub", logo: SI("github"), color: "#e2e8f0", lastCalledBy: "Forge", lastEndpoint: "POST /repos/commits", lastStatus: "201 Created", lastMs: "243ms" },
+      { name: "Vercel", logo: SI("vercel"), color: "#e2e8f0", lastCalledBy: "Forge", lastEndpoint: "POST /v13/deployments", lastStatus: "200 OK", lastMs: "412ms" },
       { name: "Bitbucket", logo: SI("bitbucket"), color: "#2684FF", lastCalledBy: "Forge", lastEndpoint: "POST /repositories/pullrequests", lastStatus: "201 Created", lastMs: "312ms" },
       { name: "Jira", logo: SI("jira"), color: "#0052CC", lastCalledBy: "Kaze", lastEndpoint: "POST /rest/api/issue", lastStatus: "201 Created", lastMs: "134ms" },
       { name: "Linear", logo: SI("linear"), color: "#5E6AD2", lastCalledBy: "Kaze", lastEndpoint: "POST /graphql (createIssue)", lastStatus: "200 OK", lastMs: "134ms" },
@@ -49,6 +53,7 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
     label: "Finance & Payments",
     integrations: [
       { name: "Stripe", logo: SI("stripe"), color: "#6772E5", lastCalledBy: "Forge", lastEndpoint: "POST /v1/payment_intents", lastStatus: "201 Created", lastMs: "445ms" },
+      { name: "Razorpay", logo: SI("razorpay"), color: "#072654", lastCalledBy: "Forge", lastEndpoint: "POST /v1/orders", lastStatus: "201 Created", lastMs: "298ms" },
       { name: "Gusto", logo: SI("gusto"), color: "#F45D48", lastCalledBy: "Scout", lastEndpoint: "GET /v1/companies/payrolls", lastStatus: "200 OK", lastMs: "312ms" },
       { name: "Shopify", logo: SI("shopify"), color: "#96BF48", lastCalledBy: "Scout", lastEndpoint: "GET /admin/api/orders.json", lastStatus: "200 OK", lastMs: "267ms" },
       { name: "QuickBooks", logo: SI("quickbooks"), color: "#2CA01C", lastCalledBy: "Scout", lastEndpoint: "POST /invoice", lastStatus: "200 OK", lastMs: "312ms" },
@@ -58,6 +63,7 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
   {
     label: "Data & Analytics",
     integrations: [
+      { name: "Google Analytics", logo: SI("googleanalytics"), color: "#E37400", lastCalledBy: "Scout", lastEndpoint: "POST /v1beta/reports:runReport", lastStatus: "200 OK", lastMs: "312ms" },
       { name: "Google Sheets", logo: SI("googlesheets"), color: "#34A853", lastCalledBy: "Scout", lastEndpoint: "POST /values:append", lastStatus: "200 OK", lastMs: "156ms" },
       { name: "Airtable", logo: SI("airtable"), color: "#FCB400", lastCalledBy: "Scout", lastEndpoint: "POST /records", lastStatus: "200 OK", lastMs: "156ms" },
       { name: "Looker", logo: SI("looker"), color: "#4285F4", lastCalledBy: "Scout", lastEndpoint: "POST /queries/run/json", lastStatus: "200 OK", lastMs: "523ms" },
@@ -78,6 +84,7 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
     integrations: [
       { name: "SAP S/4HANA", logo: SI("sap"), color: "#009de0", lastCalledBy: "Scout", lastEndpoint: "GET /API_PRODUCT_SRV/A_Product", lastStatus: "200 OK", lastMs: "789ms" },
       { name: "SAP SuccessFactors", logo: SI("sap"), color: "#F0AB00", lastCalledBy: "Scout", lastEndpoint: "GET /odata/v2/User", lastStatus: "200 OK", lastMs: "612ms" },
+      { name: "Zoho Workspace", logo: SI("zoho"), color: "#E42527", lastCalledBy: "Scout", lastEndpoint: "GET /crm/v3/Contacts", lastStatus: "200 OK", lastMs: "412ms" },
       { name: "Workday", logo: SI("workday"), color: "#F5820F", lastCalledBy: "Scout", lastEndpoint: "GET /v1/workers", lastStatus: "200 OK", lastMs: "534ms" },
       { name: "ServiceNow", logo: SI("servicenow"), color: "#62D84E", lastCalledBy: "Sentinel", lastEndpoint: "POST /api/now/table/incident", lastStatus: "201 Created", lastMs: "345ms" },
       { name: "Greenhouse", logo: SI("greenhouse"), color: "#24A47F", lastCalledBy: "Scout", lastEndpoint: "GET /v1/candidates", lastStatus: "200 OK", lastMs: "267ms" },
@@ -86,6 +93,7 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
   {
     label: "Marketing & Ads",
     integrations: [
+      { name: "Mailchimp", logo: SI("mailchimp"), color: "#FFE01B", lastCalledBy: "Ghost", lastEndpoint: "POST /3.0/campaigns", lastStatus: "201 Created", lastMs: "234ms" },
       { name: "Meta Ads", logo: SI("meta"), color: "#1877F2", lastCalledBy: "Scout", lastEndpoint: "GET /act_{id}/insights", lastStatus: "200 OK", lastMs: "412ms" },
       { name: "Google Ads", logo: SI("googleads"), color: "#4285F4", lastCalledBy: "Scout", lastEndpoint: "GET /customers/{id}/campaigns", lastStatus: "200 OK", lastMs: "378ms" },
       { name: "Zendesk", logo: SI("zendesk"), color: "#03363D", lastCalledBy: "Sentinel", lastEndpoint: "GET /tickets?status=open", lastStatus: "200 OK", lastMs: "98ms" },
