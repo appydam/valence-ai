@@ -103,6 +103,10 @@ export const update = mutation({
     skills: v.optional(v.array(v.string())),
     sessionMaxTurns: v.optional(v.number()),
     sessionTimeout: v.optional(v.number()),
+    displayName: v.optional(v.string()),
+    customEmoji: v.optional(v.string()),
+    customRole: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { agentName, ...fields } = args;

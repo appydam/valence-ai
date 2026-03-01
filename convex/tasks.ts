@@ -2,6 +2,7 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
+import { checkPlanLimit } from "./lib/planGating";
 
 export const list = query({
   args: {
@@ -115,6 +116,12 @@ export const create = mutation({
     requiredUserId: v.optional(v.string()), // NEW: User ID for integration credentials
   },
   handler: async (ctx, args) => {
+    // Plan limit check
+    const planCheck = await checkPlanLimit(ctx, "tasks");
+    if (!planCheck.allowed) {
+      throw new Error(`Plan limit reached: ${planCheck.current}/${planCheck.limit} tasks this month (${planCheck.plan} plan). Upgrade to create more tasks.`);
+    }
+
     const now = Date.now();
     let missionId: Id<"missions"> | undefined = args.missionId || undefined;
 
@@ -361,7 +368,39 @@ export const update = mutation({
         }
       }
     }
+    // Auto-wake Sentinel (QA) when any agent submits work for review
+    // Sentinel reviews first — if it passes, Kaze does final approval
+    if (updates.status === "in_review" && existing.assignee !== "Kaze") {
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: "Sentinel",
+        taskId: id as string,
+        reason: "task_ready_for_review",
+      });
+    }
+
+    // Also wake Kaze for awareness (but Sentinel reviews first)
+    if (updates.status === "in_review" && existing.assignee !== "Kaze") {
+      await ctx.scheduler.runAfter(2000, internal.agentWakeup.triggerWakeup, {
+        agentName: "Kaze",
+        taskId: id as string,
+        reason: "task_ready_for_review",
+      });
+    }
+
+    // Apply the update BEFORE chain trigger so dependency checks see the new status
+    await ctx.db.patch(id, updates);
+
+    // If assignee changed, wake up the new agent
+    if (updates.assignee && updates.assignee !== existing.assignee) {
+      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        agentName: updates.assignee,
+        taskId: id as string,
+        reason: "task_reassigned",
+      });
+    }
+
     // Chain trigger: when a task completes, wake up agents whose blocked tasks are now ready
+    // MUST run after ctx.db.patch so dependency checks see this task's updated "done" status
     if (updates.status === "done" && existing.blocks && existing.blocks.length > 0) {
       for (const blockedTaskId of existing.blocks) {
         const blockedTask = await ctx.db.get(blockedTaskId as Id<"tasks">);
@@ -401,36 +440,6 @@ export const update = mutation({
         }
       }
     }
-
-    // Auto-wake Sentinel (QA) when any agent submits work for review
-    // Sentinel reviews first — if it passes, Kaze does final approval
-    if (updates.status === "in_review" && existing.assignee !== "Kaze") {
-      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
-        agentName: "Sentinel",
-        taskId: id as string,
-        reason: "task_ready_for_review",
-      });
-    }
-
-    // Also wake Kaze for awareness (but Sentinel reviews first)
-    if (updates.status === "in_review" && existing.assignee !== "Kaze") {
-      await ctx.scheduler.runAfter(2000, internal.agentWakeup.triggerWakeup, {
-        agentName: "Kaze",
-        taskId: id as string,
-        reason: "task_ready_for_review",
-      });
-    }
-
-    await ctx.db.patch(id, updates);
-
-    // If assignee changed, wake up the new agent
-    if (updates.assignee && updates.assignee !== existing.assignee) {
-      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
-        agentName: updates.assignee,
-        taskId: id as string,
-        reason: "task_reassigned",
-      });
-    }
   },
 });
 
@@ -444,12 +453,7 @@ export const remove = mutation({
 export const claim = mutation({
   args: {
     id: v.id("tasks"),
-    agentName: v.union(
-      v.literal("Kaze"),
-      v.literal("Scout"),
-      v.literal("Forge"),
-      v.literal("Ghost")
-    ),
+    agentName: v.string(), // Accepts any agent including Sentinel
   },
   handler: async (ctx, args) => {
     const task = await ctx.db.get(args.id);
@@ -598,12 +602,7 @@ export const addDeliverable = mutation({
 export const canAgentExecuteTask = query({
   args: {
     taskId: v.id("tasks"),
-    agentName: v.union(
-      v.literal("Kaze"),
-      v.literal("Scout"),
-      v.literal("Forge"),
-      v.literal("Ghost")
-    ),
+    agentName: v.string(), // Accepts any agent including Sentinel
     userId: v.string(),
   },
   handler: async (ctx, args) => {

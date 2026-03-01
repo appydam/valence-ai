@@ -29,12 +29,7 @@ export const list = query({
 
 export const log = mutation({
   args: {
-    agentName: v.union(
-      v.literal("Kaze"),
-      v.literal("Scout"),
-      v.literal("Forge"),
-      v.literal("Ghost")
-    ),
+    agentName: v.string(), // Accepts any agent including Sentinel
     action: v.string(),
     details: v.string(),
     taskId: v.optional(v.string()),

@@ -80,4 +80,15 @@ crons.interval(
   internal.tasks.inboxTriageSweep
 );
 
+/**
+ * Monthly usage counter rotation.
+ * Runs on the 1st of each month at 00:05 UTC.
+ * Creates a fresh usage counter for the new billing period.
+ */
+crons.monthly(
+  "usage-counter-rotation",
+  { day: 1, hourUTC: 0, minuteUTC: 5 },
+  internal.billing.rotateUsageCounters
+);
+
 export default crons;

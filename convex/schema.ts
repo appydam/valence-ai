@@ -163,6 +163,10 @@ export default defineSchema({
     skills: v.array(v.string()),
     sessionMaxTurns: v.number(),
     sessionTimeout: v.number(),
+    displayName: v.optional(v.string()),
+    customEmoji: v.optional(v.string()),
+    customRole: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
     updatedAt: v.number(),
     updatedBy: v.string(),
   }).index("by_agent", ["agentName"]),
@@ -224,6 +228,10 @@ export default defineSchema({
     sourceUrl: v.optional(v.string()),
 
     iconUrl: v.optional(v.string()),
+
+    // Enterprise OAuth override — when set, overrides authConfig for this deployment
+    customAuthConfig: v.optional(v.string()), // JSON-stringified custom OAuth config
+
     createdAt: v.number(),
     updatedAt: v.number(),
     createdBy: v.string(),
@@ -274,6 +282,15 @@ export default defineSchema({
   })
     .index("by_blueprint", ["blueprintId"])
     .index("by_blueprint_name", ["blueprintId", "name"]),
+
+  // Short-lived OAuth state tokens — stored server-side to keep redirect URLs short
+  oauthStates: defineTable({
+    token: v.string(),        // short random hex token used as the `state` param
+    blueprintSlug: v.string(),
+    userId: v.string(),
+    codeVerifier: v.optional(v.string()), // PKCE code_verifier (stored for token exchange)
+    expiresAt: v.number(),    // ms timestamp, 10-minute TTL
+  }).index("by_token", ["token"]),
 
   connections: defineTable({
     blueprintId: v.id("blueprints"),
@@ -330,8 +347,43 @@ export default defineSchema({
     email: v.string(),
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
+    role: v.optional(v.union(
+      v.literal("admin"),
+      v.literal("member"),
+      v.literal("viewer"),
+    )),
+    invitedBy: v.optional(v.string()),
     createdAt: v.number(),
-  }).index("by_clerk_id", ["clerkId"]),
+  }).index("by_clerk_id", ["clerkId"])
+    .index("by_role", ["role"]),
+
+  // API keys for programmatic access (agents, CI/CD, external tools)
+  apiKeys: defineTable({
+    userId: v.string(),          // Clerk ID of creator
+    name: v.string(),            // "Agent Server Key", "CI/CD Key"
+    keyHash: v.string(),         // SHA-256 hash (never store plaintext)
+    keyPrefix: v.string(),       // First 8 chars for display: "vk_live_abc12..."
+    role: v.union(v.literal("agent"), v.literal("admin")),
+    permissions: v.array(v.string()),
+    lastUsedAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_key_hash", ["keyHash"])
+    .index("by_user", ["userId"]),
+
+  // Audit log for sensitive operations
+  auditLog: defineTable({
+    userId: v.string(),
+    action: v.string(),           // "task.complete", "apiKey.generate", "user.invite"
+    resource: v.string(),         // "task", "apiKey", "user", "integration"
+    resourceId: v.optional(v.string()),
+    details: v.optional(v.string()), // JSON-stringified context
+    timestamp: v.number(),
+  }).index("by_user", ["userId"])
+    .index("by_action", ["action"])
+    .index("by_timestamp", ["timestamp"])
+    .index("by_resource", ["resource", "resourceId"]),
 
   integrationActivity: defineTable({
     userId: v.string(),
@@ -775,4 +827,73 @@ export default defineSchema({
   })
     .index("by_session", ["sessionId"])
     .index("by_session_time", ["sessionId", "timestamp"]),
+
+  // ============================================================
+  // BILLING & SUBSCRIPTION TABLES
+  // ============================================================
+
+  subscriptions: defineTable({
+    stripeCustomerId: v.string(),
+    stripeSubscriptionId: v.string(),
+    plan: v.union(v.literal("starter"), v.literal("pro"), v.literal("enterprise")),
+    status: v.union(
+      v.literal("active"),
+      v.literal("past_due"),
+      v.literal("cancelled"),
+      v.literal("trialing"),
+      v.literal("paused")
+    ),
+    currentPeriodStart: v.number(),
+    currentPeriodEnd: v.number(),
+    cancelAtPeriodEnd: v.boolean(),
+    trialEnd: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_stripe_customer", ["stripeCustomerId"])
+    .index("by_stripe_subscription", ["stripeSubscriptionId"])
+    .index("by_plan", ["plan"]),
+
+  planLimits: defineTable({
+    plan: v.string(),
+    maxUsers: v.number(),
+    maxAgents: v.number(),
+    maxIntegrations: v.number(),
+    maxTasksPerMonth: v.number(),
+    maxApiCallsPerMonth: v.number(),
+    features: v.array(v.string()),
+  }).index("by_plan", ["plan"]),
+
+  usageCounters: defineTable({
+    periodStart: v.number(),
+    periodEnd: v.number(),
+    tasksCreated: v.number(),
+    apiCallsMade: v.number(),
+    integrationExecutions: v.number(),
+    agentSessions: v.number(),
+    updatedAt: v.number(),
+  }).index("by_period", ["periodStart"]),
+
+  // ============================================================
+  // ONBOARDING & BRANDING TABLES
+  // ============================================================
+
+  onboardingState: defineTable({
+    userId: v.string(),
+    currentStep: v.number(),
+    completed: v.boolean(),
+    companyName: v.optional(v.string()),
+    integrationsConnected: v.array(v.string()),
+    agentsConfigured: v.boolean(),
+    teamInvitesSent: v.number(),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  brandConfig: defineTable({
+    companyName: v.string(),
+    logoUrl: v.optional(v.string()),
+    primaryColor: v.optional(v.string()),
+    accentColor: v.optional(v.string()),
+    updatedAt: v.number(),
+  }),
 });
