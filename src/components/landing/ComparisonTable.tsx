@@ -125,6 +125,18 @@ const PRODUCTS: {
     values: ["yes","yes","yes","yes","partial","partial","no","no","partial","partial","yes","yes","no","partial","no"],
   },
   {
+    // n8n — open-source self-hosted workflow automation engine
+    // The go-to tool for technical teams before they adopt an agent platform.
+    // YES: 400+ integrations; native webhooks; self-hostable; partial audit (execution logs)
+    // PARTIAL: multi-agent — basic AI nodes, not true agent orchestration
+    // PARTIAL: task decomp — branching logic, not AI-driven decomposition
+    // NO: persistent memory; NO: quality review gates; NO: AI doc scraper; NO: voice
+    // NO: agent SOUL; NO: white-label
+    name: "n8n",
+    short: "N8N",
+    values: ["partial","yes","yes","partial","no","no","no","no","yes","no","yes","yes","no","partial","no"],
+  },
+  {
     // Lindy AI — no-code AI agent platform ("AI employees"), SMB-focused
     // YES: agents with autonomy (30+ hours on Claude Sonnet 4.5)
     // YES: 100+ integrations via Zapier + native; web, email, spreadsheets
