@@ -4,6 +4,7 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 import { encrypt, decrypt, encryptCredentials, decryptCredentials } from "./lib/crypto";
+import crypto from "crypto";
 
 /**
  * OAuth and API key connection actions (Node runtime for crypto)
@@ -44,12 +45,8 @@ export const startOAuth = action({
       throw new Error(`Blueprint "${args.blueprintSlug}" not found or not OAuth2`);
     }
 
-    const authConfig = JSON.parse(blueprint.authConfig);
-    const encKey = process.env.INTEGRATION_ENCRYPTION_KEY!;
-
-    if (!encKey) {
-      throw new Error("INTEGRATION_ENCRYPTION_KEY not configured");
-    }
+    // Use enterprise custom OAuth config if set, otherwise fall back to default
+    const authConfig = JSON.parse(blueprint.customAuthConfig || blueprint.authConfig);
 
     // Validate client secret can be resolved
     if (authConfig.clientSecret) {
@@ -60,19 +57,26 @@ export const startOAuth = action({
       throw new Error("OAuth configuration incomplete: missing clientId or authorizeUrl");
     }
 
-    // Generate encrypted state parameter with blueprintSlug, userId, and timestamp
-    const statePayload = JSON.stringify({
+    // Generate a short random state token and store payload server-side.
+    const token = crypto.randomBytes(16).toString("hex"); // 32 hex chars
+
+    // PKCE: Generate code_verifier and code_challenge if blueprint uses PKCE
+    // Twitter/X requires PKCE — without code_challenge the auth page loops forever.
+    let codeVerifier: string | undefined;
+    if (authConfig.usePKCE) {
+      // code_verifier: 43-128 char random URL-safe string
+      codeVerifier = crypto.randomBytes(32)
+        .toString("base64url")
+        .slice(0, 64);
+    }
+
+    await ctx.runMutation(api.connections.saveOAuthState, {
+      token,
       blueprintSlug: args.blueprintSlug,
       userId: args.userId,
-      ts: Date.now(),
+      codeVerifier,
+      expiresAt: Date.now() + 10 * 60 * 1000,
     });
-
-    // Convert to URL-safe Base64 to prevent corruption when Atlassian/other providers
-    // redirect back — standard Base64 +/= chars get mangled by URL encoding
-    const state = encrypt(statePayload, encKey)
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=/g, "");
 
     // Build callback URL - use CONVEX_SITE_URL env var
     const convexSiteUrl = process.env.CONVEX_SITE_URL || "https://beloved-squirrel-599.convex.site";
@@ -83,16 +87,16 @@ export const startOAuth = action({
       client_id: authConfig.clientId,
       redirect_uri: redirectUri,
       response_type: "code",
-      state,
+      state: token,
     });
 
-    // Add scope — separator is config-driven, not hardcoded per provider
-    if (authConfig.scopes) {
-      const separator = authConfig.scopeSeparator === "comma" ? "," : " ";
-      const scopeString = Array.isArray(authConfig.scopes)
-        ? authConfig.scopes.join(separator)
-        : authConfig.scopes;
-      params.set("scope", scopeString);
+    // PKCE: Add code_challenge to authorize URL
+    if (codeVerifier) {
+      const codeChallenge = crypto.createHash("sha256")
+        .update(codeVerifier)
+        .digest("base64url");
+      params.set("code_challenge", codeChallenge);
+      params.set("code_challenge_method", "S256");
     }
 
     // Add provider-specific authorization parameters (e.g. audience, prompt, login_hint)
@@ -102,7 +106,20 @@ export const startOAuth = action({
       });
     }
 
-    const authorizeUrl = `${authConfig.authorizeUrl}?${params.toString()}`;
+    // Build scope string — appended raw to avoid URLSearchParams encoding.
+    // URLSearchParams encodes spaces as + and commas as %2C, both of which break
+    // providers like Zoho. Scope names only contain letters, dots, and underscores
+    // which are all URL-safe, so no encoding is needed at all.
+    let scopeSuffix = "";
+    if (authConfig.scopes) {
+      const separator = authConfig.scopeSeparator === "comma" ? "," : " ";
+      const scopeString = Array.isArray(authConfig.scopes)
+        ? authConfig.scopes.join(separator)
+        : authConfig.scopes;
+      scopeSuffix = `&scope=${scopeString}`;
+    }
+
+    const authorizeUrl = `${authConfig.authorizeUrl}?${params.toString()}${scopeSuffix}`;
 
     return { authorizeUrl };
   },
@@ -116,30 +133,23 @@ export const handleOAuthCallback = action({
   handler: async (ctx, args) => {
     const encKey = process.env.INTEGRATION_ENCRYPTION_KEY!;
 
-    if (!encKey) {
-      throw new Error("INTEGRATION_ENCRYPTION_KEY not configured");
+    // Look up state token from DB (stored server-side to keep OAuth URLs short)
+    const stateRecord = await ctx.runQuery(api.connections.getOAuthState, {
+      token: args.state,
+    });
+
+    if (!stateRecord) {
+      throw new Error("Invalid or expired state parameter - please try connecting again");
     }
 
-    // Decrypt and validate state parameter
-    // Restore standard Base64 from URL-safe Base64 before decrypting
-    let statePayload: any;
-    try {
-      const standardBase64 = args.state
-        .replace(/-/g, "+")
-        .replace(/_/g, "/")
-        .padEnd(args.state.length + (4 - (args.state.length % 4)) % 4, "=");
-      const decrypted = decrypt(standardBase64, encKey);
-      statePayload = JSON.parse(decrypted);
-    } catch (e) {
-      throw new Error("Invalid state parameter - possible CSRF attempt");
-    }
-
-    const { blueprintSlug, userId, ts } = statePayload;
-
-    // Validate state expiry (10 minutes)
-    if (Date.now() - ts > 600000) {
+    if (Date.now() > stateRecord.expiresAt) {
       throw new Error("Authorization expired - please try connecting again");
     }
+
+    const { blueprintSlug, userId, codeVerifier } = stateRecord;
+
+    // Clean up used state token
+    await ctx.runMutation(api.connections.deleteOAuthState, { token: args.state });
 
     // Fetch blueprint
     const blueprint = await ctx.runQuery(api.blueprints.getBySlug, {
@@ -150,7 +160,8 @@ export const handleOAuthCallback = action({
       throw new Error(`Blueprint "${blueprintSlug}" not found`);
     }
 
-    const authConfig = JSON.parse(blueprint.authConfig);
+    // Use enterprise custom OAuth config if set, otherwise fall back to default
+    const authConfig = JSON.parse(blueprint.customAuthConfig || blueprint.authConfig);
 
     if (!authConfig.clientId || !authConfig.clientSecret || !authConfig.tokenUrl) {
       throw new Error("OAuth configuration incomplete: missing clientId, clientSecret, or tokenUrl");
@@ -177,6 +188,11 @@ export const handleOAuthCallback = action({
       code: args.code,
       redirect_uri: redirectUri,
     };
+
+    // PKCE: Send code_verifier in token exchange (required by Twitter/X)
+    if (codeVerifier) {
+      bodyParams.code_verifier = codeVerifier;
+    }
 
     // Token endpoint auth: some providers want client_id/secret in body,
     // others want HTTP Basic auth in header. Config-driven via tokenEndpointAuth.
@@ -327,7 +343,8 @@ export const refreshToken = action({
       throw new Error("Blueprint not found");
     }
 
-    const authConfig = JSON.parse(blueprint.authConfig);
+    // Use enterprise custom OAuth config if set, otherwise fall back to default
+    const authConfig = JSON.parse(blueprint.customAuthConfig || blueprint.authConfig);
     const creds = decryptCredentials(conn.credentialsEncrypted, encKey);
 
     if (!creds.refreshToken) {

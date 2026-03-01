@@ -170,6 +170,31 @@ export const update = mutation({
 });
 
 /**
+ * Set custom OAuth config (enterprise override)
+ * When set, overrides the default Valence OAuth app for this blueprint.
+ * Pass null/empty to clear and revert to Valence default.
+ */
+export const setCustomAuthConfig = mutation({
+  args: {
+    id: v.id("blueprints"),
+    customAuthConfig: v.optional(v.string()), // JSON string or undefined to clear
+  },
+  handler: async (ctx, args) => {
+    const blueprint = await ctx.db.get(args.id);
+    if (!blueprint) {
+      throw new Error("Blueprint not found");
+    }
+
+    await ctx.db.patch(args.id, {
+      customAuthConfig: args.customAuthConfig,
+      updatedAt: Date.now(),
+    });
+
+    return { ok: true };
+  },
+});
+
+/**
  * Archive a blueprint (soft delete)
  */
 export const archive = mutation({

@@ -3,21 +3,70 @@ import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { filterToolsByAgentRole } from "./lib/agentToolRecommendations";
+import { authenticateRequest, buildCorsHeaders, type AuthResult } from "./lib/auth";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "./lib/rateLimit";
 
 const http = httpRouter();
 
-function corsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Content-Type": "application/json",
-  };
+// Legacy corsHeaders — delegates to the new buildCorsHeaders with ALLOWED_ORIGIN support.
+// Kept as a function so existing handlers can call it without refactoring all at once.
+function corsHeaders(request?: Request) {
+  return buildCorsHeaders(request);
 }
 
 function optionsHandler() {
-  return httpAction(async () => {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+  return httpAction(async (_, request) => {
+    return new Response(null, { status: 204, headers: corsHeaders(request) });
+  });
+}
+
+/**
+ * Create an authenticated HTTP handler.
+ * Verifies Clerk JWT or API key before calling the handler.
+ * Options:
+ *   requireRole — require a specific role (e.g., "admin")
+ *   allowUnauthenticated — skip auth check (for webhooks, OAuth callbacks)
+ */
+function authenticatedHandler(
+  handler: (ctx: any, request: Request, auth: AuthResult) => Promise<Response>,
+  options?: { requireRole?: string; allowUnauthenticated?: boolean; rateLimit?: { limit: number; windowMs: number } },
+) {
+  return httpAction(async (ctx, request) => {
+    // Skip auth for OPTIONS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders(request) });
+    }
+
+    if (options?.allowUnauthenticated) {
+      // For webhooks, OAuth callbacks — pass a dummy auth
+      const dummyAuth: AuthResult = { userId: "system", role: "system", authMethod: "jwt" };
+      return handler(ctx, request, dummyAuth);
+    }
+
+    const auth = await authenticateRequest(ctx, request);
+    if (!auth) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", message: "Valid authentication required. Send Clerk JWT as Bearer token or API key via X-API-Key header." }),
+        { status: 401, headers: corsHeaders(request) },
+      );
+    }
+
+    if (options?.requireRole && auth.role !== options.requireRole && auth.role !== "admin") {
+      return new Response(
+        JSON.stringify({ error: "Forbidden", message: `Role '${options.requireRole}' required.` }),
+        { status: 403, headers: corsHeaders(request) },
+      );
+    }
+
+    // Rate limiting (per-user + per-endpoint)
+    const rl = options?.rateLimit ?? RATE_LIMITS.general;
+    const path = new URL(request.url).pathname;
+    const rateLimitKey = `${auth.userId}:${path}`;
+    if (!checkRateLimit(rateLimitKey, rl.limit, rl.windowMs)) {
+      return rateLimitResponse(corsHeaders(request));
+    }
+
+    return handler(ctx, request, auth);
   });
 }
 
@@ -55,7 +104,7 @@ http.route({
               const truncatedDeliverables = dep.deliverables?.slice(0, 2).map((d: any) => ({
                 name: d.name,
                 type: d.type,
-                content: d.content?.length > 500 ? d.content.slice(0, 500) + "..." : d.content,
+                content: d.content?.length > 2000 ? d.content.slice(0, 2000) + "..." : d.content,
               }));
               return { title: dep.title, status: dep.status, deliverables: truncatedDeliverables };
             })
@@ -139,11 +188,18 @@ http.route({
     });
 
     // Only discover integration tools if explicitly requested (lazy loading)
+    // Auto-resolve userId from the agent's assigned task if not provided
     let availableTools = undefined;
-    if (body.userId && body.includeTools) {
+    let resolvedUserId = body.userId;
+    if (!resolvedUserId && body.includeTools && tasks.length > 0) {
+      // Use the first active task's requiredUserId or creatorId
+      const firstTask = tasks[0] as any;
+      resolvedUserId = firstTask.requiredUserId || firstTask.creatorId;
+    }
+    if (resolvedUserId && body.includeTools) {
       try {
         const toolsResult = await ctx.runAction(internal.executionEngine.listAvailableTools, {
-          userId: body.userId,
+          userId: resolvedUserId,
         });
 
         // Cap heavy integrations (Stripe, Salesforce, SAP, etc.) to top 20 most useful tools
@@ -173,7 +229,7 @@ http.route({
         const { recommended, other } = filterToolsByAgentRole(filteredTools, body.agentName);
 
         availableTools = {
-          userId: body.userId,
+          userId: resolvedUserId,
           count: filteredTools.length,
           tools: filteredTools,
           recommended: recommended,
@@ -182,7 +238,7 @@ http.route({
       } catch (error: any) {
         console.error("[Heartbeat] Tool discovery failed:", error.message);
         availableTools = {
-          userId: body.userId,
+          userId: resolvedUserId,
           count: 0,
           tools: [],
           recommended: [],
@@ -404,6 +460,8 @@ http.route({
       updateArgs.deliverables = body.deliverables;
     if (body.missionId !== undefined)
       updateArgs.missionId = body.missionId as Id<"missions">;
+    if (body.dependsOn !== undefined)
+      updateArgs.dependsOn = body.dependsOn;
 
     await ctx.runMutation(api.tasks.update, updateArgs as any);
     return new Response(JSON.stringify({ ok: true }), {
@@ -928,101 +986,98 @@ http.route({
   }),
 });
 
-// GET /api/ssh/config
+// GET /api/ssh/config — SECURED: Admin-only
 http.route({
   path: "/api/ssh/config",
   method: "GET",
-  handler: httpAction(async (ctx) => {
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
     const config = await ctx.runQuery(api.sshConfig.get, {});
     return new Response(JSON.stringify(config), {
       status: 200,
-      headers: corsHeaders(),
+      headers: corsHeaders(request),
     });
-  }),
+  }, { requireRole: "admin" }),
 });
 
-// POST /api/ssh/config
+// POST /api/ssh/config — SECURED: Admin-only
 http.route({
   path: "/api/ssh/config",
   method: "POST",
-  handler: httpAction(async (ctx, request) => {
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
     const body = await request.json();
     await ctx.runMutation(api.sshConfig.save, body);
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
-      headers: corsHeaders(),
+      headers: corsHeaders(request),
     });
-  }),
+  }, { requireRole: "admin" }),
 });
 
 // GET /api/ssh/config-full (returns config WITH private key for SSH operations)
+// SECURED: Admin-only — exposes SSH private key
 http.route({
   path: "/api/ssh/config-full",
   method: "GET",
-  handler: httpAction(async (ctx) => {
+  handler: authenticatedHandler(async (ctx, request, auth) => {
     const config = await ctx.runQuery(api.sshConfig.getForSSH, {});
     return new Response(JSON.stringify(config), {
       status: 200,
-      headers: corsHeaders(),
+      headers: corsHeaders(request),
     });
-  }),
+  }, { requireRole: "admin" }),
 });
 
-// POST /api/ssh/test
+// POST /api/ssh/test — SECURED: Admin-only
 http.route({
   path: "/api/ssh/test",
   method: "POST",
-  handler: httpAction(async (ctx) => {
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
     try {
       const config = await ctx.runQuery(api.sshConfig.getForSSH, {});
       if (!config) {
         return new Response(
           JSON.stringify({ ok: false, message: "No SSH config found. Please save your credentials first." }),
-          { status: 400, headers: corsHeaders() }
+          { status: 400, headers: corsHeaders(request) }
         );
       }
 
-      // Validate config fields
       if (!config.host || !config.username || !config.privateKey) {
         return new Response(
           JSON.stringify({ ok: false, message: "Incomplete SSH configuration. Please fill all fields." }),
-          { status: 400, headers: corsHeaders() }
+          { status: 400, headers: corsHeaders(request) }
         );
       }
 
-      // For now, just validate that config exists
-      // TODO: Implement actual SSH connection test via external service
       return new Response(
         JSON.stringify({
           ok: true,
           message: `SSH config saved for ${config.username}@${config.host}:${config.port}. Connection test coming soon - the one-click restart will validate it.`
         }),
-        { status: 200, headers: corsHeaders() }
+        { status: 200, headers: corsHeaders(request) }
       );
     } catch (error: any) {
       return new Response(
         JSON.stringify({ ok: false, message: error.message }),
-        { status: 500, headers: corsHeaders() }
+        { status: 500, headers: corsHeaders(request) }
       );
     }
-  }),
+  }, { requireRole: "admin" }),
 });
 
-// POST /api/ssh/restart-openclaw
+// POST /api/ssh/restart-openclaw — SECURED: Admin-only
 http.route({
   path: "/api/ssh/restart-openclaw",
   method: "POST",
-  handler: httpAction(async (ctx) => {
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
     try {
       const config = await ctx.runQuery(api.sshConfig.getForSSH, {});
       if (!config) {
         return new Response(
           JSON.stringify({ ok: false, error: "No SSH config found. Configure SSH in Settings first." }),
-          { status: 400, headers: corsHeaders() }
+          { status: 400, headers: corsHeaders(request) }
         );
       }
 
-      // Generate SSH command for user to run
       const sshCommand = `ssh -i ~/.ssh/key.pem ${config.username}@${config.host} "openclaw gateway restart"`;
 
       return new Response(
@@ -1031,15 +1086,15 @@ http.route({
           error: `SSH automation requires a separate service. For now, please run this command in your terminal:\n\n${sshCommand}`,
           command: sshCommand
         }),
-        { status: 200, headers: corsHeaders() }
+        { status: 200, headers: corsHeaders(request) }
       );
     } catch (error: any) {
       return new Response(
         JSON.stringify({ ok: false, error: error.message }),
-        { status: 500, headers: corsHeaders() }
+        { status: 500, headers: corsHeaders(request) }
       );
     }
-  }),
+  }, { requireRole: "admin" }),
 });
 
 // POST /api/soul/save
@@ -1143,31 +1198,47 @@ http.route({
 // UNIVERSAL INTEGRATION ENGINE ENDPOINTS
 // ============================================================
 
-// POST /api/integrations/tools - List available tools for user
+// POST /api/integrations/tools - List available tools for user — SECURED
 http.route({
   path: "/api/integrations/tools",
   method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const { userId } = await request.json();
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "userId required" }), {
-        status: 400, headers: corsHeaders(),
-      });
-    }
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    // Use authenticated userId instead of client-provided
+    const body = await request.json();
+    const userId = auth.authMethod === "api_key" ? (body.userId || auth.userId) : auth.userId;
     const result = await ctx.runAction(api.executionEngine.listAvailableTools, { userId });
-    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
   }),
 });
 
 // POST /api/integrations/execute - Execute a tool (real API call)
+// Allows both authenticated (frontend/API key) and agent calls (agentName + userId in body)
 http.route({
   path: "/api/integrations/execute",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    const { userId, agentName, blueprintSlug, toolName, toolArgs } = await request.json();
-    if (!userId || !blueprintSlug || !toolName) {
-      return new Response(JSON.stringify({ error: "userId, blueprintSlug, and toolName required" }), {
-        status: 400, headers: corsHeaders(),
+    const body = await request.json();
+    const { agentName, blueprintSlug, toolName, toolArgs } = body;
+
+    // Determine userId: try auth first, fall back to body.userId for agent calls
+    let userId = body.userId;
+    try {
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity) {
+        userId = identity.subject;
+      }
+    } catch {
+      // No JWT — agent call, use body.userId
+    }
+
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "userId required (via auth or request body)" }), {
+        status: 400, headers: corsHeaders(request),
+      });
+    }
+    if (!blueprintSlug || !toolName) {
+      return new Response(JSON.stringify({ error: "blueprintSlug and toolName required" }), {
+        status: 400, headers: corsHeaders(request),
       });
     }
 
@@ -1175,47 +1246,48 @@ http.route({
       const result = await ctx.runAction(api.executionEngine.executeTool, {
         userId, agentName, blueprintSlug, toolName, toolArgs,
       });
-      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
     } catch (error: any) {
       console.error("[HTTP /api/integrations/execute] Error:", error);
       return new Response(JSON.stringify({
         success: false,
         error: error.message || "Tool execution failed",
         details: error.stack?.split('\n')[0] || ""
-      }), { status: 200, headers: corsHeaders() });
+      }), { status: 502, headers: corsHeaders(request) });
     }
   }),
 });
 
-// GET /api/integrations/activity - Get execution activity log
+// GET /api/integrations/activity - Get execution activity log — SECURED
 http.route({
   path: "/api/integrations/activity",
   method: "GET",
-  handler: httpAction(async (ctx, request) => {
+  handler: authenticatedHandler(async (ctx, request, auth) => {
     const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
     const limit = url.searchParams.get("limit");
+    // Use authenticated userId — don't let clients query other users' activity
     const result = await ctx.runQuery(api.integrationActivity.list, {
-      userId: userId || undefined,
+      userId: auth.userId,
       limit: limit ? parseInt(limit) : undefined,
     });
-    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
   }),
 });
 
-// POST /api/integrations/oauth/start - Start OAuth flow
+// POST /api/integrations/oauth/start - Start OAuth flow — SECURED
 http.route({
   path: "/api/integrations/oauth/start",
   method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const { blueprintSlug, userId } = await request.json();
-    if (!blueprintSlug || !userId) {
-      return new Response(JSON.stringify({ error: "blueprintSlug and userId required" }), {
-        status: 400, headers: corsHeaders(),
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const { blueprintSlug } = await request.json();
+    if (!blueprintSlug) {
+      return new Response(JSON.stringify({ error: "blueprintSlug required" }), {
+        status: 400, headers: corsHeaders(request),
       });
     }
-    const result = await ctx.runAction(api.connectionActions.startOAuth, { blueprintSlug, userId });
-    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    // Use authenticated userId instead of client-provided
+    const result = await ctx.runAction(api.connectionActions.startOAuth, { blueprintSlug, userId: auth.userId });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
   }),
 });
 
@@ -1313,59 +1385,54 @@ http.route({
   }),
 });
 
-// POST /api/integrations/connect-key - Connect via API key
+// POST /api/integrations/connect-key - Connect via API key — SECURED
 http.route({
   path: "/api/integrations/connect-key",
   method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const { blueprintSlug, userId, apiKey } = await request.json();
-    if (!blueprintSlug || !userId || !apiKey) {
-      return new Response(JSON.stringify({ error: "blueprintSlug, userId, and apiKey required" }), {
-        status: 400, headers: corsHeaders(),
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const { blueprintSlug, apiKey } = await request.json();
+    if (!blueprintSlug || !apiKey) {
+      return new Response(JSON.stringify({ error: "blueprintSlug and apiKey required" }), {
+        status: 400, headers: corsHeaders(request),
       });
     }
     try {
-      const result = await ctx.runAction(api.connectionActions.connectApiKey, { blueprintSlug, userId, apiKey });
-      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+      const result = await ctx.runAction(api.connectionActions.connectApiKey, { blueprintSlug, userId: auth.userId, apiKey });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
     } catch (e: any) {
       return new Response(
         JSON.stringify({ success: false, error: e.message || "Connection failed" }),
-        { status: 200, headers: corsHeaders() }
+        { status: 200, headers: corsHeaders(request) }
       );
     }
   }),
 });
 
-// GET /api/integrations/connections - List user's connections
+// GET /api/integrations/connections - List user's connections — SECURED
 http.route({
   path: "/api/integrations/connections",
   method: "GET",
-  handler: httpAction(async (ctx, request) => {
-    const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "userId required" }), {
-        status: 400, headers: corsHeaders(),
-      });
-    }
-    const result = await ctx.runQuery(api.connections.listByUser, { userId });
-    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    // Use authenticated userId — don't let clients query other users' connections
+    const result = await ctx.runQuery(api.connections.listByUser, { userId: auth.userId });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
   }),
 });
 
-// POST /api/integrations/disconnect - Disconnect a connection
+// POST /api/integrations/disconnect - Disconnect a connection — SECURED
 http.route({
   path: "/api/integrations/disconnect",
   method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const { blueprintId, userId } = await request.json();
-    if (!blueprintId || !userId) {
-      return new Response(JSON.stringify({ error: "blueprintId and userId required" }), {
-        status: 400, headers: corsHeaders(),
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const { blueprintId } = await request.json();
+    if (!blueprintId) {
+      return new Response(JSON.stringify({ error: "blueprintId required" }), {
+        status: 400, headers: corsHeaders(request),
       });
     }
-    const result = await ctx.runMutation(api.connections.disconnect, { blueprintId, userId });
-    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders() });
+    // Use authenticated userId — prevent disconnecting other users' integrations
+    const result = await ctx.runMutation(api.connections.disconnect, { blueprintId, userId: auth.userId });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
   }),
 });
 
@@ -2312,5 +2379,61 @@ http.route({
 });
 
 http.route({ path: "/api/voice/briefing-data", method: "OPTIONS", handler: optionsHandler() });
+
+// ============================================================
+// BILLING ENDPOINTS
+// ============================================================
+
+// POST /api/billing/webhook — Stripe webhook (NO auth — uses Stripe signature verification)
+http.route({
+  path: "/api/billing/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const signature = request.headers.get("stripe-signature");
+    if (!signature) {
+      return new Response(JSON.stringify({ error: "Missing stripe-signature header" }), {
+        status: 400, headers: corsHeaders(request),
+      });
+    }
+    const payload = await request.text();
+    try {
+      const result = await ctx.runAction(api.billingActions.handleWebhook, { payload, signature });
+      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
+    } catch (error: any) {
+      console.error("[Billing Webhook] Error:", error.message);
+      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders(request) });
+    }
+  }),
+});
+
+// POST /api/billing/checkout — Create Stripe Checkout session — SECURED (admin only)
+http.route({ path: "/api/billing/checkout", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/billing/checkout",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    const body = await request.json();
+    const result = await ctx.runAction(api.billingActions.createCheckoutSession, {
+      plan: body.plan,
+      successUrl: body.successUrl,
+      cancelUrl: body.cancelUrl,
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
+  }, { requireRole: "admin" }),
+});
+
+// POST /api/billing/portal — Open Stripe Customer Portal — SECURED (admin only)
+http.route({ path: "/api/billing/portal", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/billing/portal",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    const body = await request.json();
+    const result = await ctx.runAction(api.billingActions.createPortalSession, {
+      returnUrl: body.returnUrl,
+    });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
+  }, { requireRole: "admin" }),
+});
 
 export default http;

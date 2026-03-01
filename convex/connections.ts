@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { checkPlanLimit } from "./lib/planGating";
 
 /**
  * Upsert connection record (create or update)
@@ -20,6 +21,14 @@ export const upsert = mutation({
       .first();
 
     const now = Date.now();
+
+    if (!existing) {
+      // Only check plan limit when creating a NEW connection
+      const planCheck = await checkPlanLimit(ctx, "integrations");
+      if (!planCheck.allowed) {
+        throw new Error(`Plan limit reached: ${planCheck.current}/${planCheck.limit} integrations (${planCheck.plan} plan). Upgrade to connect more integrations.`);
+      }
+    }
 
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -160,5 +169,57 @@ export const listAll = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("connections").collect();
+  },
+});
+
+/**
+ * Save a short-lived OAuth state token server-side.
+ * Keeps OAuth redirect URLs short (fixes Twitter/X infinite loading bug).
+ */
+export const saveOAuthState = mutation({
+  args: {
+    token: v.string(),
+    blueprintSlug: v.string(),
+    userId: v.string(),
+    codeVerifier: v.optional(v.string()),
+    expiresAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("oauthStates", {
+      token: args.token,
+      blueprintSlug: args.blueprintSlug,
+      userId: args.userId,
+      codeVerifier: args.codeVerifier,
+      expiresAt: args.expiresAt,
+    });
+  },
+});
+
+/**
+ * Look up an OAuth state token.
+ */
+export const getOAuthState = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("oauthStates")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .first();
+  },
+});
+
+/**
+ * Delete a used OAuth state token.
+ */
+export const deleteOAuthState = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const record = await ctx.db
+      .query("oauthStates")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .first();
+    if (record) {
+      await ctx.db.delete(record._id);
+    }
   },
 });

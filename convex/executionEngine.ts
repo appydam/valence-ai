@@ -164,12 +164,35 @@ export const executeTool = action({
         }
       }
 
-      // 6. Build HTTP request
+      // 6. Pre-process toolArgs for special cases
+      let processedToolArgs = args.toolArgs || {};
+
+      // Gmail create_draft: accept {to, subject, body} and convert to RFC 2822 base64url
+      if (args.blueprintSlug === "gmail" && args.toolName === "create_draft") {
+        const { to, subject, body: emailBody, ...rest } = processedToolArgs;
+        if (to !== undefined || subject !== undefined || emailBody !== undefined) {
+          const rfc2822 = [
+            `To: ${to || ""}`,
+            `Subject: ${subject || ""}`,
+            `Content-Type: text/plain; charset="UTF-8"`,
+            ``,
+            emailBody || "",
+          ].join("\r\n");
+          const base64url = Buffer.from(rfc2822)
+            .toString("base64")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
+          processedToolArgs = { ...rest, message: { raw: base64url } };
+        }
+      }
+
+      // Build HTTP request
       const { url, headers, body } = buildRequest({
         blueprint,
         tool,
         credentials,
-        toolArgs: args.toolArgs || {},
+        toolArgs: processedToolArgs,
       });
 
       // Debug logging for HubSpot auth
@@ -267,6 +290,15 @@ export const executeTool = action({
         } catch (e: any) {
           lastError = e;
           console.error(`[ExecutionEngine] Attempt ${attempt + 1}/${maxRetries + 1} failed:`, e.message);
+
+          // Don't retry non-idempotent methods on timeout — the request may have
+          // already been processed by the server (e.g., Slack message sent, Notion page created)
+          const isNonIdempotent = ["POST", "PUT", "PATCH"].includes(tool.method.toUpperCase());
+          const isTimeout = e.message?.includes("Request timeout");
+          if (isNonIdempotent && isTimeout) {
+            console.warn(`[ExecutionEngine] Skipping retry for ${tool.method} ${url} — timeout on non-idempotent request`);
+            break;
+          }
 
           if (attempt < maxRetries) {
             const waitMs = backoffMs(attempt);
