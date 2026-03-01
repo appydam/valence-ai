@@ -6,6 +6,7 @@ import { LiveOpsFeed } from "@/components/LiveOpsFeed";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Loader, CheckCircle, Clock, Users } from "lucide-react";
+import { GettingStartedChecklist } from "@/components/GettingStartedChecklist";
 
 const Index = () => {
   const agents = useQuery(api.agents.list) ?? [];
@@ -35,6 +36,9 @@ const Index = () => {
           <h1 className="text-2xl font-bold text-foreground">Live Ops Feed</h1>
           <p className="text-sm text-muted-foreground mt-1">Real-time squad operations — watch agents work</p>
         </div>
+
+        {/* Getting Started Checklist */}
+        <GettingStartedChecklist />
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">

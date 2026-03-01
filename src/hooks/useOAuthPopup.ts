@@ -38,7 +38,7 @@ export function useOAuthPopup() {
       const popup = window.open(
         authorizeUrl,
         "oauth_popup",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=no,status=no`
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,status=no`
       );
 
       if (!popup) {

@@ -80,7 +80,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "hubspot", name: "HubSpot", category: "CRM", description: "Manage contacts, companies, and deals in HubSpot", iconUrl: "https://cdn.worldvectorlogo.com/logos/hubspot-2.svg", status: "available" },
   { slug: "dynamics365-sales", name: "Microsoft Dynamics 365 Sales", category: "CRM", description: "Connect with Microsoft Dynamics 365 for sales operations", iconUrl: "https://cdn.worldvectorlogo.com/logos/microsoft-5.svg", status: "available" },
   { slug: "pipedrive", name: "Pipedrive", category: "CRM", description: "Manage your sales pipeline in Pipedrive", iconUrl: "https://cdn.worldvectorlogo.com/logos/pipedrive.svg", status: "available" },
-  { slug: "zoho-crm", name: "Zoho CRM", category: "CRM", description: "Access Zoho CRM contacts and opportunities", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "zoho-crm", name: "Zoho CRM", category: "CRM", description: "Manage Zoho CRM leads, contacts, deals, and accounts via Zoho Workspace integration", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
   { slug: "close", name: "Close", category: "CRM", description: "Integrate with Close CRM for sales tracking", iconUrl: "https://cdn.simpleicons.org/close/000000", status: "available" },
   { slug: "zendesk-sell", name: "Zendesk Sell", category: "CRM", description: "Connect with Zendesk Sell (formerly Base)", iconUrl: "https://cdn.worldvectorlogo.com/logos/zendesk-1.svg", status: "available" },
   { slug: "insightly", name: "Insightly", category: "CRM", description: "Sync with Insightly CRM and project management", iconUrl: "https://logo.clearbit.com/insightly.com", status: "available" },
@@ -126,6 +126,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "clickup", name: "ClickUp", category: "Project Management", description: "Create and update ClickUp tasks", iconUrl: "https://cdn.worldvectorlogo.com/logos/clickup.svg", status: "available" },
   { slug: "linear", name: "Linear", category: "Project Management", description: "Manage Linear issues and projects", iconUrl: "https://cdn.worldvectorlogo.com/logos/linear-icon.svg", status: "available" },
   { slug: "github", name: "GitHub", category: "Project Management", description: "Access GitHub repos, issues, and pull requests", iconUrl: "https://cdn.worldvectorlogo.com/logos/github-icon-1.svg", status: "available" },
+  { slug: "vercel", name: "Vercel", category: "Project Management", description: "Manage deployments, projects, environment variables, and domains on Vercel.", iconUrl: "https://cdn.simpleicons.org/vercel/ffffff", status: "available" },
   { slug: "productboard", name: "Productboard", category: "Project Management", description: "Sync product features and feedback", iconUrl: "https://cdn.worldvectorlogo.com/logos/productboard.svg", status: "available" },
   { slug: "hive", name: "Hive", category: "Project Management", description: "Manage Hive projects and actions", iconUrl: "https://cdn.worldvectorlogo.com/logos/hive-2.svg", status: "available" },
   { slug: "shortcut", name: "Shortcut", category: "Project Management", description: "Connect with Shortcut (formerly Clubhouse)", iconUrl: "https://cdn.worldvectorlogo.com/logos/shortcut-1.svg", status: "available" },
@@ -222,6 +223,7 @@ export const INTEGRATIONS: Integration[] = [
   // Payments
   { slug: "stripe", name: "Stripe", category: "Payments", description: "Access Stripe payments and customer data", iconUrl: "https://cdn.worldvectorlogo.com/logos/stripe-2.svg", status: "available" },
   { slug: "ramp", name: "Ramp", category: "Payments", description: "Manage Ramp corporate card transactions", iconUrl: "https://cdn.worldvectorlogo.com/logos/ramp-icon.svg", status: "available" },
+  { slug: "razorpay", name: "Razorpay", category: "Payments", description: "Create orders, process payments, issue refunds, and track settlements. India's leading payment platform.", iconUrl: "https://cdn.simpleicons.org/razorpay/0C2451", status: "available" },
 
   // HR & Other
   { slug: "adp-workforce-now", name: "ADP Workforce Now", category: "HR", description: "Access ADP employee and payroll data", iconUrl: "https://cdn.worldvectorlogo.com/logos/adp-2.svg", status: "available" },
@@ -230,7 +232,13 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "gusto", name: "Gusto", category: "HR", description: "Connect with Gusto payroll and benefits", iconUrl: "https://cdn.worldvectorlogo.com/logos/gusto-2.svg", status: "available" },
   { slug: "workable", name: "Workable", category: "HR", description: "Manage Workable recruiting pipeline", iconUrl: "https://cdn.worldvectorlogo.com/logos/workable-1.svg", status: "available" },
   { slug: "workday", name: "Workday", category: "HR", description: "Access Workday HCM data", iconUrl: "https://cdn.worldvectorlogo.com/logos/workday-1.svg", status: "available" },
-  { slug: "zoho-people", name: "Zoho People", category: "HR", description: "Manage Zoho People HR records", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "zoho-people", name: "Zoho People", category: "HR", description: "Manage employee records, leave types, and HR data via Zoho Workspace integration", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "zoho-books", name: "Zoho Books", category: "Accounting", description: "Manage invoices, contacts, and customer payments in Zoho Books", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "zoho-desk", name: "Zoho Desk", category: "Support", description: "Create and manage support tickets and contacts in Zoho Desk", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "zoho-projects", name: "Zoho Projects", category: "Project Management", description: "Manage projects and tasks in Zoho Projects", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "zoho-mail", name: "Zoho Mail", category: "Communication", description: "Send and read emails via Zoho Mail", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "zoho-cliq", name: "Zoho Cliq", category: "Communication", description: "Post messages to Zoho Cliq channels and direct messages", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "zoho-workdrive", name: "Zoho WorkDrive", category: "File Storage", description: "Browse and manage files and team folders in Zoho WorkDrive", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
   { slug: "sap-successfactors", name: "SAP SuccessFactors", category: "HR", description: "Access employee profiles, job info, compensation, time-off, and performance goals via SAP SuccessFactors", iconUrl: "https://logo.clearbit.com/sap.com", status: "available" },
 
   // Design

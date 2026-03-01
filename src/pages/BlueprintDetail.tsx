@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -25,7 +25,9 @@ import {
   Edit,
   Save,
   X,
+  ArrowLeft,
 } from "lucide-react";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
@@ -33,12 +35,15 @@ import { useIntegrationEngine } from "@/hooks/useIntegrationEngine";
 import { ApiKeyEntry } from "@/components/integration-engine/ApiKeyEntry";
 import { OAuthSetupGuide } from "@/components/integration-engine/OAuthSetupGuide";
 import { apiPost } from "@/lib/api";
+import { useMutation, useQuery as useConvexQuery } from "convex/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 export default function BlueprintDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const userId = useCurrentUserId();
   const { connectApiKey, connectOAuth, disconnect, testConnection, isLoading } = useIntegrationEngine();
@@ -49,9 +54,23 @@ export default function BlueprintDetail() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; data?: any } | null>(null);
   const [showResponseData, setShowResponseData] = useState(false);
+  const [testSuiteResults, setTestSuiteResults] = useState<Array<{
+    tool: string;
+    label: string;
+    status: "pending" | "running" | "pass" | "fail";
+    data?: any;
+    error?: string;
+  }> | null>(null);
   const [isEditingConfig, setIsEditingConfig] = useState(false);
   const [editedAuthConfig, setEditedAuthConfig] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [customOAuthClientId, setCustomOAuthClientId] = useState("");
+  const [customOAuthClientSecret, setCustomOAuthClientSecret] = useState("");
+  const [isSavingCustomOAuth, setIsSavingCustomOAuth] = useState(false);
+
+  const setCustomAuthConfig = useMutation(api.blueprints.setCustomAuthConfig);
+  const currentUser = useConvexQuery(api.users.getCurrentUser);
+  const isAdmin = currentUser?.role === "admin";
 
   // All queries fire in parallel — no cascading waits
   const blueprintId = id as Id<"blueprints"> | undefined;
@@ -196,12 +215,14 @@ export default function BlueprintDetail() {
 
       const toolsWithoutRequiredParams = tools?.filter((t) => {
         const pathParams = t.pathParams ? JSON.parse(t.pathParams) : null;
-        if (!pathParams) return true;
         if (Array.isArray(pathParams) && pathParams.length > 0) {
-          // Check if all params are optional
-          return pathParams.every((p: any) => !p.required);
+          if (!pathParams.every((p: any) => !p.required)) return false;
+        } else if (!Array.isArray(pathParams) && pathParams && Object.keys(pathParams).length > 0) {
+          return false;
         }
-        if (!Array.isArray(pathParams) && Object.keys(pathParams).length > 0) return false;
+        // Also exclude tools with required query params
+        const queryParams = t.queryParams ? JSON.parse(t.queryParams) : null;
+        if (Array.isArray(queryParams) && queryParams.some((p: any) => p.required)) return false;
         return true;
       });
 
@@ -264,18 +285,157 @@ export default function BlueprintDetail() {
   };
 
 
+  const handleRunTestSuite = async () => {
+    if (!blueprint) return;
+    setIsTesting(true);
+    setTestResult(null);
+    setShowResponseData(false);
+
+    // Define test steps per integration slug
+    type TestStep = { tool: string; label: string; args: Record<string, any>; extractForNext?: string };
+    const suiteMap: Record<string, TestStep[]> = {
+      confluence: [
+        { tool: "get_accessible_resources", label: "Get Cloud ID", args: {}, extractForNext: "cloudId" },
+        { tool: "list_spaces", label: "List Spaces", args: { cloudId: "__cloudId__" }, extractForNext: "spaceId" },
+        {
+          tool: "create_page", label: "Create Test Page", args: {
+            cloudId: "__cloudId__",
+            spaceId: "__spaceId__",
+            title: `Mission Control Test — ${new Date().toISOString()}`,
+            status: "current",
+            body: { representation: "storage", value: "<p>This is an automated test page created by Mission Control. Safe to delete.</p>" },
+          }, extractForNext: "pageId",
+        },
+        { tool: "get_page", label: "Read Test Page", args: { cloudId: "__cloudId__", pageId: "__pageId__", "body-format": "storage" } },
+        { tool: "search_pages", label: "Search Pages", args: { cloudId: "__cloudId__", title: "Mission Control", limit: 5 } },
+      ],
+      jira: [
+        { tool: "get_accessible_resources", label: "Get Cloud ID", args: {}, extractForNext: "cloudId" },
+        { tool: "list_projects", label: "List Projects", args: { cloudId: "__cloudId__" } },
+      ],
+      notion: [
+        { tool: "search", label: "Search Pages", args: {} },
+      ],
+      hubspot: [
+        { tool: "list_contacts", label: "List Contacts", args: { limit: 5 } },
+      ],
+      "google-calendar": [
+        { tool: "list_calendars", label: "List Calendars", args: {} },
+      ],
+      "zoho-workspace": [
+        { tool: "get_user_profile", label: "Verify Identity (Profile)", args: {} },
+        { tool: "crm_list_leads", label: "CRM: List Leads", args: { per_page: 5 } },
+        { tool: "books_list_invoices", label: "Books: List Invoices", args: {} },
+        { tool: "desk_list_tickets", label: "Desk: List Tickets", args: {} },
+      ],
+    };
+
+    const steps: TestStep[] = suiteMap[blueprint.slug] ?? [];
+
+    // If no suite defined, fall back to single-tool test
+    if (steps.length === 0) {
+      await handleTestConnection();
+      return;
+    }
+
+    // Initialise all steps as pending
+    const results = steps.map((s) => ({ tool: s.tool, label: s.label, status: "pending" as const }));
+    setTestSuiteResults([...results]);
+
+    // Shared context extracted from responses
+    const ctx: Record<string, string> = {};
+
+    const resolveArgs = (args: Record<string, any>): Record<string, any> => {
+      const resolve = (v: any): any => {
+        if (typeof v === "string") return v.replace(/__(\w+)__/g, (_, k) => ctx[k] ?? v);
+        if (typeof v === "object" && v !== null) {
+          return Object.fromEntries(Object.entries(v).map(([k, vv]) => [k, resolve(vv)]));
+        }
+        return v;
+      };
+      return resolve(args);
+    };
+
+    let allPassed = true;
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      // Mark current step running
+      results[i] = { ...results[i], status: "running" };
+      setTestSuiteResults([...results]);
+
+      try {
+        const resolvedArgs = resolveArgs(step.args);
+        const res = await testConnection(blueprint.slug, step.tool, resolvedArgs);
+
+        if (res.success) {
+          results[i] = { ...results[i], status: "pass", data: res.result };
+
+          // Extract context for subsequent steps
+          if (step.extractForNext === "cloudId") {
+            const resources = Array.isArray(res.result) ? res.result : [res.result];
+            if (resources[0]?.id) ctx.cloudId = resources[0].id;
+          } else if (step.extractForNext === "spaceId") {
+            // v2 API: results is under .results array, each has .id (numeric)
+            const spaces = res.result?.results ?? (Array.isArray(res.result) ? res.result : []);
+            if (spaces[0]?.id) ctx.spaceId = String(spaces[0].id);
+          } else if (step.extractForNext === "spaceKey") {
+            const spaces = res.result?.results ?? (Array.isArray(res.result) ? res.result : []);
+            if (spaces[0]?.key) ctx.spaceKey = spaces[0].key;
+          } else if (step.extractForNext === "pageId") {
+            if (res.result?.id) ctx.pageId = String(res.result.id);
+          }
+        } else {
+          results[i] = { ...results[i], status: "fail", error: res.details || res.error || "Unknown error" };
+          allPassed = false;
+          // Stop suite on auth failure
+          if (res.error === "Authentication failed") break;
+        }
+      } catch (e: any) {
+        results[i] = { ...results[i], status: "fail", error: e.message };
+        allPassed = false;
+        break;
+      }
+
+      setTestSuiteResults([...results]);
+    }
+
+    // Mark remaining pending steps as skipped (show as fail with "Skipped")
+    for (let i = 0; i < results.length; i++) {
+      if (results[i].status === "pending") {
+        results[i] = { ...results[i], status: "fail", error: "Skipped (previous step failed)" };
+      }
+    }
+    setTestSuiteResults([...results]);
+
+    setTestResult({
+      success: allPassed,
+      message: allPassed
+        ? `All ${steps.length} tests passed for ${blueprint.name}`
+        : `${results.filter((r) => r.status === "fail").length} of ${steps.length} tests failed`,
+    });
+
+    setIsTesting(false);
+  };
+
   if (!blueprint) {
     return (
-      <div className="container mx-auto py-8">
-        <p className="text-muted-foreground">Loading blueprint...</p>
-      </div>
+      <DashboardLayout>
+        <div className="container mx-auto py-8">
+          <p className="text-muted-foreground">Loading blueprint...</p>
+        </div>
+      </DashboardLayout>
     );
   }
 
   const authConfig = JSON.parse(blueprint.authConfig || "{}");
 
   return (
+    <DashboardLayout>
     <div className="container mx-auto py-8">
+      <Button variant="ghost" size="sm" onClick={() => navigate("/integrations")} className="mb-6 -ml-2">
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back to Integrations
+      </Button>
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div className="flex-1">
@@ -327,6 +487,14 @@ export default function BlueprintDetail() {
                   <Zap className="w-4 h-4 mr-2" />
                 )}
                 {isTesting ? "Testing..." : "Test Connection"}
+              </Button>
+              <Button variant="outline" onClick={() => { setTestSuiteResults(null); handleRunTestSuite(); }} disabled={isTesting}>
+                {isTesting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Play className="w-4 h-4 mr-2" />
+                )}
+                {isTesting ? "Running..." : "Run Test Suite"}
               </Button>
               <Button variant="outline" onClick={handleDisconnect}>
                 Disconnect
@@ -470,8 +638,58 @@ export default function BlueprintDetail() {
         </Card>
       )}
 
-      {/* Test Result */}
-      {testResult && (
+      {/* Test Suite Results */}
+      {testSuiteResults && (
+        <Card className={`mb-6 ${testResult?.success ? "border-green-500" : "border-yellow-500"}`}>
+          <CardHeader className="pb-3">
+            <CardTitle className={`text-sm flex items-center ${testResult?.success ? "text-green-600" : "text-yellow-600"}`}>
+              {testResult?.success ? (
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 mr-2" />
+              )}
+              {testResult?.message ?? "Running test suite…"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {testSuiteResults.map((step, idx) => (
+              <div key={idx} className="flex items-start gap-3 py-2 border-b last:border-0">
+                <div className="mt-0.5 shrink-0">
+                  {step.status === "pending" && <Clock className="w-4 h-4 text-muted-foreground" />}
+                  {step.status === "running" && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
+                  {step.status === "pass" && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+                  {step.status === "fail" && <XCircle className="w-4 h-4 text-red-500" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium">{step.label}</span>
+                    <code className="text-[10px] text-muted-foreground bg-muted px-1 rounded">{step.tool}</code>
+                  </div>
+                  {step.status === "fail" && step.error && (
+                    <p className="text-xs text-red-500 mt-0.5 truncate">{step.error}</p>
+                  )}
+                  {step.status === "pass" && step.data && (
+                    <details className="mt-1">
+                      <summary className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">
+                        Show response
+                        {Array.isArray(step.data) && (
+                          <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0">{step.data.length} items</Badge>
+                        )}
+                      </summary>
+                      <pre className="mt-1 text-[10px] bg-muted p-2 rounded overflow-x-auto max-h-48 overflow-y-auto">
+                        {JSON.stringify(step.data, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Test Result (single tool) */}
+      {testResult && !testSuiteResults && (
         <Card className={`mb-6 ${testResult.success ? "border-green-500" : "border-yellow-500"}`}>
           <CardHeader className="pb-3">
             <CardTitle className={`text-sm flex items-center ${testResult.success ? "text-green-600" : "text-yellow-600"}`}>
@@ -618,6 +836,91 @@ export default function BlueprintDetail() {
                   <span>Remember to share Notion pages with your integration. Go to any page → <strong className="text-foreground">···</strong> → <strong className="text-foreground">Connect to</strong> → select your integration.</span>
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Zoho Workspace — Connected Apps Overview */}
+      {blueprint.slug === "zoho-workspace" && (
+        <Card className="mb-6 border-border bg-gradient-to-br from-[#E42527]/5 to-transparent">
+          <CardContent className="pt-5 pb-5">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="shrink-0 w-10 h-10 rounded-xl bg-[#E42527] flex items-center justify-center shadow-md">
+                <img src="https://cdn.worldvectorlogo.com/logos/zoho.svg" className="w-5 h-5 brightness-0 invert" alt="Zoho" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-foreground">Zoho Workspace</h3>
+                  {isConnected && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400">
+                      <CheckCircle2 className="w-3 h-3" /> Connected
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">8 apps accessible via a single OAuth connection</p>
+              </div>
+            </div>
+
+            {/* App Cards Grid */}
+            {(() => {
+              // Apps confirmed working via OAuth consent screen
+              // Each entry: label, abbr, color classes, description, toolCount, active
+              const apps = [
+                { key: "crm",       label: "Zoho CRM",      abbr: "CRM", color: "blue",   desc: "Leads, Contacts, Deals, Accounts", tools: 6,  active: isConnected },
+                { key: "books",     label: "Zoho Books",    abbr: "₹",   color: "amber",  desc: "Invoices, Payments, Contacts",      tools: 4,  active: isConnected },
+                { key: "desk",      label: "Zoho Desk",     abbr: "DSK", color: "rose",   desc: "Tickets, Support Contacts",         tools: 4,  active: isConnected },
+                { key: "projects",  label: "Zoho Projects", abbr: "PRJ", color: "orange", desc: "Projects, Tasks, My Tasks",         tools: 4,  active: false },
+                { key: "mail",      label: "Zoho Mail",     abbr: "✉",   color: "purple", desc: "Send, Read, Folders",               tools: 4,  active: false },
+                { key: "cliq",      label: "Zoho Cliq",     abbr: "CLQ", color: "green",  desc: "Channels, DMs, Users",              tools: 4,  active: false },
+                { key: "workdrive", label: "WorkDrive",     abbr: "WD",  color: "indigo", desc: "Files, Folders, Team Folders",      tools: 4,  active: false },
+                { key: "people",    label: "Zoho People",   abbr: "HR",  color: "yellow", desc: "Employees, Leave, HR Records",      tools: 3,  active: false },
+              ];
+              const colorMap: Record<string, { bg: string; text: string; badge: string }> = {
+                blue:   { bg: "bg-blue-500/10",   text: "text-blue-600 dark:text-blue-400",   badge: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300" },
+                amber:  { bg: "bg-amber-500/10",  text: "text-amber-600 dark:text-amber-400", badge: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300" },
+                rose:   { bg: "bg-rose-500/10",   text: "text-rose-600 dark:text-rose-400",   badge: "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300" },
+                orange: { bg: "bg-orange-500/10", text: "text-orange-600 dark:text-orange-400", badge: "bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300" },
+                purple: { bg: "bg-purple-500/10", text: "text-purple-600 dark:text-purple-400", badge: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300" },
+                green:  { bg: "bg-green-500/10",  text: "text-green-600 dark:text-green-400",  badge: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300" },
+                indigo: { bg: "bg-indigo-500/10", text: "text-indigo-600 dark:text-indigo-400", badge: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300" },
+                yellow: { bg: "bg-yellow-500/10", text: "text-yellow-600 dark:text-yellow-400", badge: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300" },
+              };
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {apps.map((app) => {
+                    const c = colorMap[app.color];
+                    return (
+                      <div key={app.key} className={`rounded-lg border bg-card px-3 py-2.5 flex flex-col gap-1.5 relative transition-all ${app.active ? "border-green-500/50 shadow-sm shadow-green-500/10" : "border-border opacity-60"}`}>
+                        {app.active && (
+                          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-500" title="Connected" />
+                        )}
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-5 h-5 rounded ${c.bg} flex items-center justify-center shrink-0`}>
+                            <span className={`text-[9px] font-bold ${c.text}`}>{app.abbr}</span>
+                          </div>
+                          <p className="text-xs font-semibold text-foreground truncate">{app.label}</p>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground leading-tight">{app.desc}</p>
+                        <div className="flex items-center justify-between gap-1">
+                          <p className={`text-[10px] font-medium ${c.text}`}>{app.tools} tools</p>
+                          {app.active
+                            ? <span className="text-[9px] font-semibold text-green-600 dark:text-green-400">Active</span>
+                            : <span className="text-[9px] text-muted-foreground">Not connected</span>
+                          }
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {/* Footer note */}
+            <div className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+              <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>CRM, Books, and Desk are confirmed active. Additional apps (Projects, Mail, Cliq, WorkDrive, People) can be enabled by upgrading your Zoho plan or activating those products.</span>
             </div>
           </CardContent>
         </Card>
@@ -839,6 +1142,106 @@ export default function BlueprintDetail() {
                 )}
               </div>
 
+              {/* Enterprise OAuth Override — admin only */}
+              {isAdmin && blueprint.authType === "oauth2" && (
+                <div className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Use Custom OAuth App</p>
+                      <p className="text-xs text-muted-foreground">
+                        Override the default Valence OAuth app with your own (for compliance or custom scopes)
+                      </p>
+                    </div>
+                    <Switch
+                      checked={!!blueprint.customAuthConfig}
+                      onCheckedChange={async (checked) => {
+                        if (!checked) {
+                          // Clear custom config — revert to Valence default
+                          await setCustomAuthConfig({ id: blueprint._id, customAuthConfig: undefined });
+                          toast({ title: "Reverted to Default", description: "Using Valence's OAuth app" });
+                        } else {
+                          // Pre-fill from existing authConfig
+                          const existing = JSON.parse(blueprint.authConfig || "{}");
+                          setCustomOAuthClientId(existing.clientId || "");
+                          setCustomOAuthClientSecret("");
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {blueprint.customAuthConfig && (
+                    <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs text-blue-900 dark:text-blue-100 font-medium mb-1">
+                        Custom OAuth App Active
+                      </p>
+                      <p className="text-xs text-blue-800 dark:text-blue-200">
+                        This blueprint uses your organization's OAuth credentials instead of Valence's defaults.
+                      </p>
+                    </div>
+                  )}
+
+                  {!blueprint.customAuthConfig && !!blueprint.authType && (
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-xs">Custom Client ID</Label>
+                        <Input
+                          placeholder="Your OAuth App Client ID"
+                          value={customOAuthClientId}
+                          onChange={(e) => setCustomOAuthClientId(e.target.value)}
+                          className="text-sm mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Custom Client Secret</Label>
+                        <Input
+                          type="password"
+                          placeholder="Your OAuth App Client Secret"
+                          value={customOAuthClientSecret}
+                          onChange={(e) => setCustomOAuthClientSecret(e.target.value)}
+                          className="text-sm mt-1"
+                        />
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Stored encrypted. Will replace the Valence-managed secret for this integration.
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        disabled={!customOAuthClientId || !customOAuthClientSecret || isSavingCustomOAuth}
+                        onClick={async () => {
+                          setIsSavingCustomOAuth(true);
+                          try {
+                            const baseConfig = JSON.parse(blueprint.authConfig || "{}");
+                            const customConfig = {
+                              ...baseConfig,
+                              clientId: customOAuthClientId,
+                              clientSecret: customOAuthClientSecret,
+                            };
+                            await setCustomAuthConfig({
+                              id: blueprint._id,
+                              customAuthConfig: JSON.stringify(customConfig),
+                            });
+                            toast({ title: "Custom OAuth Saved", description: "Your OAuth credentials are now active" });
+                            setCustomOAuthClientId("");
+                            setCustomOAuthClientSecret("");
+                          } catch (error: any) {
+                            toast({ title: "Save Failed", description: error.message, variant: "destructive" });
+                          } finally {
+                            setIsSavingCustomOAuth(false);
+                          }
+                        }}
+                      >
+                        {isSavingCustomOAuth ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-2" />
+                        )}
+                        Save Custom OAuth
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {blueprint.defaultHeaders && blueprint.defaultHeaders !== "{}" && (
                 <div>
                   <p className="text-sm font-medium mb-1">Default Headers</p>
@@ -918,5 +1321,6 @@ export default function BlueprintDetail() {
         </TabsContent>
       </Tabs>
     </div>
+    </DashboardLayout>
   );
 }

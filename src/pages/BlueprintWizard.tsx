@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Code, Edit, CheckCircle2 } from "lucide-react";
+import { Loader2, Upload, Code, Edit, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useDocScraper } from "@/hooks/useDocScraper";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 import { apiPost } from "@/lib/api";
+import { DashboardLayout } from "@/components/DashboardLayout";
 
 type AuthType = "oauth2" | "api_key" | "bearer_token" | "basic_auth" | "none";
 type SourceType = "manual" | "ai_scraped" | "openapi_import";
@@ -151,8 +152,13 @@ export default function BlueprintWizard() {
   };
 
   return (
+    <DashboardLayout>
     <div className="container max-w-4xl mx-auto py-8">
       <div className="mb-8">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/integrations")} className="mb-4 -ml-2">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Integrations
+        </Button>
         <h1 className="text-3xl font-bold">Create Integration Blueprint</h1>
         <p className="text-muted-foreground mt-2">
           Add a new API integration to your agent toolkit
@@ -391,5 +397,6 @@ export default function BlueprintWizard() {
         </TabsContent>
       </Tabs>
     </div>
+    </DashboardLayout>
   );
 }

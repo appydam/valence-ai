@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import Board from "./pages/Board";
 import Missions from "./pages/Missions";
@@ -23,6 +24,8 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 import Autopilot from "./pages/Autopilot";
+import Billing from "./pages/Billing";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -50,8 +53,10 @@ const App = () => (
         </BrowserRouter>
       </Unauthenticated>
       <Authenticated>
+        <ErrorBoundary>
         <BrowserRouter>
           <Routes>
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/" element={<Index />} />
             <Route path="/autopilot" element={<Autopilot />} />
             <Route path="/board" element={<Board />} />
@@ -67,12 +72,14 @@ const App = () => (
             <Route path="/memory" element={<MemoryBank />} />
             <Route path="/memory/:agentName" element={<AgentMemoryDetail />} />
             <Route path="/soul/review/:versionId" element={<SoulReview />} />
+            <Route path="/billing" element={<Billing />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </ErrorBoundary>
       </Authenticated>
     </TooltipProvider>
   </QueryClientProvider>

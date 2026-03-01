@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────
+# Convex Environment Variables Template
+# Variables with {PLACEHOLDER} are replaced during provisioning
+# ─────────────────────────────────────────────────────
+
+# Auth & Security
+ALLOWED_ORIGIN=https://{DOMAIN}
+INTEGRATION_ENCRYPTION_KEY=GENERATE_NEW_32BYTE_HEX_KEY
+
+# Clerk (shared app, per-org)
+CLERK_JWT_ISSUER_DOMAIN=https://clerk.valence.ai
+
+# Stripe
+STRIPE_SECRET_KEY=sk_live_REPLACE_ME
+STRIPE_WEBHOOK_SECRET=whsec_REPLACE_ME
+STRIPE_PRICE_STARTER=price_REPLACE_ME
+STRIPE_PRICE_PRO=price_REPLACE_ME
+STRIPE_PRICE_ENTERPRISE=price_REPLACE_ME
+
+# Anthropic (for doc scraper + agent sessions)
+ANTHROPIC_API_KEY=sk-ant-REPLACE_ME
+
+# OAuth App Secrets (Valence-owned, shared across customers)
+OAUTH_SECRET_GITHUB=REPLACE_ME
+OAUTH_SECRET_SLACK=REPLACE_ME
+OAUTH_SECRET_GOOGLE=REPLACE_ME
+OAUTH_SECRET_JIRA=REPLACE_ME
+OAUTH_SECRET_LINEAR=REPLACE_ME
+OAUTH_SECRET_NOTION=REPLACE_ME

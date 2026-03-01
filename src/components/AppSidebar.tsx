@@ -13,6 +13,7 @@ import {
   BarChart3,
   Brain,
   Wand2,
+  CreditCard,
 } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const navItems = [
   { title: "Integrations", path: "/integrations", icon: Plug },
   { title: "Webhooks", path: "/webhooks", icon: Webhook },
   { title: "Analytics", path: "/analytics", icon: BarChart3 },
+  { title: "Billing", path: "/billing", icon: CreditCard },
   { title: "Settings", path: "/settings", icon: Settings },
 ];
 

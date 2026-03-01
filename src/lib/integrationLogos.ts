@@ -124,6 +124,7 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "salesforce":         LOGO_SALESFORCE,
   "hubspot":            si("hubspot", "FF7A59"),
   "gong":               LOGO_GONG,
+  "pipedrive":          "https://cdn.worldvectorlogo.com/logos/pipedrive.svg",
 
   // Payments
   "stripe-api":         si("stripe", "635BFF"),
@@ -158,6 +159,19 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
 
   // Sales Enablement
   "mindtickle":         LOGO_MINDTICKLE,
+
+  // Payments
+  "razorpay":           si("razorpay", "0C2451"),
+
+  // Dev Tools
+  "vercel":             si("vercel", "ffffff"),
+
+  // Marketing
+  "mailchimp":          si("mailchimp", "FFE01B"),
+  "hunter":             svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#FF4800"/><text x="32" y="44" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="28" fill="#fff">H</text></svg>`),
+
+  // Analytics
+  "google-analytics":   si("googleanalytics", "E37400"),
 
   // Social Media
   "instagram":          si("instagram", "E4405F"),
