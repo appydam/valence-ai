@@ -697,85 +697,245 @@ function VoiceCommandVisual() {
 }
 
 // ─── Mission Autopilot visual ────────────────────────────────────────────────
+// Shows: user prompt → Claude Opus decompose node → task graph with 5 agent
+// nodes in two parallel lanes → converging deliver node. Animated connectors,
+// live status badges, and a running token counter.
 function AutopilotVisual() {
-  const phases = [
-    { label: "GOAL", color: "hsl(217, 91%, 60%)", text: "Research top 10 competitors and prepare a pitch deck", icon: "🎯" },
-    { label: "DECOMPOSE", color: "hsl(258, 90%, 66%)", text: "Claude Opus breaks into 6 subtasks with dependencies", icon: "🧠" },
-    { label: "EXECUTE", color: "hsl(38, 92%, 50%)", text: "Scout researches → Ghost writes → Forge builds slides", icon: "⚡" },
-    { label: "DELIVER", color: "hsl(160, 84%, 39%)", text: "Pitch deck in Notion, team notified on Slack", icon: "✓" },
+  const [tick, setTick] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
+
+  // Slowly animate a "tokens processed" counter once in view
+  useEffect(() => {
+    if (!isInView) return;
+    const id = setInterval(() => setTick((t) => t + 1), 120);
+    return () => clearInterval(id);
+  }, [isInView]);
+
+  const tokenCount = Math.min(tick * 47, 18_420);
+
+  // Task nodes with agent assignment, status, tool used
+  const TASKS: {
+    id: string;
+    label: string;
+    agent: string;
+    agentEmoji: string;
+    agentColor: string;
+    tool: string;
+    status: "done" | "running" | "queued";
+    lane: number; // 0 = left, 1 = right
+    row: number;
+  }[] = [
+    { id: "t1", label: "Competitor research", agent: "Scout", agentEmoji: "🔭", agentColor: "hsl(160,84%,39%)", tool: "web_fetch", status: "done", lane: 0, row: 0 },
+    { id: "t2", label: "Financial analysis", agent: "Scout", agentEmoji: "🔭", agentColor: "hsl(160,84%,39%)", tool: "google_sheets", status: "done", lane: 1, row: 0 },
+    { id: "t3", label: "Slide deck outline", agent: "Ghost", agentEmoji: "👻", agentColor: "hsl(258,90%,66%)", tool: "notion", status: "running", lane: 0, row: 1 },
+    { id: "t4", label: "Data visualisations", agent: "Forge", agentEmoji: "🔨", agentColor: "hsl(38,92%,50%)", tool: "github", status: "running", lane: 1, row: 1 },
+    { id: "t5", label: "QA & fact-check", agent: "Sentinel", agentEmoji: "🔍", agentColor: "hsl(330,81%,60%)", tool: "internal", status: "queued", lane: 0, row: 2 },
   ];
 
+  const statusColor = { done: "hsl(160,84%,45%)", running: "hsl(38,92%,55%)", queued: "hsl(0,0%,40%)" } as const;
+  const statusLabel = { done: "DONE", running: "RUNNING", queued: "QUEUED" } as const;
+  const statusDot   = { done: "bg-green-400", running: "bg-amber-400 animate-pulse", queued: "bg-zinc-600" } as const;
+
   return (
-    <div className="w-full max-w-sm space-y-2">
-      {phases.map((phase, i) => (
+    <div ref={ref} className="w-full max-w-md select-none">
+      {/* ── HEADER: user prompt ── */}
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.5, type: "spring", stiffness: 120, damping: 18 }}
+        className="rounded-xl px-4 py-3 mb-1"
+        style={{ background: "hsl(240 25% 8%)", border: "1px solid hsl(217 91% 60% / 0.3)" }}
+      >
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-[9px] font-mono tracking-widest text-primary/60">YOU → KAZE</span>
+          <div className="flex-1 h-px" style={{ background: "hsl(217 91% 60% / 0.15)" }} />
+          <img src="https://cdn.simpleicons.org/claude" alt="Claude" width="11" height="11"
+            style={{ filter: "brightness(0) saturate(100%) invert(62%) sepia(98%) saturate(400%) hue-rotate(330deg) brightness(105%)" }} />
+          <span className="text-[9px] font-mono text-muted-foreground/40">Claude Opus 4.6</span>
+        </div>
+        <p className="text-xs text-foreground/80 leading-relaxed">
+          "Research our top 10 competitors and prepare a pitch deck for the board meeting."
+        </p>
+      </motion.div>
+
+      {/* ── CONNECTOR: prompt → decompose ── */}
+      <div className="flex justify-center">
+        <svg width="2" height="18" className="overflow-visible">
+          <motion.line x1="1" y1="0" x2="1" y2="18"
+            stroke="hsl(258,90%,66%)" strokeWidth="1.5" strokeDasharray="3 2"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={isInView ? { pathLength: 1, opacity: 0.5 } : {}}
+            transition={{ delay: 0.4, duration: 0.4 }}
+          />
+        </svg>
+      </div>
+
+      {/* ── DECOMPOSE node ── */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.88 }}
+        animate={isInView ? { opacity: 1, scale: 1 } : {}}
+        transition={{ delay: 0.5, type: "spring", stiffness: 160, damping: 20 }}
+        className="rounded-xl px-4 py-2.5 mb-1 flex items-center justify-between"
+        style={{
+          background: "hsl(258 90% 66% / 0.08)",
+          border: "1px solid hsl(258 90% 66% / 0.35)",
+          boxShadow: "0 0 20px hsl(258 90% 66% / 0.08)",
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm"
+            style={{ background: "hsl(258 90% 66% / 0.15)", border: "1px solid hsl(258 90% 66% / 0.4)" }}>
+            🧠
+          </div>
+          <div>
+            <div className="text-[9px] font-mono tracking-widest text-purple-400/70">CLAUDE OPUS · DECOMPOSE</div>
+            <div className="text-xs text-foreground/70 mt-0.5">5 subtasks · 2 parallel lanes · dependencies mapped</div>
+          </div>
+        </div>
+        {/* Animated token counter */}
+        <div className="text-right flex-shrink-0 ml-3">
+          <div className="text-[10px] font-mono text-purple-400/50 tabular-nums">
+            {tokenCount.toLocaleString()}
+          </div>
+          <div className="text-[8px] text-muted-foreground/30">tokens</div>
+        </div>
+      </motion.div>
+
+      {/* ── FORK: two lane connectors ── */}
+      <div className="relative h-5 mb-1">
+        <svg className="absolute inset-0 w-full h-full overflow-visible">
+          {/* left branch */}
+          <motion.path d="M 50% 0 Q 25% 0 25% 100%"
+            fill="none" stroke="hsl(160,84%,39%)" strokeWidth="1" strokeDasharray="3 2" opacity="0.4"
+            initial={{ pathLength: 0 }} animate={isInView ? { pathLength: 1 } : {}}
+            transition={{ delay: 0.75, duration: 0.35 }}
+          />
+          {/* right branch */}
+          <motion.path d="M 50% 0 Q 75% 0 75% 100%"
+            fill="none" stroke="hsl(38,92%,50%)" strokeWidth="1" strokeDasharray="3 2" opacity="0.4"
+            initial={{ pathLength: 0 }} animate={isInView ? { pathLength: 1 } : {}}
+            transition={{ delay: 0.75, duration: 0.35 }}
+          />
+        </svg>
+      </div>
+
+      {/* ── TASK GRID: two columns, 2.5 rows ── */}
+      <div className="grid grid-cols-2 gap-2 mb-1">
+        {TASKS.filter((t) => t.row < 2).map((task, i) => (
+          <motion.div
+            key={task.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.85 + i * 0.1, type: "spring", stiffness: 180, damping: 22 }}
+            className="rounded-lg px-3 py-2.5 relative overflow-hidden"
+            style={{
+              background: `${task.agentColor.replace("hsl(", "hsla(").replace(")", ", 0.06)")}`,
+              border: `1px solid ${task.agentColor.replace("hsl(", "hsla(").replace(")", ", 0.2)")}`,
+            }}
+          >
+            {/* Running pulse overlay */}
+            {task.status === "running" && (
+              <div className="absolute inset-0 rounded-lg pointer-events-none animate-pulse"
+                style={{ background: `${task.agentColor.replace("hsl(", "hsla(").replace(")", ", 0.04)")}` }} />
+            )}
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs">{task.agentEmoji}</span>
+                <span className="text-[9px] font-mono tracking-wide" style={{ color: task.agentColor }}>
+                  {task.agent}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className={`w-1.5 h-1.5 rounded-full ${statusDot[task.status]}`} />
+                <span className="text-[8px] font-mono" style={{ color: statusColor[task.status] }}>
+                  {statusLabel[task.status]}
+                </span>
+              </div>
+            </div>
+            <div className="text-[11px] text-foreground/70 leading-tight mb-1.5">{task.label}</div>
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 rounded-full" style={{ background: task.agentColor, opacity: 0.5 }} />
+              <span className="text-[9px] text-muted-foreground/40 font-mono">{task.tool}</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* QA node — full width, centered */}
+      {TASKS.filter((t) => t.row === 2).map((task) => (
         <motion.div
-          key={phase.label}
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.12, type: "spring", stiffness: 200, damping: 22 }}
-          className="relative rounded-xl px-4 py-3 group cursor-default"
+          key={task.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 1.15, type: "spring", stiffness: 180, damping: 22 }}
+          className="rounded-lg px-3 py-2.5 flex items-center gap-3 mb-1"
           style={{
-            background: `${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.06)")}`,
-            border: `1px solid ${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.2)")}`,
+            background: `${task.agentColor.replace("hsl(", "hsla(").replace(")", ", 0.06)")}`,
+            border: `1px solid ${task.agentColor.replace("hsl(", "hsla(").replace(")", ", 0.2)")}`,
           }}
         >
-          <div className="flex items-start gap-3">
-            {/* Phase indicator */}
-            <div className="flex flex-col items-center flex-shrink-0 pt-0.5">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs"
-                style={{
-                  background: `${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.15)")}`,
-                  border: `1px solid ${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.4)")}`,
-                }}
-              >
-                {phase.icon}
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0"
+            style={{ background: `${task.agentColor.replace("hsl(", "hsla(").replace(")", ", 0.15)")}`, border: `1px solid ${task.agentColor.replace("hsl(", "hsla(").replace(")", ", 0.4)")}`}}>
+            {task.agentEmoji}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-mono tracking-wide" style={{ color: task.agentColor }}>{task.agent} · {task.label}</span>
+              <div className="flex items-center gap-1">
+                <div className={`w-1.5 h-1.5 rounded-full ${statusDot[task.status]}`} />
+                <span className="text-[8px] font-mono" style={{ color: statusColor[task.status] }}>{statusLabel[task.status]}</span>
               </div>
-              {i < phases.length - 1 && (
-                <div
-                  className="w-px h-4 mt-1"
-                  style={{ background: `${phase.color.replace("hsl(", "hsla(").replace(")", ", 0.15)")}` }}
-                />
-              )}
             </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="text-[9px] font-mono tracking-widest mb-1" style={{ color: phase.color }}>{phase.label}</div>
-              <div className="text-xs text-muted-foreground leading-relaxed">{phase.text}</div>
-            </div>
+            <div className="text-[9px] text-muted-foreground/40 mt-0.5">Waits for Scout + Ghost + Forge before starting</div>
           </div>
         </motion.div>
       ))}
 
-      {/* Stats bar */}
-      <div
-        className="flex items-center justify-between px-4 py-2.5 rounded-xl text-[10px] font-mono mt-3"
-        style={{ background: "hsl(240 25% 6%)", border: "1px solid hsl(var(--border) / 0.4)" }}
-      >
-        <span className="text-muted-foreground/40">Powered by</span>
-        <div className="flex items-center gap-1.5">
-          <img
-            src="https://cdn.simpleicons.org/claude"
-            alt="Claude"
-            width="11"
-            height="11"
-            style={{ filter: "brightness(0) saturate(100%) invert(62%) sepia(98%) saturate(400%) hue-rotate(330deg) brightness(105%)" }}
+      {/* ── MERGE connector ── */}
+      <div className="flex justify-center">
+        <svg width="2" height="16" className="overflow-visible">
+          <motion.line x1="1" y1="0" x2="1" y2="16"
+            stroke="hsl(160,84%,39%)" strokeWidth="1.5" strokeDasharray="3 2"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={isInView ? { pathLength: 1, opacity: 0.5 } : {}}
+            transition={{ delay: 1.3, duration: 0.35 }}
           />
-          <span className="text-muted-foreground/60">Claude Opus 4.6</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <img
-            src="https://cdn.simpleicons.org/amazonaws"
-            alt="AWS"
-            width="11"
-            height="11"
-            style={{ filter: "brightness(0) invert(1)", opacity: 0.5 }}
-          />
-          <span className="text-muted-foreground/60">Nova Sonic</span>
-        </div>
+        </svg>
       </div>
+
+      {/* ── DELIVER node ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ delay: 1.4, type: "spring", stiffness: 160, damping: 20 }}
+        className="rounded-xl px-4 py-2.5 flex items-center gap-3"
+        style={{
+          background: "hsl(160 84% 39% / 0.08)",
+          border: "1px solid hsl(160 84% 39% / 0.35)",
+          boxShadow: "0 0 20px hsl(160 84% 39% / 0.08)",
+        }}
+      >
+        <div className="w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0"
+          style={{ background: "hsl(160 84% 39% / 0.15)", border: "1px solid hsl(160 84% 39% / 0.4)" }}>
+          ✓
+        </div>
+        <div className="flex-1">
+          <div className="text-[9px] font-mono tracking-widest text-green-400/60 mb-0.5">KAZE · DELIVER</div>
+          <div className="text-xs text-foreground/70">Pitch deck live in Notion · Slack notification sent · Calendar invite booked</div>
+        </div>
+        <div className="flex-shrink-0 flex flex-col items-end gap-1">
+          <div className="flex items-center gap-1">
+            <img src="https://cdn.simpleicons.org/notion" alt="Notion" width="10" height="10"
+              style={{ filter: "brightness(0) invert(1)", opacity: 0.5 }} />
+            <img src="https://cdn.simpleicons.org/slack" alt="Slack" width="10" height="10"
+              style={{ filter: "brightness(0) invert(1)", opacity: 0.5 }} />
+            <img src="https://cdn.simpleicons.org/googlecalendar" alt="Calendar" width="10" height="10"
+              style={{ filter: "brightness(0) invert(1)", opacity: 0.5 }} />
+          </div>
+          <span className="text-[8px] font-mono text-muted-foreground/30">3 tools called</span>
+        </div>
+      </motion.div>
     </div>
   );
 }
