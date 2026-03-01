@@ -21,6 +21,11 @@ const FEATURES = [
   "Native event / webhook triggers",
   "Dedicated specialist agents",
   "Live ops dashboard",
+  // ── New differentiating rows ──
+  "On-prem / self-hosted",
+  "Agent SOUL & evolving identity",
+  "Audit log & API key management",
+  "White-label / brand config",
 ];
 
 type CellValue = "yes" | "no" | "partial";
@@ -41,7 +46,11 @@ const PRODUCTS: {
     // Native webhooks = HMAC-verified event triggers, no 3rd party needed
     // AI scraper = paste URL → Claude generates blueprint
     // Live ops = activity feed, session replay, agent analytics
-    values: ["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],
+    // On-prem = runs on your AWS Lightsail / any VPS; agent server self-hosted
+    // SOUL = SOUL.md per agent, evolves via memory distillation over time
+    // Audit log = every action logged; API keys with scoped permissions
+    // White-label = brandConfig: custom logo, colors, domain
+    values: ["yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes","yes"],
   },
   {
     // Perplexity Computer — launched Feb 25, 2026 — genuinely strong product
@@ -64,35 +73,43 @@ const PRODUCTS: {
     // NO: Native webhooks — event-driven triggers require 3rd party (n8n, Make, Pipedream)
     // NO: Dedicated specialist agents — general orchestrator assigns to models, not
     //     named agents with persistent identities, SOULs, and evolving memories
+    // NO: On-prem — cloud-only, always; no self-hosted option announced
+    // NO: Agent SOUL — no named agent identities, no evolving persona files
+    // NO: Audit log & API keys — no documented audit trail or programmatic API keys
+    // NO: White-label — consumer product; zero brand customization
     name: "Perplexity Computer",
     short: "PPLX",
     subtitle: "launched Feb '26",
-    values: ["yes","yes","yes","yes","yes","partial","no","yes","no","no","partial"],
+    values: ["yes","yes","yes","yes","yes","partial","no","yes","no","no","partial","no","no","no","no"],
   },
   {
     name: "ChatGPT",
     short: "GPT",
     // Operator-configured actions; limited true multi-agent; memory on Pro;
-    // voice on mobile+desktop; no native webhooks; no specialist agents
-    values: ["partial","partial","partial","no","partial","no","no","yes","no","no","partial"],
+    // voice on mobile+desktop; no native webhooks; no specialist agents;
+    // cloud-only; no audit log API; no white-label
+    values: ["partial","partial","partial","no","partial","no","no","yes","no","no","partial","no","no","no","no"],
   },
   {
     name: "Zapier",
     short: "ZAP",
-    // Strong on integrations + webhooks; no AI agents; no memory; no voice
-    values: ["no","yes","yes","partial","no","no","no","no","yes","no","yes"],
+    // Strong on integrations + webhooks; no AI agents; no memory; no voice;
+    // cloud SaaS only; no agent SOULs; partial audit via Zapier Tables; no white-label
+    values: ["no","yes","yes","partial","no","no","no","no","yes","no","yes","no","no","partial","no"],
   },
   {
     name: "n8n",
     short: "N8N",
-    // Open-source workflow engine; webhooks yes; basic AI nodes; no agents/voice
-    values: ["no","yes","yes","yes","no","no","no","no","yes","no","yes"],
+    // Open-source workflow engine; webhooks yes; basic AI nodes; no agents/voice;
+    // self-hostable (YES on-prem); no SOULs; partial audit log; no white-label natively
+    values: ["no","yes","yes","yes","no","no","no","no","yes","no","yes","yes","no","partial","no"],
   },
   {
     name: "Paragon",
     short: "PAR",
-    // Integration platform for SaaS; no AI agents; no voice; no memory
-    values: ["no","yes","yes","partial","no","no","no","no","no","no","partial"],
+    // Integration platform for SaaS; no AI agents; no voice; no memory;
+    // cloud-only; no SOULs; no audit log; white-label is their core offering
+    values: ["no","yes","yes","partial","no","no","no","no","no","no","partial","no","no","no","yes"],
   },
 ];
 
