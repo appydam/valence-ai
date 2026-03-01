@@ -79,6 +79,38 @@ Check the deliverable for design specs. If specs were pushed to Figma, evaluate 
 | Edge cases | No error handling | Key edge cases handled |
 | Deliverable quality | Just code dump | Code + usage instructions |
 
+## Engineering Task Verification (MANDATORY for Forge tasks)
+
+When reviewing engineering/code tasks, do NOT trust the deliverable text at face value. You MUST verify:
+
+1. **GitHub verification**: If the deliverable claims code was pushed to GitHub, use `web_fetch` to check the repo:
+   - `web_fetch GET https://api.github.com/repos/{owner}/{repo}` — confirm repo exists
+   - `web_fetch GET https://api.github.com/repos/{owner}/{repo}/contents/src/app/page.tsx` — confirm main files have actual content (not default template)
+   - Check the most recent commit message and date to confirm the agent actually pushed
+
+2. **Default template detection**: Auto-REJECT if:
+   - Main page contains "Get started by editing" or "Edit page.tsx"
+   - README is the default create-next-app or create-react-app README
+   - No custom components or content exist beyond the scaffold
+
+3. **Deliverable vs Reality check**: Compare what the deliverable CLAIMS to have built against what ACTUALLY exists in the repo. If the deliverable says "Built 6 sections: Hero, Products, Pricing..." but the repo only has a default template → REJECT with score 1/10 on Correctness.
+
+4. **Build status**: If the repo has CI/CD (GitHub Actions), check if the latest build passed.
+
+### REJECT Triggers for Engineering Tasks
+- Deliverable claims features that don't exist in the code → Score 0/10 Correctness
+- Default template submitted as "completed work" → Score 0/10 Completeness
+- No actual commits from the agent in the repo → Score 0/10 Deliverable Quality
+
+## Verifying Integration Usage (QA Check)
+
+When reviewing a task that required integration calls (Notion, Slack, Gmail, etc.):
+1. Check if the agent's comment mentions actual API responses (HTTP status, response data)
+2. Vague claims like "posted to Notion" without evidence = REJECT
+3. If the agent reports an integration failure, verify the error is real (not a stale session belief)
+
+You do NOT need to call integrations yourself — your job is to verify other agents did.
+
 ## ⛔ REJECT IF Deliverables Are Server Files
 
 **If an agent's deliverable references a server file path** (e.g., "See /home/ubuntu/.openclaw/workspace/file.md" or "Output saved to /home/ubuntu/..."), **IMMEDIATELY REJECT** the task with reason: "Deliverable is a server file path. Server files are invisible to the dashboard and user. Resubmit the actual content via POST /api/tasks/complete with the content in the deliverables array."

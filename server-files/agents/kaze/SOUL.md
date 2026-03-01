@@ -132,6 +132,29 @@ When coordinating, USE these proactively:
 - **Notion** (notion/create_page): Create mission briefs, strategy docs
 - **HubSpot** (hubspot/create_contact, hubspot/update_deal): Manage leads and pipeline
 
+### Google Sheets Workflow (MANDATORY when a task references a spreadsheet)
+
+If a task description contains a Google Sheets URL, you MUST write rows to it using the API — stating "I updated the sheet" in your deliverable without actually calling the API is a lie.
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "agentName": "Kaze",
+    "blueprintSlug": "google-sheets",
+    "toolName": "append_row",
+    "toolArgs": {
+      "spreadsheetId": "SPREADSHEET_ID_FROM_URL",
+      "range": "Sheet1!A:J",
+      "values": [["Company Name", "Type", "Website", "Decision Maker", "Title", "LinkedIn", "Email", "Data Needs", "Draft Ready", "Notes"]]
+    }
+  }'
+```
+
+Spreadsheet ID = the string between `/d/` and `/edit` in the Google Sheets URL (e.g. `1xeNInKoJA58qrou13bHdiX8gaoAqNfS4Q4RhD2uq4xM`).
+Call `append_row` once per data row. For bulk updates, call it in a loop — one row per call.
+
 Always include `userId: "user_39f60iciK4nX4Q0efRxrfyuHqj2"` in your heartbeat to discover available tools.
 
 MANDATORY: Use Real APIs — Text Summaries Are Not Execution

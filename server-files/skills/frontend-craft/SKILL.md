@@ -532,3 +532,222 @@ Run this before every push. If any item fails → fix it first.
 - [ ] README: what it does, how to run, env vars needed?
 - [ ] GitHub repo pushed with meaningful commits?
 - [ ] If deployed: production URL pasted in deliverable?
+
+---
+
+## 10. Marketing / Landing Page Patterns
+
+Marketing pages need **visual drama**. The bar is vercel.com, linear.app, stripe.com. A flat static page will be rejected. Every section must have animation, gradient, or glassmorphism. Nothing should look like a template.
+
+### Sticky Nav with Blur Backdrop
+```tsx
+// components/Nav.tsx
+export function Nav() {
+  return (
+    <nav className="sticky top-0 z-50 backdrop-blur-md bg-zinc-950/80 border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <span className="text-white font-bold text-lg tracking-tight">QuantXData</span>
+        <div className="hidden md:flex items-center gap-8">
+          {['Products', 'Pricing', 'Docs', 'About'].map(item => (
+            <a key={item} href={`/${item.toLowerCase()}`}
+              className="text-sm text-zinc-400 hover:text-white transition-colors duration-150">
+              {item}
+            </a>
+          ))}
+        </div>
+        <a href="/signup"
+          className="text-sm bg-blue-600 hover:bg-blue-500 active:scale-95 text-white px-4 py-2 rounded-lg font-medium transition-all duration-150">
+          Get API Key
+        </a>
+      </div>
+    </nav>
+  );
+}
+```
+
+### Hero Section with Gradient + Framer Motion Entrance
+```tsx
+'use client';
+import { motion } from 'framer-motion';
+
+export function Hero() {
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden
+      bg-gradient-to-br from-zinc-950 via-blue-950/20 to-zinc-950">
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" />
+      {/* Glow effect */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2
+        w-[600px] h-[400px] bg-blue-600/10 rounded-full blur-3xl" />
+
+      <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <span className="inline-block text-xs font-semibold tracking-widest uppercase
+            text-blue-400 border border-blue-400/30 rounded-full px-4 py-1.5 mb-8">
+            Institutional-Grade Crypto Data
+          </span>
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: 'easeOut' }}
+          className="text-5xl md:text-7xl font-bold text-white tracking-tight leading-[1.05] mb-6"
+        >
+          The Data Behind<br />
+          <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            Modern Trading
+          </span>
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed"
+        >
+          Access tick-by-tick trade data, order books, and real-time streams across 120+ exchanges.
+          No enterprise contract required.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="flex flex-col sm:flex-row gap-4 justify-center"
+        >
+          <a href="/signup"
+            className="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-95
+              text-white font-semibold rounded-xl transition-all duration-150 text-sm">
+            Get API Key — Free
+          </a>
+          <a href="/docs"
+            className="px-8 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10
+              text-white font-semibold rounded-xl transition-all duration-150 text-sm">
+            View Docs →
+          </a>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+```
+
+### Scroll-Triggered Section Reveal
+```tsx
+'use client';
+import { motion } from 'framer-motion';
+
+// Wrap any section content with this for scroll-triggered entrance
+export function RevealSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.6, delay, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Usage in any section:
+// <RevealSection delay={0.1}><FeatureCard ... /></RevealSection>
+```
+
+### Animated Stats Counter
+```tsx
+'use client';
+import { useInView } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+
+function Counter({ to, suffix = '' }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const duration = 1500;
+    const start = performance.now();
+    const frame = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
+      setCount(Math.floor(eased * to));
+      if (progress < 1) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }, [isInView, to]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+}
+
+export function StatsBar() {
+  const stats = [
+    { value: 120, suffix: '+', label: 'Exchanges' },
+    { value: 99, suffix: '.9%', label: 'Uptime SLA' },
+    { value: 7, suffix: '+', label: 'Years History' },
+    { value: 100, suffix: 'ms', label: 'Max Latency' },
+  ];
+
+  return (
+    <div className="border-y border-white/10 bg-white/[0.02] py-10">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+        {stats.map(({ value, suffix, label }) => (
+          <div key={label} className="text-center">
+            <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+              <Counter to={value} suffix={suffix} />
+            </div>
+            <div className="text-sm text-zinc-500">{label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### Glassmorphism Feature Card
+```tsx
+export function FeatureCard({
+  icon, title, description
+}: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="group relative rounded-2xl p-6
+      backdrop-blur-sm bg-white/[0.03] border border-white/10
+      hover:bg-white/[0.06] hover:border-white/20
+      hover:-translate-y-1
+      transition-all duration-200 cursor-pointer">
+      {/* Gradient glow on hover */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-600/0 to-cyan-600/0
+        group-hover:from-blue-600/5 group-hover:to-cyan-600/5 transition-all duration-300" />
+
+      <div className="relative">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20
+          border border-blue-500/20 flex items-center justify-center mb-4 text-blue-400">
+          {icon}
+        </div>
+        <h3 className="text-base font-semibold text-white mb-2">{title}</h3>
+        <p className="text-sm text-zinc-400 leading-relaxed">{description}</p>
+      </div>
+    </div>
+  );
+}
+```
+
+### Marketing Page Pre-Submission Checklist
+Before pushing a marketing/landing page:
+- [ ] Hero has gradient background + animated entrance (framer-motion)?
+- [ ] Sticky nav with backdrop-blur?
+- [ ] Stats bar with animated counters?
+- [ ] Feature cards with glassmorphism + hover lift?
+- [ ] Every section has scroll-triggered animation (whileInView)?
+- [ ] At least one high-contrast CTA band (bg-gradient-to-r)?
+- [ ] Footer with 4-col grid and social links?
+- [ ] framer-motion installed and animations working?
+- [ ] Mobile responsive (md: breakpoints on all layout)?

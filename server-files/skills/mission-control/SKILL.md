@@ -48,7 +48,7 @@ To also discover integration tools, add `includeTools: true` and `userId`:
 ```bash
 curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
   -H "Content-Type: application/json" \
-  -d '{"agentName": "YOUR_NAME", "status": "working", "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2", "includeTools": true}'
+  -d '{"agentName": "YOUR_NAME", "status": "working", "userId": "{TASK_USER_ID}", "includeTools": true}'
 ```
 
 Response includes:
@@ -362,7 +362,7 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
   -d '{
     "agentName": "Forge",
     "status": "working",
-    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2"
+    "userId": "{TASK_USER_ID}"
   }'
 ```
 
@@ -375,7 +375,7 @@ Response includes:
   "assignedTasks": [...],
   "config": {...},
   "availableTools": {
-    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "userId": "{TASK_USER_ID}",
     "count": 15,
     "recommended": [
       {
@@ -419,9 +419,13 @@ You see ALL tools the user has connected, but `recommended` highlights tools mos
 
 ### Getting User ID
 
-The `userId` comes from the task context. When a human creates a task, the system captures their Clerk user ID. You'll execute tools using their credentials (their connected integrations).
+The `userId` comes from the task context — **NOT a hardcoded value**. When a human creates a task, the system captures their Clerk user ID in the task's `requiredUserId` field. You use that user's credentials (their connected integrations) to execute tools on their behalf.
 
-**For agent-created tasks:** If no userId is available, skip tool discovery or use the system default: `user_39f60iciK4nX4Q0efRxrfyuHqj2`
+**How to get the userId:**
+1. Call heartbeat — your `assignedTasks` response includes each task's `requiredUserId`
+2. Use that `requiredUserId` as the `userId` in all integration tool calls and heartbeats with `includeTools: true`
+3. If the task has no `requiredUserId`, check for `creatorId` on the task instead
+4. **For agent-created subtasks:** Use the parent task's `requiredUserId`
 
 ### Execute an Integration Tool
 
@@ -431,7 +435,7 @@ Once you've discovered tools, execute them when needed for your tasks. Use the s
 curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "userId": "{TASK_USER_ID}",
     "agentName": "YOUR_NAME",
     "blueprintSlug": "slack",
     "toolName": "send_message",
@@ -472,7 +476,7 @@ Response on failure:
 Check recent integration API calls for debugging:
 
 ```bash
-curl "https://beloved-squirrel-599.convex.site/api/integrations/activity?userId=user_39f60iciK4nX4Q0efRxrfyuHqj2&limit=20"
+curl "https://beloved-squirrel-599.convex.site/api/integrations/activity?userId={TASK_USER_ID}&limit=20"
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 ## Connected Integrations (via Mission Control)
 
-Always include `userId: "user_39f60iciK4nX4Q0efRxrfyuHqj2"` in your heartbeat to discover tools.
+Always include `userId: "{TASK_USER_ID}"` in your heartbeat to discover tools.
 
 ### Slack
 - `slack/send_message` — Share drafts for feedback, announce published content

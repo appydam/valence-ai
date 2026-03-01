@@ -32,7 +32,7 @@ const OPENCLAW_BIN = process.env.OPENCLAW_BIN || "/home/ubuntu/.npm-global/bin/o
 const LOG_DIR = process.env.LOG_DIR || "/tmp";
 const QUEUE_DIR = process.env.QUEUE_DIR || "/tmp";
 
-const VALID_AGENTS = new Set(["kaze", "scout", "forge", "ghost"]);
+const VALID_AGENTS = new Set(["kaze", "scout", "forge", "ghost", "sentinel"]);
 
 // Track running agents to prevent duplicate starts
 const runningAgents = new Set();

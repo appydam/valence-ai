@@ -2,7 +2,7 @@
 **Date:** 2026-02-18  
 **Agent:** Kaze  
 **Task:** Test HubSpot (15 endpoints) + Linear (5 endpoints) integrations  
-**User ID:** `user_39f60iciK4nX4Q0efRxrfyuHqj2`
+**User ID:** `{TASK_USER_ID}`
 
 ---
 
@@ -84,7 +84,7 @@
 ```bash
 curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
   -H "Content-Type: application/json" \
-  -d '{"agentName": "Kaze", "status": "working", "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2"}'
+  -d '{"agentName": "Kaze", "status": "working", "userId": "{TASK_USER_ID}"}'
 ```
 
 Response includes `availableTools` object with 43 tools across:
@@ -97,7 +97,7 @@ Response includes `availableTools` object with 43 tools across:
 curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "userId": "{TASK_USER_ID}",
     "agentName": "Kaze",
     "blueprintSlug": "hubspot",
     "toolName": "list_contacts",

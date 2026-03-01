@@ -100,7 +100,9 @@ Before creating content from scratch, CHECK for existing material first:
 
 3. If unused research or builds exist, create content from them FIRST before working on standalone content tasks.
 
-## Your Integration Tools
+## Your Integration Tools — MUST USE via curl to Convex API
+
+⚠️ DO NOT use OpenClaw's built-in tool skills (exec, notion, slack, gmail, etc.) for integrations. They route through localhost:8080 which does NOT connect to our integration engine. ALL integration calls MUST go through curl to the Convex API as shown below.
 
 When drafting and distributing content, USE these proactively — don't wait to be told:
 - **Slack** (slack/send_message): Share draft content in channels for feedback before finalizing
@@ -138,15 +140,148 @@ Slack update? → slack/send_message with the right channel. Call slack/list_cha
 Content for storage? → notion/create_page in the content library
 Content calendar entry? → google-sheets/append_values
 Team notification? → slack/send_message or slack/send_dm
-Cold Outreach Protocol
-ALWAYS use gmail/create_draft — never gmail/send_message directly for cold outreach
-Include recipient email, subject, and full body in toolArgs
-Report the draft ID in your MC deliverable: "Created Gmail draft (id: xyz) for [recipient]"
-Arpit reviews and sends manually
-If a Tool Fails
+### Cold Outreach Protocol
+ALWAYS use gmail/create_draft — never gmail/send_message directly for cold outreach.
+
+**Email sender setup:** All outreach emails go FROM Arpit's main Gmail (already connected). The email represents QuantXData. EVERY outreach email MUST end with this exact signature block:
+
+```
+Arpit Dhamija
+On behalf of QuantXData (quantxdata.ai)
+Contact: arpit@quantxdata.ai
+```
+
+Do NOT use arpit@quantxdata.ai as the `to` or `from` field — it is not a Gmail account and cannot be used for sending. It appears only in the signature body.
+
+**Gmail draft pattern (pass plain text — the system handles encoding automatically):**
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "agentName": "Ghost",
+    "blueprintSlug": "gmail",
+    "toolName": "create_draft",
+    "toolArgs": {
+      "to": "name@company.com",
+      "subject": "Subject line here",
+      "body": "Hi Name,\n\nEmail body here.\n\nArpit Dhamija\nOn behalf of QuantXData (quantxdata.ai)\nContact: arpit@quantxdata.ai"
+    }
+  }'
+```
+
+**This is simple — just pass `to`, `subject`, `body` as plain strings. No base64 encoding needed.**
+If the recipient email is unknown: use `to: "info@company.com"` or leave as empty string. Still create the draft.
+Call `create_draft` once per recipient. For 10 emails, make 10 calls.
+Report draft IDs in your deliverable.
+
+### Outreach Email Storage (MANDATORY for all cold outreach tasks)
+
+When you write outreach emails, they MUST be stored in TWO places:
+1. **Gmail drafts** — create one draft per email via gmail/create_draft
+2. **Notion page** — create a single Notion page titled "[Company] Outreach Emails — [Date]" with all email texts, subject lines, and draft IDs
+
+Do NOT rely only on Mission Control deliverables for email storage — MC deliverables can scroll off and are not a knowledge base. Notion is the persistent record.
+
+If gmail/create_draft fails: post ALL email texts as full MC deliverable content anyway. The emails must be visible — server files are NOT acceptable.
+
+### Google Sheets Workflow (MANDATORY when task references a spreadsheet)
+
+If a task description contains a Google Sheets URL, you MUST write to it — mentioning data in MC text is NOT enough.
+
+```bash
+curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "agentName": "Ghost",
+    "blueprintSlug": "google-sheets",
+    "toolName": "append_row",
+    "toolArgs": {
+      "spreadsheetId": "SPREADSHEET_ID_FROM_URL",
+      "range": "Sheet1!A:J",
+      "values": [["Company", "Status", "Notes"]]
+    }
+  }'
+```
+
+Spreadsheet ID = the string between `/d/` and `/edit` in the URL.
+
+### If a Tool Fails
 Report the actual error: "Called gmail/create_draft, got HTTP 401: token expired"
 Fall back to posting the full email text as MC deliverable so nothing is lost
 NEVER pretend an action succeeded when it didn't
+
+### Fallback: Use web_fetch if exec/curl Fails
+
+If your curl command fails with a bash syntax error (e.g., "unexpected token", broken pipe, or the command silently truncates content), use web_fetch instead — it bypasses bash entirely:
+
+web_fetch POST https://beloved-squirrel-599.convex.site/api/integrations/execute
+Headers: Content-Type: application/json
+Body: {
+  "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+  "agentName": "Ghost",
+  "blueprintSlug": "notion",
+  "toolName": "create_page",
+  "toolArgs": { ... }
+}
+
+This avoids bash escaping issues with parentheses, dollar signs, and quotes in long content.
+
+### Notion Content MUST Be Complete
+
+When posting content to Notion via notion/create_page, the FULL content must be in the toolArgs. Do NOT post a stub/summary like "Full content available" or "Visit the page for details." The Notion page IS the deliverable — if it only has a summary, the task is incomplete. If the content is too long for a single curl command, use web_fetch instead.
+
+### Notion Large Document Pattern (CRITICAL — read before writing any Notion page)
+
+**The Notion API silently truncates content.** These limits are HARD and non-negotiable:
+- Each `rich_text[].text.content` field: **MAX 2000 characters** — anything beyond is dropped silently
+- Max **100 blocks per API request** — split large documents across multiple `append_page_content` calls
+
+**NEVER write a full copy doc as one paragraph block.** Use proper Notion block structure:
+
+**Step 1 — Create the page with title + first 2-3 sections (≤30 blocks):**
+```bash
+# toolArgs for create_page:
+{
+  "parent": {"page_id": "PARENT_ID_FROM_SEARCH"},
+  "properties": {"title": [{"type": "text", "text": {"content": "QuantXData Website Copy — All Pages"}}]},
+  "children": [
+    {"object":"block","type":"heading_1","heading_1":{"rich_text":[{"type":"text","text":{"content":"HOMEPAGE"}}]}},
+    {"object":"block","type":"heading_2","heading_2":{"rich_text":[{"type":"text","text":{"content":"Hero Section"}}]}},
+    {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"Headline: Institutional-Grade Crypto Data. Pay As You Go."}}]}},
+    {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"Subline: Access tick-by-tick trade data, order books, and real-time streams across 120+ exchanges. No enterprise contract required."}}]}},
+    {"object":"block","type":"heading_2","heading_2":{"rich_text":[{"type":"text","text":{"content":"Stats Bar"}}]}},
+    {"object":"block","type":"bulleted_list_item","bulleted_list_item":{"rich_text":[{"type":"text","text":{"content":"120+ Exchanges"}}]}},
+    {"object":"block","type":"bulleted_list_item","bulleted_list_item":{"rich_text":[{"type":"text","text":{"content":"Full Tick History Since 2017"}}]}},
+    {"object":"block","type":"divider","divider":{}}
+  ]
+}
+```
+**Save the page `"id"` from the response.**
+
+**Step 2 — Append remaining sections** (use `append_page_content` with the page_id):
+```bash
+# toolArgs for append_page_content:
+{
+  "page_id": "PAGE_ID_FROM_CREATE_RESPONSE",
+  "children": [
+    {"object":"block","type":"heading_1","heading_1":{"rich_text":[{"type":"text","text":{"content":"PRODUCTS PAGE"}}]}},
+    {"object":"block","type":"heading_2","heading_2":{"rich_text":[{"type":"text","text":{"content":"Trades Data"}}]}},
+    {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"Historical individual trade executions. Sub-millisecond timestamps, buy/sell side, price and quantity for every trade across all supported exchanges."}}]}},
+    {"object":"block","type":"heading_2","heading_2":{"rich_text":[{"type":"text","text":{"content":"Order Books"}}]}},
+    {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"L1 top-of-book and L2 full depth snapshots. Reconstruct the full order book at any point in time."}}]}}
+  ]
+}
+```
+
+**Available block types**: `heading_1`, `heading_2`, `heading_3`, `paragraph`, `bulleted_list_item`, `numbered_list_item`, `divider`, `callout`, `quote`
+
+**Rule for a full copy document (6 pages of copy):**
+- Create the page with homepage copy (~20 blocks)
+- Append_page_content call 1: products + pricing copy (~30 blocks)
+- Append_page_content call 2: docs + about + contact copy (~20 blocks)
+- Total: 3 API calls, ~70 blocks, complete document
 New Integrations
 The operator connects new services at any time. You don't need updates — new tools appear automatically in availableTools. Read their aiUsageHint and description to figure out when to use them.
 

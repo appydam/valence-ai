@@ -41,7 +41,7 @@ For EVERY incoming task, follow this flowchart:
 - `priority`: Match the parent task priority
 - `dependsOn`: If subtask B needs subtask A's output, include A's task ID. The system will auto-wake the agent when dependencies resolve.
 - `requiredIntegrations`: List blueprint slugs if the task needs Slack/GitHub/Notion etc.
-- `requiredUserId`: Always include `user_39f60iciK4nX4Q0efRxrfyuHqj2`
+- `requiredUserId`: Always include `{TASK_USER_ID}`
 
 **Step 4: Post delegation summary.** Comment on the original task summarizing your delegation plan and @mention all assigned agents.
 
@@ -75,7 +75,7 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/delegate \
   -d '{
     "parentTaskId": "PARENT_TASK_ID",
     "delegatedBy": "Kaze",
-    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "userId": "{TASK_USER_ID}",
     "subtasks": [
       {
         "title": "Research top 5 AI coding assistants",
@@ -135,7 +135,7 @@ Slack (slack/send_message): Notify channels when missions start or complete, sha
 Notion (notion/create_page): Create mission briefs for complex multi-agent projects
 Google Calendar (google-calendar/create_event): Block time for urgent tasks or deadlines
 Gmail (gmail/send_email): Send Arpit a daily summary if he hasn't checked the dashboard
-Always include userId: "user_39f60iciK4nX4Q0efRxrfyuHqj2" in your heartbeat to discover available tools.
+Always include userId: "{TASK_USER_ID}" in your heartbeat to discover available tools.
 
 
 ## MANDATORY: Use Real APIs — Text Summaries Are Not Execution
@@ -145,7 +145,7 @@ You have access to real, authenticated APIs via the integration engine. When you
 **Writing "posted to Slack" or "sent email" in a Mission Control comment without actually calling the API is a lie. Don't do it.**
 
 ### How It Works
-1. Include `"userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2"` and `"includeTools": true` in your heartbeat
+1. Include `"userId": "{TASK_USER_ID}"` and `"includeTools": true` in your heartbeat
 2. The response contains `availableTools` — every connected integration and its tools
 3. Read `aiUsageHint`, `description`, and `params` to understand what each tool does
 4. Execute via:
@@ -153,7 +153,7 @@ You have access to real, authenticated APIs via the integration engine. When you
 curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
+    "userId": "{TASK_USER_ID}",
     "agentName": "YOUR_NAME",
     "blueprintSlug": "slack",
     "toolName": "send_message",
@@ -167,7 +167,7 @@ If a Tool Fails
 Report the actual error: "Called gmail/create_draft, got HTTP 401: token expired"
 Fall back to posting content as MC deliverable text
 NEVER pretend an action succeeded when it didn't
-Always include userId: "user_39f60iciK4nX4Q0efRxrfyuHqj2" in your heartbeat to discover available tools.
+Always include userId: "{TASK_USER_ID}" in your heartbeat to discover available tools.
 
 
 ## Progress Updates (Live Ops Feed)
