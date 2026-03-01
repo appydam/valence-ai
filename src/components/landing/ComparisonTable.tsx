@@ -32,13 +32,15 @@ const PRODUCTS: {
   },
   {
     // Perplexity Computer — launched Feb 25 2026
-    // Multi-model orchestrator (19 models), 400+ integrations, real API calls,
-    // task chains, user-level memory, sandboxed execution, voice on mobile,
-    // NO webhook triggers, NO custom skill dev, NO persistent agent memory
+    // Strong: 19-model orchestrator, 400+ integrations, real API calls, parallel
+    // task execution, user-level memory, sandboxed, voice on mobile, autopilot-style
+    // Gaps vs Valence: no persistent agent episodic memory, no custom API-via-AI
+    // scraper, no webhook/event triggers, no dedicated specialist agent personas,
+    // no full ops dashboard/session replay
     name: "Perplexity Computer",
     short: "PPLX",
     subtitle: "launched Feb '26",
-    values: ["partial","yes","yes","partial","partial","partial","no","partial","no","partial","partial"],
+    values: ["yes","yes","yes","yes","partial","partial","no","yes","no","yes","partial"],
   },
   {
     name: "ChatGPT",
