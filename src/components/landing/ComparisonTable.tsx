@@ -83,33 +83,60 @@ const PRODUCTS: {
     values: ["yes","yes","yes","yes","yes","partial","no","yes","no","no","partial","no","no","no","no"],
   },
   {
-    name: "ChatGPT",
-    short: "GPT",
-    // Operator-configured actions; limited true multi-agent; memory on Pro;
-    // voice on mobile+desktop; no native webhooks; no specialist agents;
-    // cloud-only; no audit log API; no white-label
-    values: ["partial","partial","partial","no","partial","no","no","yes","no","no","partial","no","no","no","no"],
+    // Relevance AI — AI workforce platform for GTM/sales/ops teams
+    // YES: multi-agent teams with specialized roles; visual workflow builder
+    // YES: enterprise integrations (CRM-focused: Salesforce, HubSpot, etc.)
+    // YES: real API access; task chains with dependencies
+    // PARTIAL: memory — RAG/embeddings per agent, not episodic session memory
+    // PARTIAL: quality review — human-in-loop steps available but not a dedicated QA agent
+    // NO: AI doc scraper; NO: voice; NO: native webhooks (uses Zapier/Make triggers)
+    // NO: on-prem (cloud-only); NO: agent SOUL/evolving identity; NO: white-label
+    // Pricing: enterprise (not public); focused on GTM teams, not general ops
+    name: "Relevance AI",
+    short: "REL",
+    values: ["yes","yes","yes","yes","partial","partial","no","no","no","partial","yes","no","no","partial","no"],
   },
   {
-    name: "Zapier",
-    short: "ZAP",
-    // Strong on integrations + webhooks; no AI agents; no memory; no voice;
-    // cloud SaaS only; no agent SOULs; partial audit via Zapier Tables; no white-label
-    values: ["no","yes","yes","partial","no","no","no","no","yes","no","yes","no","no","partial","no"],
+    // Beam AI — enterprise Agentic Process Automation (APA) platform
+    // YES: multi-agent orchestration via Petri Nets; parallel multi-threaded workflows
+    // YES: 500+ enterprise API integrations
+    // YES: real API access; task dependencies; self-learning from outcomes
+    // PARTIAL: memory — process-outcome learning, not episodic session memory
+    // PARTIAL: quality review — SOP-based hybrid; human-in-loop configurable
+    // NO: AI doc scraper; NO: voice; NO: native webhooks (enterprise event bus)
+    // NO: on-prem; NO: agent SOUL/evolving identity
+    // Pricing: enterprise only ($37B TAM focus); heavy implementation overhead
+    name: "Beam AI",
+    short: "BEAM",
+    values: ["yes","yes","yes","yes","partial","partial","no","no","partial","partial","yes","no","no","partial","no"],
   },
   {
-    name: "n8n",
-    short: "N8N",
-    // Open-source workflow engine; webhooks yes; basic AI nodes; no agents/voice;
-    // self-hostable (YES on-prem); no SOULs; partial audit log; no white-label natively
-    values: ["no","yes","yes","yes","no","no","no","no","yes","no","yes","yes","no","partial","no"],
+    // CrewAI — open-source multi-agent framework + CrewAI AMP managed platform
+    // YES: foundational multi-agent orchestration (1.4B+ automations, PwC/IBM/NVIDIA)
+    // YES: open ecosystem — works with any API; AMP adds managed scaling
+    // YES: real API access; task decomposition; parallel execution
+    // PARTIAL: memory — session context, no persistent agent SOUL/identity
+    // PARTIAL: quality review — tracing/observability in AMP, no dedicated QA agent
+    // PARTIAL: voice — no native voice; integrable via SDK
+    // YES: on-prem (open-source, self-hostable); NO: dedicated agent SOUL
+    // PARTIAL: audit (AMP has execution traces); NO: white-label
+    name: "CrewAI",
+    short: "CREW",
+    values: ["yes","yes","yes","yes","partial","partial","no","no","partial","partial","yes","yes","no","partial","no"],
   },
   {
-    name: "Paragon",
-    short: "PAR",
-    // Integration platform for SaaS; no AI agents; no voice; no memory;
-    // cloud-only; no SOULs; no audit log; white-label is their core offering
-    values: ["no","yes","yes","partial","no","no","no","no","no","no","partial","no","no","no","yes"],
+    // Lindy AI — no-code AI agent platform ("AI employees"), SMB-focused
+    // YES: agents with autonomy (30+ hours on Claude Sonnet 4.5)
+    // YES: 100+ integrations via Zapier + native; web, email, spreadsheets
+    // YES: real API access
+    // PARTIAL: task decomposition — single long-running agent, not multi-agent graph
+    // PARTIAL: memory — conversation-level; no evolving cross-session agent identity
+    // NO: quality review gates; NO: AI doc scraper; PARTIAL: voice (implied)
+    // NO: on-prem (cloud SaaS); NO: agent SOUL; NO: audit log / API keys; NO: white-label
+    // Pricing: free → $49.99/mo — most accessible competitor
+    name: "Lindy AI",
+    short: "LNDY",
+    values: ["partial","yes","yes","partial","partial","no","no","partial","no","no","yes","no","no","no","no"],
   },
 ];
 
