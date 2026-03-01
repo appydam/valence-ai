@@ -407,7 +407,7 @@ function SavingsVisual() {
       </div>
       <div className="space-y-2">
         {[
-          { label: "Pre-built blueprints", value: "94+", color: "hsl(217, 91%, 60%)" },
+          { label: "Pre-built blueprints", value: "100+", color: "hsl(217, 91%, 60%)" },
           { label: "Any API via AI scraper", value: "∞", color: "hsl(160, 84%, 39%)" },
           { label: "Developer hours saved", value: "100s", color: "hsl(38, 92%, 50%)" },
         ].map((item) => (
@@ -691,6 +691,71 @@ function VoiceCommandVisual() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="m16 2-4 4-4-4"/><path d="m2 16 4-4 4 4"/><path d="M22 16c0-5.523-4.477-10-10-10"/><path d="M2 8c0 5.523 4.477 10 10 10"/></svg>
         </div>
         <div className="w-8" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Billing & Team visual ───────────────────────────────────────────────────
+function BillingVisual() {
+  const plans = [
+    { name: "Starter", price: "$99", color: "hsl(217, 91%, 60%)", features: ["3 agents", "25 integrations", "10k API calls/mo"] },
+    { name: "Pro", price: "$299", color: "hsl(258, 90%, 66%)", features: ["5 agents", "100+ integrations", "Unlimited API calls"], highlight: true },
+    { name: "Enterprise", price: "Custom", color: "hsl(160, 84%, 39%)", features: ["Unlimited agents", "White-label UI", "Dedicated SLA"] },
+  ];
+
+  return (
+    <div className="w-full max-w-sm space-y-3">
+      {plans.map((plan, i) => (
+        <motion.div
+          key={plan.name}
+          initial={{ opacity: 0, x: 20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: i * 0.1, type: "spring", stiffness: 200, damping: 22 }}
+          className="relative rounded-xl px-4 py-3"
+          style={{
+            background: plan.highlight
+              ? `${plan.color.replace("hsl(", "hsla(").replace(")", ", 0.08)")}`
+              : "hsl(240 25% 7%)",
+            border: `1px solid ${plan.color.replace("hsl(", "hsla(").replace(")", plan.highlight ? ", 0.4)" : ", 0.15)")}`,
+            boxShadow: plan.highlight ? `0 0 20px ${plan.color.replace("hsl(", "hsla(").replace(")", ", 0.08)")}` : "none",
+          }}
+        >
+          {plan.highlight && (
+            <div
+              className="absolute -top-2.5 right-3 text-[9px] font-mono px-2 py-0.5 rounded-full tracking-widest"
+              style={{ background: plan.color, color: "#000" }}
+            >
+              POPULAR
+            </div>
+          )}
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-foreground/80">{plan.name}</span>
+            <span className="text-sm font-bold font-mono" style={{ color: plan.color }}>{plan.price}<span className="text-[10px] text-muted-foreground/40">{plan.price !== "Custom" ? "/mo" : ""}</span></span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {plan.features.map((f) => (
+              <span key={f} className="text-[9px] px-1.5 py-0.5 rounded font-mono text-muted-foreground/60"
+                style={{ background: "hsl(240 25% 10%)", border: "1px solid hsl(var(--border) / 0.3)" }}>
+                {f}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+      ))}
+
+      <div className="flex items-center gap-3 pt-1">
+        {[
+          { label: "API Keys", icon: "🔑", color: "hsl(38, 92%, 50%)" },
+          { label: "Audit Log", icon: "📋", color: "hsl(160, 84%, 39%)" },
+          { label: "Team Roles", icon: "👥", color: "hsl(217, 91%, 60%)" },
+        ].map((item) => (
+          <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50">
+            <span>{item.icon}</span>
+            <span>{item.label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -996,7 +1061,7 @@ export default function Landing() {
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-glow" />
-                5 AGENTS ONLINE · VOICE COMMAND · 94 INTEGRATIONS
+                5 AGENTS ONLINE · VOICE COMMAND · 100+ INTEGRATIONS
               </motion.div>
 
               {/* Headline */}
@@ -1080,7 +1145,7 @@ export default function Landing() {
                 transition={{ delay: 0.9, duration: 0.6 }}
                 className="text-lg text-muted-foreground leading-relaxed"
               >
-                Five specialized AI agents. <span className="text-foreground/80">94 integrated tools.</span> Multi-step workflows that run while you sleep - across GitHub, HubSpot, Slack, Stripe, Notion, Figma, Salesforce, Jira and everything else your business runs on.
+                Five specialized AI agents. <span className="text-foreground/80">100+ integrated tools.</span> Multi-step workflows that run while you sleep — across GitHub, HubSpot, Slack, Stripe, Notion, Figma, Salesforce, Jira, Pipedrive, Razorpay and everything else your business runs on.
               </motion.p>
 
               {/* Typing command */}
@@ -1151,7 +1216,7 @@ export default function Landing() {
                   <span>All 5 agents operational</span>
                 </div>
                 <span>·</span>
-                <span>847 API calls in last hour</span>
+                <span>1,240 API calls in last hour</span>
                 <span>·</span>
                 <span>Selective pilot program</span>
               </motion.div>
@@ -1384,7 +1449,7 @@ export default function Landing() {
               Connect Everything
             </motion.h2>
             <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              94 integrations ready to connect. 2,400+ API actions in the catalog. Or add any API with AI — paste a URL, we generate the integration.
+              100+ integrations ready to connect. 2,400+ API actions in the catalog. Or add any API with AI — paste a URL, we generate the integration in seconds.
             </motion.p>
           </RevealSection>
 
@@ -1466,12 +1531,12 @@ export default function Landing() {
           <FeatureBlock
             label="INTEGRATION ENGINE"
             title="Built in-house. No Paragon. No $2,500/month."
-            description="We replaced Paragon with a custom integration engine that costs nothing to run. It supports any API — OAuth2, API key, Bearer, Basic auth. And if your API isn't in the catalog, just paste the docs URL."
+            description="We replaced Paragon with a custom integration engine. 100+ blueprints across CRM, payments, analytics, dev tools, and marketing — all with OAuth2, API key, and Bearer auth out of the box. If your API isn't in the catalog, paste the docs URL and Claude generates it."
             bullets={[
-              "94+ pre-seeded blueprints ready to connect today",
-              "AI doc scraper: paste URL → Claude generates tool definitions",
+              "100+ pre-seeded blueprints: Salesforce, Stripe, Pipedrive, Razorpay, Vercel, Apollo, Hunter, Google Analytics and more",
+              "AI doc scraper: paste URL → Claude generates tool definitions in seconds",
               "OpenAPI spec import (deterministic, no AI needed)",
-              "Jittered backoff, rate limit handling, auto token refresh",
+              "Jittered backoff, rate limit handling, auto OAuth token refresh",
             ]}
             visual={<SavingsVisual />}
           />
@@ -1515,6 +1580,19 @@ export default function Landing() {
             ]}
             visual={<AutopilotVisual />}
             reverse
+          />
+
+          <FeatureBlock
+            label="BILLING & TEAM MANAGEMENT"
+            title="Built for teams. Ready for scale."
+            description="Valence ships with everything you need to run it as a real product — subscription plans, usage metering, team roles, API keys for agents and CI/CD, and a full audit log. No bolted-on add-ons."
+            bullets={[
+              "Starter, Pro, and Enterprise plans with Stripe-powered billing",
+              "Team roles (Admin / Member / Viewer) with granular permissions",
+              "API key management — agent server keys, CI/CD keys, revocation",
+              "Audit log: every sensitive action tracked with user + timestamp",
+            ]}
+            visual={<BillingVisual />}
           />
         </div>
       </section>

@@ -3,7 +3,7 @@ import { useInView } from "framer-motion";
 
 const STATS = [
   { label: "Autonomous Agents", value: 5, suffix: "", prefix: "" },
-  { label: "Live Integrations", value: 94, suffix: "", prefix: "" },
+  { label: "Live Integrations", value: 100, suffix: "+", prefix: "" },
   { label: "API Actions", value: 2400, suffix: "+", prefix: "" },
   { label: "Platform Cost", value: 0, suffix: "/mo", prefix: "$", highlight: true },
 ];
