@@ -253,25 +253,54 @@ export default mutation({
         }),
         aiUsageHint: `Create a new Notion page or database row.
 
-CRITICAL — argument structure must be nested objects:
+STEP 1 — FIND A PARENT FIRST: If you don't already have a page_id or database_id, call notion/search with an empty query {} to discover available pages. Use the first result's id as the parent. This is required — you cannot create a page without a parent.
+
+STEP 2 — CREATE THE PAGE with nested objects:
+
+To create a SUB-PAGE inside another page:
+{
+  "parent": { "page_id": "ID_FROM_SEARCH" },
+  "properties": {
+    "title": [{ "type": "text", "text": { "content": "Page title" } }]
+  },
+  "children": [
+    {"object": "block", "type": "paragraph", "paragraph": {"rich_text": [{"type": "text", "text": {"content": "Body text"}}]}}
+  ]
+}
 
 To create a DATABASE ROW:
 {
-  "parent": { "database_id": "YOUR_DATABASE_ID" },
+  "parent": { "database_id": "ID_FROM_SEARCH" },
   "properties": {
     "Name": { "title": [{ "type": "text", "text": { "content": "Row title" } }] }
   }
 }
 
-To create a SUB-PAGE inside another page:
-{
-  "parent": { "page_id": "YOUR_PAGE_ID" },
-  "properties": {
-    "title": [{ "type": "text", "text": { "content": "Page title" } }]
-  }
-}
+NEVER pass flat keys like database_id="abc" or title="text" — Notion requires nested objects or it returns 400 validation_error.
 
-NEVER pass flat keys like database_id="abc" or title="text" — Notion requires nested objects or it returns 400 validation_error.`,
+---
+
+BLOCK TYPES available in children array:
+- heading_1: {"object":"block","type":"heading_1","heading_1":{"rich_text":[{"type":"text","text":{"content":"Title"}}]}}
+- heading_2: {"object":"block","type":"heading_2","heading_2":{"rich_text":[{"type":"text","text":{"content":"Subtitle"}}]}}
+- heading_3: {"object":"block","type":"heading_3","heading_3":{"rich_text":[{"type":"text","text":{"content":"Sub-subtitle"}}]}}
+- paragraph: {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"Text here"}}]}}
+- bulleted_list_item: {"object":"block","type":"bulleted_list_item","bulleted_list_item":{"rich_text":[{"type":"text","text":{"content":"Bullet point"}}]}}
+- numbered_list_item: {"object":"block","type":"numbered_list_item","numbered_list_item":{"rich_text":[{"type":"text","text":{"content":"Numbered item"}}]}}
+- divider: {"object":"block","type":"divider","divider":{}}
+- callout: {"object":"block","type":"callout","callout":{"rich_text":[{"type":"text","text":{"content":"Note"}}],"icon":{"type":"emoji","emoji":"💡"}}}
+
+CRITICAL LIMITS — these are hard API limits, not suggestions:
+- Each rich_text[].text.content field: MAX 2000 characters — Notion silently drops content beyond this
+- Max 100 blocks per create_page or append_page_content request
+
+FOR LONG DOCUMENTS (research briefs, copy docs, reports):
+1. create_page with the page title + first 2-3 sections (keep children array ≤30 blocks)
+2. Save the page "id" from the response
+3. Call append_page_content with remaining sections (use page_id from step 2)
+4. Repeat append_page_content for each additional batch of ≤50 blocks
+
+A 10-section document = ~40-60 blocks across 1 create + 1-2 append calls. NEVER put an entire research brief into a single paragraph block.`,
         exampleArgs: JSON.stringify({
           parent: { database_id: "your-database-id-here" },
           properties: {
@@ -398,21 +427,32 @@ Do NOT pass flat title="text". Notion requires rich text arrays.`,
             },
           },
         }),
-        aiUsageHint: `Append text or blocks to an existing Notion page.
+        aiUsageHint: `Append content blocks to an existing Notion page. Use this to write long documents in batches after creating the page with create_page.
 
-Example to append a paragraph:
+CRITICAL LIMITS:
+- Each rich_text[].text.content: MAX 2000 characters — silently truncated beyond this
+- Max 100 blocks per request — split very large sections into multiple append calls
+
+MULTI-SECTION EXAMPLE (append a full section with heading + paragraphs + bullets):
 {
-  "page_id": "YOUR_PAGE_ID",
+  "page_id": "YOUR_PAGE_ID_FROM_CREATE_PAGE_RESPONSE",
   "children": [
-    {
-      "object": "block",
-      "type": "paragraph",
-      "paragraph": {
-        "rich_text": [{ "type": "text", "text": { "content": "New content here." } }]
-      }
-    }
+    {"object":"block","type":"heading_1","heading_1":{"rich_text":[{"type":"text","text":{"content":"Section: Competitive Analysis"}}]}},
+    {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"Kaiko charges $50k-120k/year for enterprise access. CCData offers similar enterprise-only pricing. Neither has self-serve or pay-as-you-go tiers."}}]}},
+    {"object":"block","type":"heading_2","heading_2":{"rich_text":[{"type":"text","text":{"content":"Pricing Comparison"}}]}},
+    {"object":"block","type":"bulleted_list_item","bulleted_list_item":{"rich_text":[{"type":"text","text":{"content":"Kaiko: $50k-120k/year — enterprise contracts only"}}]}},
+    {"object":"block","type":"bulleted_list_item","bulleted_list_item":{"rich_text":[{"type":"text","text":{"content":"CCData: enterprise tier, no public pricing"}}]}},
+    {"object":"block","type":"bulleted_list_item","bulleted_list_item":{"rich_text":[{"type":"text","text":{"content":"CoinGecko: free tier + $129/mo — limited institutional data"}}]}},
+    {"object":"block","type":"divider","divider":{}},
+    {"object":"block","type":"heading_1","heading_1":{"rich_text":[{"type":"text","text":{"content":"Section: Recommendations"}}]}},
+    {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"QuantXData's pay-as-you-go model is the key differentiator. Emphasize no minimum commitment and instant access in all marketing."}}]}}
   ]
-}`,
+}
+
+PATTERN for a full research document:
+1. create_page → first sections (≤30 blocks) → save returned "id"
+2. append_page_content → next sections (≤50 blocks) using saved page_id
+3. Repeat append for each additional batch`,
         exampleArgs: JSON.stringify({
           page_id: "your-page-id-here",
           children: [

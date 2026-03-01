@@ -479,6 +479,129 @@ export const getTaskMetricsForPeriod = query({
 });
 
 /**
+ * Get detailed task breakdown by priority and agent
+ */
+export const getTaskBreakdown = query({
+  args: {
+    days: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const days = args.days || 30;
+    const now = Date.now();
+    const startTime = now - days * 24 * 60 * 60 * 1000;
+
+    const allTasks = await ctx.db.query("tasks").collect();
+
+    // Priority breakdown
+    const byPriority = {
+      urgent: allTasks.filter((t) => t.priority === "urgent").length,
+      high: allTasks.filter((t) => t.priority === "high").length,
+      medium: allTasks.filter((t) => t.priority === "medium").length,
+      low: allTasks.filter((t) => t.priority === "low").length,
+    };
+
+    // Per-agent breakdown with priority
+    const agents = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"] as const;
+    const agentBreakdown = agents.map((name) => {
+      const agentTasks = allTasks.filter((t) => t.assignee === name);
+      const completed = agentTasks.filter((t) => t.status === "done");
+      const completedInPeriod = completed.filter(
+        (t) => t.completedAt && t.completedAt >= startTime
+      );
+
+      // Average completion time for this agent
+      const durations = completedInPeriod
+        .filter((t) => t.completedAt && t.createdAt)
+        .map((t) => t.completedAt! - t.createdAt);
+      const avgCompletionTime =
+        durations.length > 0
+          ? durations.reduce((a, b) => a + b, 0) / durations.length
+          : 0;
+
+      return {
+        name,
+        total: agentTasks.length,
+        completed: completed.length,
+        completedInPeriod: completedInPeriod.length,
+        active: agentTasks.filter(
+          (t) => t.status === "in_progress" || t.status === "assigned"
+        ).length,
+        inReview: agentTasks.filter((t) => t.status === "in_review").length,
+        cancelled: agentTasks.filter((t) => t.status === "cancelled").length,
+        avgCompletionTime,
+        byPriority: {
+          urgent: agentTasks.filter((t) => t.priority === "urgent").length,
+          high: agentTasks.filter((t) => t.priority === "high").length,
+          medium: agentTasks.filter((t) => t.priority === "medium").length,
+          low: agentTasks.filter((t) => t.priority === "low").length,
+        },
+      };
+    });
+
+    // Task velocity: tasks created vs completed per day over period
+    const velocity = [];
+    for (let i = 0; i < Math.min(days, 30); i++) {
+      const dayStart = now - (i + 1) * 24 * 60 * 60 * 1000;
+      const dayEnd = now - i * 24 * 60 * 60 * 1000;
+      const date = new Date(dayEnd).toISOString().split("T")[0];
+
+      const created = allTasks.filter(
+        (t) => t.createdAt >= dayStart && t.createdAt < dayEnd
+      ).length;
+      const completed = allTasks.filter(
+        (t) =>
+          t.status === "done" &&
+          t.completedAt &&
+          t.completedAt >= dayStart &&
+          t.completedAt < dayEnd
+      ).length;
+
+      velocity.push({ date, created, completed });
+    }
+
+    // Recently completed tasks
+    const recentCompleted = allTasks
+      .filter((t) => t.status === "done" && t.completedAt)
+      .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0))
+      .slice(0, 10)
+      .map((t) => ({
+        _id: t._id,
+        title: t.title,
+        assignee: t.assignee,
+        priority: t.priority,
+        completedAt: t.completedAt,
+        duration: t.completedAt ? t.completedAt - t.createdAt : 0,
+      }));
+
+    // Tasks currently in progress
+    const inProgress = allTasks
+      .filter((t) => t.status === "in_progress")
+      .map((t) => ({
+        _id: t._id,
+        title: t.title,
+        assignee: t.assignee,
+        priority: t.priority,
+        createdAt: t.createdAt,
+        elapsed: now - t.createdAt,
+      }));
+
+    // Unassigned tasks
+    const unassigned = allTasks.filter(
+      (t) => t.status === "inbox" && !t.assignee
+    ).length;
+
+    return {
+      byPriority,
+      agentBreakdown,
+      velocity: velocity.reverse(),
+      recentCompleted,
+      inProgress,
+      unassigned,
+    };
+  },
+});
+
+/**
  * Internal: Store agent metrics
  */
 export const storeAgentMetrics = internalMutation({

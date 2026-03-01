@@ -57,9 +57,9 @@ export default mutation({
         tokenUrl: "https://auth.atlassian.com/oauth/token",
         scopes: [
           "offline_access",
-          "read:confluence-content.all",
-          "write:confluence-content",
-          "read:confluence-space.summary",
+          "read:space:confluence",
+          "read:page:confluence",
+          "write:page:confluence",
           "read:confluence-user",
         ],
         scopeSeparator: "space",
@@ -104,7 +104,7 @@ export default mutation({
         name: "list_spaces",
         displayName: "List Spaces",
         description:
-          "List all Confluence spaces the user has access to. Spaces are the top-level containers for pages.",
+          "List all Confluence spaces. Returns spaceId and name for each space. Requires granular scope: read:space:confluence",
         method: "GET" as const,
         path: "/ex/confluence/{cloudId}/wiki/api/v2/spaces",
         pathParams: JSON.stringify([
@@ -129,16 +129,16 @@ export default mutation({
           },
         ]),
         aiUsageHint:
-          "List all Confluence spaces to find space IDs for listing or creating pages.",
+          "List all Confluence spaces to find space IDs for creating pages. Returns results[].id (the spaceId needed for create_page) and results[].key.",
         exampleArgs: JSON.stringify({ cloudId: "abc123", limit: 25 }),
       },
       {
         name: "list_pages",
         displayName: "List Pages in Space",
         description:
-          "List pages within a specific Confluence space using the space ID.",
+          "List pages in a Confluence space by spaceId. Requires granular scope: read:page:confluence",
         method: "GET" as const,
-        path: "/ex/confluence/{cloudId}/wiki/api/v2/spaces/{spaceId}/pages",
+        path: "/ex/confluence/{cloudId}/wiki/api/v2/pages",
         pathParams: JSON.stringify([
           {
             name: "cloudId",
@@ -146,14 +146,14 @@ export default mutation({
             required: true,
             description: "Atlassian Cloud site ID",
           },
+        ]),
+        queryParams: JSON.stringify([
           {
             name: "spaceId",
             type: "string",
             required: true,
-            description: "Space ID from list_spaces (numeric string, e.g. '65538')",
+            description: "Space ID from list_spaces (numeric, e.g. '65538')",
           },
-        ]),
-        queryParams: JSON.stringify([
           {
             name: "limit",
             type: "number",
@@ -167,7 +167,7 @@ export default mutation({
           },
         ]),
         aiUsageHint:
-          "List pages in a Confluence space. Use list_spaces first to get spaceId.",
+          "List pages in a Confluence space. Use list_spaces first to get the spaceId.",
         exampleArgs: JSON.stringify({
           cloudId: "abc123",
           spaceId: "65538",
@@ -178,7 +178,7 @@ export default mutation({
         name: "get_page",
         displayName: "Get Page",
         description:
-          "Get the full content of a specific Confluence page, including its body.",
+          "Get the full content of a specific Confluence page by ID. Requires granular scope: read:page:confluence",
         method: "GET" as const,
         path: "/ex/confluence/{cloudId}/wiki/api/v2/pages/{pageId}",
         pathParams: JSON.stringify([
@@ -192,7 +192,7 @@ export default mutation({
             name: "pageId",
             type: "string",
             required: true,
-            description: "The ID of the Confluence page",
+            description: "Page ID from list_pages or create_page",
           },
         ]),
         queryParams: JSON.stringify([
@@ -200,11 +200,11 @@ export default mutation({
             name: "body-format",
             type: "string",
             default: "storage",
-            description: "Format for the page body: storage, atlas_doc_format, or view",
+            description: "Content format: storage (XHTML), atlas_doc_format, or view",
           },
         ]),
         aiUsageHint:
-          "Fetch a specific Confluence page by ID. Use body-format=storage to get the full page content.",
+          "Fetch a Confluence page by ID. Use body-format=storage to get the full XHTML content.",
         exampleArgs: JSON.stringify({
           cloudId: "abc123",
           pageId: "123456789",
@@ -215,7 +215,7 @@ export default mutation({
         name: "create_page",
         displayName: "Create Page",
         description:
-          "Create a new page in a Confluence space. Content is provided in Confluence Storage Format (XHTML-based).",
+          "Create a new page in a Confluence space. Requires granular scope: write:page:confluence",
         method: "POST" as const,
         path: "/ex/confluence/{cloudId}/wiki/api/v2/pages",
         pathParams: JSON.stringify([
@@ -232,12 +232,12 @@ export default mutation({
           properties: {
             spaceId: {
               type: "string",
-              description: "Space ID to create the page in (from list_spaces)",
+              description: "Space ID from list_spaces (numeric string, e.g. '65538')",
             },
             title: { type: "string", description: "Page title" },
             parentId: {
               type: "string",
-              description: "Optional parent page ID to nest this page under",
+              description: "Optional parent page ID",
             },
             status: {
               type: "string",
@@ -251,27 +251,26 @@ export default mutation({
                 representation: {
                   type: "string",
                   default: "storage",
-                  description: "Content format: storage (XHTML) or atlas_doc_format",
+                  description: "Content format: storage (XHTML)",
                 },
                 value: {
                   type: "string",
-                  description:
-                    "Page content in Confluence Storage Format (XHTML). Use <p>text</p> for paragraphs, <h1>heading</h1> for headings.",
+                  description: "Page content in Confluence Storage Format (XHTML). Use <p>text</p>, <h1>heading</h1> etc.",
                 },
               },
             },
           },
         }),
         aiUsageHint:
-          "Create a Confluence page. Use list_spaces to get spaceId first. Body uses Confluence Storage Format (XHTML). Example value: '<p>Hello world</p>'",
+          "Create a Confluence page. Use list_spaces to get spaceId first. Body uses storage format: {representation: 'storage', value: '<h1>Title</h1><p>Content</p>'}",
         exampleArgs: JSON.stringify({
           cloudId: "abc123",
           spaceId: "65538",
-          title: "Sprint 42 Retrospective",
+          title: "QuantXData GTM Plan",
           status: "current",
           body: {
             representation: "storage",
-            value: "<h1>What went well</h1><p>Team collaboration was excellent.</p><h1>What to improve</h1><p>Need better test coverage.</p>",
+            value: "<h1>Overview</h1><p>Go-to-market plan.</p>",
           },
         }),
       },
@@ -279,7 +278,7 @@ export default mutation({
         name: "search_pages",
         displayName: "Search Pages",
         description:
-          "Search Confluence pages by title or content using CQL (Confluence Query Language).",
+          "Search Confluence pages by title. Requires granular scope: read:page:confluence",
         method: "GET" as const,
         path: "/ex/confluence/{cloudId}/wiki/api/v2/pages",
         pathParams: JSON.stringify([
@@ -294,7 +293,7 @@ export default mutation({
           {
             name: "title",
             type: "string",
-            description: "Filter pages by title (exact or partial match)",
+            description: "Filter pages by title (partial match)",
           },
           {
             name: "spaceId",
@@ -310,14 +309,14 @@ export default mutation({
           {
             name: "body-format",
             type: "string",
-            description: "Include page body: storage, view, or atlas_doc_format",
+            description: "Include page body: storage or view",
           },
         ]),
         aiUsageHint:
-          "Search Confluence pages by title. Filter by spaceId to scope to a specific space. Optionally include body-format=storage to get page content.",
+          "Search Confluence pages by title. Filter by spaceId to scope to a specific space.",
         exampleArgs: JSON.stringify({
           cloudId: "abc123",
-          title: "architecture",
+          title: "GTM",
           limit: 10,
         }),
       },
