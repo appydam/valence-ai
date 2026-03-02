@@ -2,6 +2,12 @@ import { useState } from "react";
 import { AGENT_CONFIG, AgentName } from "@/types/mission";
 import { cn } from "@/lib/utils";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ArrowRight,
   Plus,
   Trash2,
@@ -39,6 +45,13 @@ const PRIORITY_COLORS: Record<string, string> = {
 const PRIORITY_CYCLE: ("low" | "medium" | "high" | "urgent")[] = ["low", "medium", "high", "urgent"];
 const AGENTS: ("Kaze" | "Scout" | "Forge" | "Ghost")[] = ["Kaze", "Scout", "Forge", "Ghost"];
 
+const AGENT_COLOR_VAR: Record<string, string> = {
+  Kaze: "--agent-kaze",
+  Scout: "--agent-scout",
+  Forge: "--agent-forge",
+  Ghost: "--agent-ghost",
+};
+
 // ── Component ─────────────────────────────────────────────────
 
 export function AutopilotPlanEditor({
@@ -48,6 +61,8 @@ export function AutopilotPlanEditor({
   plan: DecomposedPlan;
   onChange: (plan: DecomposedPlan) => void;
 }) {
+  const [editingTimeIdx, setEditingTimeIdx] = useState<number | null>(null);
+
   // Topological sort into phases (same logic as MissionPlanView in Board.tsx)
   const depthMap = new Map<number, number>();
 
@@ -97,7 +112,6 @@ export function AutopilotPlanEditor({
   };
 
   const addTask = (afterPhase: number) => {
-    // Find indices of tasks in this phase to add dependency
     const phaseTaskIndices = phases[afterPhase]?.map((p) => p.idx) ?? [];
     const newTask: PlanTask = {
       title: "New task",
@@ -168,19 +182,28 @@ export function AutopilotPlanEditor({
       {phases.map((phaseTasks, phaseIdx) => (
         <div key={phaseIdx}>
           {/* Phase header */}
-          <div className="flex items-center gap-3 mb-3">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-              {phaseIdx === 0 ? "Phase 1 — No dependencies" : `Phase ${phaseIdx + 1}`}
+          <div className="flex items-center gap-3 mb-3 mt-4">
+            <div
+              className="flex items-center gap-2 px-2.5 py-1 rounded-full shrink-0"
+              style={{
+                background: "hsl(var(--secondary))",
+                border: "1px solid hsl(var(--border))",
+              }}
+            >
+              <span
+                className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold"
+                style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))" }}
+              >
+                {phaseIdx + 1}
+              </span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                {phaseIdx === 0 ? "Starts immediately" : `After phase ${phaseIdx}`}
+              </span>
+            </div>
+            <div className="flex-1 h-px" style={{ background: "hsl(var(--border))" }} />
+            <span className="text-[10px] text-muted-foreground/40 font-mono shrink-0">
+              {phaseTasks.length} task{phaseTasks.length !== 1 ? "s" : ""}
             </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">
-              {phaseTasks.length}
-            </span>
-            {phaseIdx < phases.length - 1 && (
-              <div className="flex-1 border-t border-dashed border-border" />
-            )}
-            {phaseIdx < phases.length - 1 && (
-              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-            )}
           </div>
 
           {/* Task cards */}
@@ -188,26 +211,52 @@ export function AutopilotPlanEditor({
             {phaseTasks.map(({ idx, task }) => (
               <div
                 key={idx}
-                className="group border border-border rounded-lg p-3 bg-card hover:border-primary/30 transition-colors"
+                className="group border border-border rounded-lg p-3 bg-card hover:border-primary/20 transition-all duration-200"
+                style={{
+                  borderLeftColor: `hsl(var(${AGENT_COLOR_VAR[task.assignee]}))`,
+                  borderLeftWidth: "2px",
+                  boxShadow: "0 1px 6px hsl(0 0% 0% / 0.15)",
+                }}
               >
                 <div className="flex items-start gap-3">
-                  {/* Agent selector */}
-                  <div className="relative">
-                    <select
-                      value={task.assignee}
-                      onChange={(e) =>
-                        updateTask(idx, { assignee: e.target.value as any })
-                      }
-                      className="appearance-none bg-accent/50 text-sm rounded-md px-2 py-1.5 pr-6 border border-border cursor-pointer focus:outline-none focus:border-primary"
-                    >
-                      {AGENTS.map((a) => (
-                        <option key={a} value={a}>
-                          {AGENT_CONFIG[a].emoji} {a}
-                        </option>
+                  {/* Agent selector — styled dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm border transition-all hover:border-primary/40 focus:outline-none shrink-0"
+                        style={{
+                          background: `hsl(var(${AGENT_COLOR_VAR[task.assignee]}) / 0.08)`,
+                          borderColor: `hsl(var(${AGENT_COLOR_VAR[task.assignee]}) / 0.25)`,
+                        }}
+                      >
+                        <span className="text-base leading-none">
+                          {AGENT_CONFIG[task.assignee as AgentName]?.emoji}
+                        </span>
+                        <span
+                          className="text-xs font-medium"
+                          style={{ color: `hsl(var(${AGENT_COLOR_VAR[task.assignee]}))` }}
+                        >
+                          {task.assignee}
+                        </span>
+                        <ChevronDown className="w-3 h-3 text-muted-foreground/50" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-40">
+                      {AGENTS.map((agent) => (
+                        <DropdownMenuItem
+                          key={agent}
+                          onClick={() => updateTask(idx, { assignee: agent })}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <span className="text-base">{AGENT_CONFIG[agent as AgentName]?.emoji}</span>
+                          <span className="text-sm">{agent}</span>
+                          <span className="text-[10px] text-muted-foreground/50 ml-auto">
+                            {AGENT_CONFIG[agent as AgentName]?.role.split(" ")[0]}
+                          </span>
+                        </DropdownMenuItem>
                       ))}
-                    </select>
-                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
-                  </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   {/* Task content */}
                   <div className="flex-1 min-w-0 space-y-1">
@@ -239,10 +288,29 @@ export function AutopilotPlanEditor({
                       {task.priority}
                     </button>
 
-                    {/* Time estimate */}
-                    <span className="text-[10px] text-muted-foreground">
-                      ~{task.estimatedMinutes}m
-                    </span>
+                    {/* Time estimate — click to edit */}
+                    {editingTimeIdx === idx ? (
+                      <input
+                        type="number"
+                        autoFocus
+                        value={task.estimatedMinutes}
+                        onChange={(e) =>
+                          updateTask(idx, { estimatedMinutes: parseInt(e.target.value) || 0 })
+                        }
+                        onBlur={() => setEditingTimeIdx(null)}
+                        onKeyDown={(e) => e.key === "Enter" && setEditingTimeIdx(null)}
+                        className="w-14 text-[10px] text-center bg-secondary border border-primary/30 rounded px-1 py-0.5 focus:outline-none"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => setEditingTimeIdx(idx)}
+                        className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors group/time"
+                        title="Click to edit"
+                      >
+                        <Clock className="w-3 h-3 opacity-50 group-hover/time:opacity-100" />
+                        ~{task.estimatedMinutes}m
+                      </button>
+                    )}
 
                     {/* Delete */}
                     <button
@@ -254,29 +322,41 @@ export function AutopilotPlanEditor({
                   </div>
                 </div>
 
-                {/* Dependencies indicator */}
+                {/* Dependencies — agent emoji + task title */}
                 {task.dependsOnIndex.length > 0 && (
-                  <div className="mt-2 flex items-center gap-1 text-[10px] text-muted-foreground/60">
-                    <ArrowRight className="w-3 h-3 rotate-180" />
-                    depends on:{" "}
-                    {task.dependsOnIndex.map((depIdx) => (
-                      <span key={depIdx} className="px-1 py-0.5 bg-secondary rounded text-[10px]">
-                        #{depIdx + 1} {plan.tasks[depIdx]?.title?.slice(0, 20)}
-                      </span>
-                    ))}
+                  <div className="mt-2.5 flex items-center flex-wrap gap-1.5">
+                    <span className="text-[10px] text-muted-foreground/40">after:</span>
+                    {task.dependsOnIndex.map((depIdx) => {
+                      const dep = plan.tasks[depIdx];
+                      if (!dep) return null;
+                      return (
+                        <span
+                          key={depIdx}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium"
+                          style={{
+                            background: "hsl(var(--secondary))",
+                            color: "hsl(var(--muted-foreground))",
+                            border: "1px solid hsl(var(--border))",
+                          }}
+                        >
+                          {AGENT_CONFIG[dep.assignee as AgentName]?.emoji}
+                          {dep.title.length > 28 ? dep.title.slice(0, 28) + "…" : dep.title}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
             ))}
           </div>
 
-          {/* Add task button */}
+          {/* Add task button — full-width dashed zone */}
           <button
             onClick={() => addTask(phaseIdx)}
-            className="mt-2 ml-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="mt-2 ml-2 flex items-center justify-center gap-1.5 w-[calc(100%-0.5rem)] py-2 rounded-lg text-xs text-muted-foreground/50 hover:text-primary hover:border-primary/30 transition-all border border-dashed border-border/50 hover:bg-primary/5"
           >
             <Plus className="w-3.5 h-3.5" />
-            Add task after Phase {phaseIdx + 1}
+            Add task to Phase {phaseIdx + 1}
           </button>
         </div>
       ))}
