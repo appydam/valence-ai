@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from "react";
-import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { motion, useInView, useReducedMotion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { PilotModal } from "@/components/landing/PilotModal";
 import { HeroParticleField } from "@/components/landing/HeroParticleField";
@@ -12,6 +12,14 @@ import { ComparisonTable } from "@/components/landing/ComparisonTable";
 import { AgentSVG } from "@/components/SquadView/AgentSVG";
 import { AGENT_CONFIG } from "@/types/mission";
 import type { AgentName } from "@/types/mission";
+import {
+  USE_CASES as ALL_USE_CASES,
+  CATEGORY_LABELS,
+  CATEGORY_ICONS,
+  CATEGORY_ORDER,
+  getUseCasesByCategory,
+  type UseCaseCategory,
+} from "@/data/useCases";
 
 // ─── Color helpers ───────────────────────────────────────────────────────────
 const COLOR_MAP: Record<string, string> = {
@@ -60,11 +68,197 @@ function RevealSection({ children, className }: { children: React.ReactNode; cla
   );
 }
 
+// ─── Compact use cases grid ─────────────────────────────────────────────────
+function UseCaseCompactGrid({ onNavigate }: { onNavigate: (slug: string) => void }) {
+  // Split all use cases into two rows for the dual-marquee
+  const row1 = ALL_USE_CASES.slice(0, Math.ceil(ALL_USE_CASES.length / 2));
+  const row2 = ALL_USE_CASES.slice(Math.ceil(ALL_USE_CASES.length / 2));
+
+  const Pill = ({ uc }: { uc: typeof ALL_USE_CASES[0] }) => (
+    <button
+      onClick={() => onNavigate(uc.slug)}
+      className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition-all duration-200"
+      style={{
+        background: "hsl(240 20% 9%)",
+        border: `1px solid hsl(var(--border) / 0.35)`,
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = uc.accentColor.replace(")", " / 0.1)").replace("hsl(", "hsl(");
+        el.style.borderColor = uc.accentColor.replace(")", " / 0.5)").replace("hsl(", "hsl(");
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = "hsl(240 20% 9%)";
+        el.style.borderColor = "hsl(var(--border) / 0.35)";
+      }}
+    >
+      <span className="text-[11px] leading-none">{uc.icon}</span>
+      <span
+        className="text-[11px] font-medium transition-colors duration-200"
+        style={{ color: "hsl(var(--muted-foreground) / 0.65)" }}
+      >
+        {uc.title}
+      </span>
+    </button>
+  );
+
+  const MarqueeRow = ({ items, reverse = false }: { items: typeof ALL_USE_CASES; reverse?: boolean }) => (
+    <div className="relative flex overflow-hidden">
+      {/* Fade edges */}
+      <div className="absolute left-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
+        style={{ background: "linear-gradient(to right, hsl(var(--background)), transparent)" }} />
+      <div className="absolute right-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
+        style={{ background: "linear-gradient(to left, hsl(var(--background)), transparent)" }} />
+
+      <motion.div
+        className="flex gap-2"
+        animate={{ x: reverse ? ["0%", "50%"] : ["0%", "-50%"] }}
+        transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+        style={{ willChange: "transform" }}
+      >
+        {/* Duplicate for seamless loop */}
+        {[...items, ...items].map((uc, i) => (
+          <Pill key={`${uc.slug}-${i}`} uc={uc} />
+        ))}
+      </motion.div>
+    </div>
+  );
+
+  return (
+    <div className="mb-12 space-y-2 -mx-6">
+      <MarqueeRow items={row1} />
+      <MarqueeRow items={row2} reverse />
+    </div>
+  );
+}
+
 // ─── Navigation ─────────────────────────────────────────────────────────────
+function UseCasesMegaMenu({ onNavigate }: { onNavigate: (slug: string) => void }) {
+  const [activeCategory, setActiveCategory] = useState<UseCaseCategory>("sales");
+  const grouped = getUseCasesByCategory();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[720px] max-w-[calc(100vw-2rem)] rounded-xl overflow-hidden"
+      style={{
+        background: "hsl(240 33% 6% / 0.98)",
+        border: "1px solid hsl(var(--border) / 0.5)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: "0 20px 60px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)",
+      }}
+    >
+      <div className="flex min-h-[340px]">
+        {/* Left: Categories */}
+        <div
+          className="w-[220px] py-3 px-2 flex flex-col gap-0.5 border-r"
+          style={{ borderColor: "hsl(var(--border) / 0.3)" }}
+        >
+          {CATEGORY_ORDER.map((cat) => {
+            const isActive = activeCategory === cat;
+            const cases = grouped[cat];
+            if (cases.length === 0) return null;
+            return (
+              <button
+                key={cat}
+                onMouseEnter={() => setActiveCategory(cat)}
+                onClick={() => setActiveCategory(cat)}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all text-sm"
+                style={{
+                  background: isActive ? "hsl(var(--primary) / 0.1)" : "transparent",
+                  color: isActive ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                }}
+              >
+                <span className="text-base">{CATEGORY_ICONS[cat]}</span>
+                <span className="font-medium">{CATEGORY_LABELS[cat]}</span>
+                <span className="ml-auto text-xs opacity-50">{cases.length}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right: Use cases for active category */}
+        <div className="flex-1 py-3 px-4">
+          <div className="text-[10px] font-mono tracking-widest text-muted-foreground/60 mb-3 px-1">
+            {CATEGORY_LABELS[activeCategory].toUpperCase()}
+          </div>
+          <div className="flex flex-col gap-1">
+            {grouped[activeCategory].map((uc) => (
+              <button
+                key={uc.slug}
+                onClick={() => onNavigate(uc.slug)}
+                className="group flex flex-col gap-1 p-3 rounded-lg text-left transition-all hover:bg-white/5"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{uc.icon}</span>
+                  <span className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                    {uc.title}
+                  </span>
+                  <span className="ml-auto text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                    →
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground/70 pl-7 line-clamp-1">
+                  {uc.trigger}
+                </div>
+                <div className="flex items-center gap-1.5 pl-7 mt-0.5">
+                  {uc.steps
+                    .flatMap((s) => s.tools)
+                    .filter((t, i, arr) => arr.findIndex((x) => x.label === t.label) === i)
+                    .slice(0, 5)
+                    .map((tool) => (
+                      <span
+                        key={tool.label}
+                        className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+                        style={{
+                          background: `${tool.color}18`,
+                          color: tool.color,
+                          border: `1px solid ${tool.color}30`,
+                        }}
+                      >
+                        {tool.label}
+                      </span>
+                    ))}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div
+        className="px-4 py-2.5 flex items-center justify-between text-xs"
+        style={{
+          borderTop: "1px solid hsl(var(--border) / 0.3)",
+          background: "hsl(var(--primary) / 0.03)",
+        }}
+      >
+        <span className="text-muted-foreground/60">
+          {ALL_USE_CASES.length} workflows across {CATEGORY_ORDER.length} domains
+        </span>
+        <button
+          onClick={() => onNavigate("close-pipeline-faster")}
+          className="text-primary/80 hover:text-primary transition-colors font-medium"
+        >
+          See all use cases →
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 function LandingNav({ onPilotClick }: { onPilotClick: () => void }) {
   const { scrollY } = useScroll();
   const navigate = useNavigate();
   const scrolled = useRef(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const navRef = useRef<HTMLElement>(null);
   useRef(() => {
@@ -81,6 +275,20 @@ function LandingNav({ onPilotClick }: { onPilotClick: () => void }) {
     return unsub;
   });
 
+  const handleMenuEnter = useCallback(() => {
+    if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
+    setMenuOpen(true);
+  }, []);
+
+  const handleMenuLeave = useCallback(() => {
+    menuTimeoutRef.current = setTimeout(() => setMenuOpen(false), 200);
+  }, []);
+
+  const handleNavigate = useCallback((slug: string) => {
+    setMenuOpen(false);
+    navigate(`/use-cases/${slug}`);
+  }, [navigate]);
+
   return (
     <motion.nav
       ref={navRef}
@@ -96,31 +304,62 @@ function LandingNav({ onPilotClick }: { onPilotClick: () => void }) {
       }}
     >
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="Valence AI" className="w-6 h-6" />
-          <span className="font-bold text-sm tracking-tight">Valence AI</span>
+        <div className="flex items-center gap-4">
+          {/* Logo + branding */}
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.svg" alt="Valence AI" className="w-6 h-6" />
+            <span className="font-bold text-sm tracking-tight">Valence AI</span>
+            <div
+              className="hidden sm:flex items-center gap-1 text-[9px] font-mono tracking-widest px-1.5 py-0.5 rounded"
+              style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
+            >
+              <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse-glow" />
+              LIVE
+            </div>
+          </div>
+
+          {/* Use Cases dropdown — left side */}
           <div
-            className="hidden sm:flex items-center gap-1 text-[9px] font-mono tracking-widest px-1.5 py-0.5 rounded"
-            style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
+            className="relative hidden sm:block"
+            onMouseEnter={handleMenuEnter}
+            onMouseLeave={handleMenuLeave}
           >
-            <span className="w-1 h-1 rounded-full bg-green-400 animate-pulse-glow" />
-            LIVE
+            <button
+              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              Use Cases
+              <svg
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            <AnimatePresence>
+              {menuOpen && (
+                <UseCasesMegaMenu onNavigate={handleNavigate} />
+              )}
+            </AnimatePresence>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <motion.button
-            onClick={onPilotClick}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-all relative overflow-hidden"
-            style={{
-              background: "hsl(var(--primary))",
-              color: "hsl(var(--primary-foreground))",
-            }}
-          >
-            Request Access →
-          </motion.button>
-        </div>
+
+        <motion.button
+          onClick={onPilotClick}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="text-sm font-semibold px-4 py-1.5 rounded-lg transition-all relative overflow-hidden"
+          style={{
+            background: "hsl(var(--primary))",
+            color: "hsl(var(--primary-foreground))",
+          }}
+        >
+          Request Access →
+        </motion.button>
       </div>
     </motion.nav>
   );
@@ -943,149 +1182,11 @@ function AutopilotVisual() {
 // ─── Main Landing Page ───────────────────────────────────────────────────────
 const AGENTS: AgentName[] = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"];
 
-const USE_CASES = [
-  {
-    title: "Close pipeline 3× faster",
-    icon: "🚀",
-    trigger: "Research our top 50 Salesforce leads and book demos this week",
-    accentColor: "hsl(217, 91%, 60%)",
-    metric: "48 hrs · 12 demos booked · saves 14 hrs/week",
-    hoursSaved: "14 hrs/week saved · replaces 1 SDR",
-    steps: [
-      {
-        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Pulls 50 open leads from Salesforce",
-        tools: [{ label: "Salesforce", color: "#00A1E0" }, { label: "Slack", color: "#4A154B" }],
-        detail: "50 leads loaded · assigned to Scout + Ghost",
-      },
-      {
-        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
-        action: "Researches each account via Gong + HubSpot history",
-        tools: [{ label: "Gong", color: "#9B59B6" }, { label: "HubSpot", color: "#FF7A59" }, { label: "Sheets", color: "#34A853" }],
-        detail: "12 high-intent signals · 3 accounts re-opened deals",
-      },
-      {
-        agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
-        action: "Writes 50 hyper-personalized outreach emails",
-        tools: [{ label: "Gmail", color: "#EA4335" }, { label: "HubSpot", color: "#FF7A59" }],
-        detail: "Referenced last Gong call + deal history · 50 drafts",
-      },
-      {
-        agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
-        action: "Reviews emails — rejects 8 generic ones",
-        tools: [],
-        detail: "Quality gate: PASS 42 · REJECTED 8",
-      },
-      {
-        agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
-        action: "Rewrites rejected 8 · MindTickle playbook applied",
-        tools: [{ label: "Gmail", color: "#EA4335" }, { label: "MindTickle", color: "#E44D26" }],
-        detail: "Sentinel re-check: all 50 PASS",
-      },
-      {
-        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Sends emails · books demos · logs in Salesforce",
-        tools: [{ label: "Salesforce", color: "#00A1E0" }, { label: "Calendar", color: "#4285F4" }, { label: "Zoom", color: "#2D8CFF" }],
-        detail: "12 demos booked · Zoom links sent · CRM updated",
-      },
-    ],
-    result: "50 personalized emails sent. 12 demos booked. Salesforce + Zoom synced.",
-  },
-  {
-    title: "Weekly CEO briefing, on autopilot",
-    icon: "📊",
-    trigger: "Every Friday 6pm: prepare the Monday morning executive briefing",
-    accentColor: "hsl(38, 92%, 50%)",
-    metric: "Weekly · saves 4 hrs every Friday",
-    hoursSaved: "4 hrs/week saved · 200 hrs/year per company",
-    steps: [
-      {
-        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
-        action: "Pulls revenue + pipeline from Stripe & Salesforce",
-        tools: [{ label: "Stripe", color: "#6772E5" }, { label: "Salesforce", color: "#00A1E0" }],
-        detail: "$284k MRR · 12 deals closing · 3 churn risks flagged",
-      },
-      {
-        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
-        action: "Pulls support health from Zendesk + Intercom",
-        tools: [{ label: "Zendesk", color: "#03363D" }, { label: "Intercom", color: "#286EFA" }],
-        detail: "CSAT 4.6/5 · 8 critical tickets · avg 2.1hr response",
-      },
-      {
-        agent: "Scout", emoji: "🔭", color: "hsl(160, 84%, 39%)",
-        action: "Pulls ad spend + ROI from Meta Ads + Google Ads",
-        tools: [{ label: "Meta Ads", color: "#1877F2" }, { label: "Google Ads", color: "#4285F4" }, { label: "Looker", color: "#4285F4" }],
-        detail: "$42k spend · 3.2× ROAS · CPL down 18% WoW",
-      },
-      {
-        agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
-        action: "Writes executive brief with highlights + risks",
-        tools: [{ label: "Notion", color: "#8B8B8B" }, { label: "Sheets", color: "#34A853" }],
-        detail: "1,200-word brief · 3 risks · 2 opportunities flagged",
-      },
-      {
-        agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
-        action: "Fact-checks every number against raw source data",
-        tools: [],
-        detail: "All figures verified · 1 discrepancy corrected",
-      },
-      {
-        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Delivers brief via Slack + Notion + books review",
-        tools: [{ label: "Slack", color: "#4A154B" }, { label: "Notion", color: "#8B8B8B" }, { label: "Calendar", color: "#4285F4" }],
-        detail: "Brief live by 7pm Friday · review booked Monday 9am",
-      },
-    ],
-    result: "Board-ready brief every Monday. No ops person manually pulling numbers ever again.",
-  },
-  {
-    title: "New hire fully set up before day 1",
-    icon: "🎯",
-    trigger: "Offer accepted in Greenhouse — onboard Alex Chen, Sales Engineer",
-    accentColor: "hsl(160, 84%, 39%)",
-    metric: "Day 0 · saves 6 hrs per hire",
-    hoursSaved: "6 hrs/hire saved · zero IT tickets",
-    steps: [
-      {
-        agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
-        action: "Detects offer accepted in Greenhouse",
-        tools: [{ label: "Greenhouse", color: "#24A47F" }, { label: "Slack", color: "#4A154B" }],
-        detail: "Role: Sales Engineer · Start: March 3 · #hr-ops notified",
-      },
-      {
-        agent: "Forge", emoji: "🔨", color: "hsl(38, 92%, 50%)",
-        action: "Provisions GitHub, Notion, Jira, Confluence access",
-        tools: [{ label: "GitHub", color: "#e2e8f0" }, { label: "Notion", color: "#8B8B8B" }, { label: "Jira", color: "#0052CC" }, { label: "Confluence", color: "#0052CC" }],
-        detail: "4 accounts created · permissions set by role template",
-      },
-      {
-        agent: "Forge", emoji: "🔨", color: "hsl(38, 92%, 50%)",
-        action: "Sets up payroll + benefits in Gusto + Workday",
-        tools: [{ label: "Gusto", color: "#FB4F14" }, { label: "Workday", color: "#F5820D" }],
-        detail: "Payroll enrolled · benefits portal invite sent",
-      },
-      {
-        agent: "Ghost", emoji: "👻", color: "hsl(258, 90%, 66%)",
-        action: "Sends personalized welcome email + 30/60/90 plan",
-        tools: [{ label: "Gmail", color: "#EA4335" }, { label: "Notion", color: "#8B8B8B" }],
-        detail: "Role-specific plan drafted · buddy assigned",
-      },
-      {
-        agent: "Kaze", emoji: "🌀", color: "hsl(217, 91%, 60%)",
-        action: "Books week 1 intro meetings with team",
-        tools: [{ label: "Calendar", color: "#4285F4" }, { label: "Zoom", color: "#2D8CFF" }],
-        detail: "8 intros scheduled · manager 1:1 booked day 1",
-      },
-      {
-        agent: "Sentinel", emoji: "🔍", color: "hsl(330, 81%, 60%)",
-        action: "Confirms all systems live · logs in ServiceNow",
-        tools: [{ label: "ServiceNow", color: "#62D84E" }, { label: "Slack", color: "#4A154B" }],
-        detail: "All 6 systems green · HR confirmed · zero IT tickets",
-      },
-    ],
-    result: "New hire fully onboarded before day 1. Zero IT tickets. HR touched nothing.",
-  },
-];
+// Landing page shows 3 hero use cases from the shared data
+const LANDING_USE_CASE_SLUGS = ["close-pipeline-faster", "ceo-briefing-autopilot", "new-hire-onboarding"] as const;
+const USE_CASES = ALL_USE_CASES.filter((uc) =>
+  (LANDING_USE_CASE_SLUGS as readonly string[]).includes(uc.slug)
+);
 
 export default function Landing() {
   const prefersReduced = useReducedMotion();
@@ -1335,40 +1436,97 @@ export default function Landing() {
                 }}
               />
 
-              {/* Screenshot frame */}
-              <div
-                className="relative rounded-2xl overflow-hidden"
-                style={{
-                  border: "1px solid hsl(217 91% 60% / 0.2)",
-                  boxShadow: "0 0 0 1px hsl(var(--border) / 0.5), 0 32px 80px hsl(240 33% 3% / 0.8), 0 0 60px hsl(217 91% 60% / 0.08)",
-                }}
-              >
-                {/* Fake browser chrome */}
-                <div
-                  className="flex items-center gap-2 px-4 py-2.5"
-                  style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
-                >
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                  <div
-                    className="mx-3 flex-1 max-w-48 h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/40 font-mono"
-                    style={{ background: "hsl(240 25% 8%)" }}
-                  >
-                    app.valence.ai/mission-board
-                  </div>
-                  <div className="ml-auto flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-[10px] text-green-400/70 font-mono">LIVE</span>
-                  </div>
-                </div>
+              {/* Screenshot stack — back card peeks above + left of front card */}
+              <div className="relative" style={{ isolation: "isolate" }}>
 
-                <img
-                  src="/screenshots/mission_board.png"
-                  alt="Valence AI Mission Board"
-                  className="w-full block"
-                  style={{ display: "block" }}
-                />
+                {/* ── BACK CARD: Autopilot page ── */}
+                {/* Positioned absolutely, shifted up-left and rotated to peek behind front */}
+                <motion.div
+                  className="rounded-2xl overflow-hidden"
+                  initial={{ opacity: 0, x: 60, rotate: -8, scale: 0.9 }}
+                  animate={{ opacity: 0.72, x: 0, rotate: -4, scale: 0.93 }}
+                  transition={{ delay: 0.42, duration: 1.1, type: "spring", stiffness: 52, damping: 18 }}
+                  style={{
+                    position: "absolute",
+                    top: "-22px",
+                    left: "-28px",
+                    right: "28px",
+                    border: "1px solid hsl(217 91% 60% / 0.13)",
+                    boxShadow: "0 12px 40px hsl(240 33% 3% / 0.7), 0 0 24px hsl(38 92% 50% / 0.05)",
+                    transformOrigin: "top left",
+                    zIndex: 0,
+                  }}
+                >
+                  <div
+                    className="flex items-center gap-2 px-4 py-2.5"
+                    style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.25)" }}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/35" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/35" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/35" />
+                    <div
+                      className="mx-3 flex-1 max-w-48 h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/25 font-mono"
+                      style={{ background: "hsl(240 25% 8%)" }}
+                    >
+                      app.valence.ai/autopilot
+                    </div>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full animate-pulse"
+                        style={{ background: "hsl(38 92% 50%)" }}
+                      />
+                      <span className="text-[10px] font-mono" style={{ color: "hsl(38 92% 50% / 0.55)" }}>
+                        AUTOPILOT
+                      </span>
+                    </div>
+                  </div>
+                  <img
+                    src="/screenshots/autopilot_page.png"
+                    alt="Valence AI Autopilot"
+                    className="w-full block"
+                  />
+                </motion.div>
+
+                {/* ── FRONT CARD: Mission Board ── */}
+                {/* mt-5 + ml-5 offsets from wrapper so back card peeks above and to the left */}
+                <motion.div
+                  className="relative rounded-2xl overflow-hidden"
+                  initial={{ opacity: 0, y: 30, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.68, duration: 0.9, type: "spring", stiffness: 65, damping: 18 }}
+                  style={{
+                    marginTop: "22px",
+                    marginLeft: "24px",
+                    border: "1px solid hsl(217 91% 60% / 0.22)",
+                    boxShadow: "0 0 0 1px hsl(var(--border) / 0.5), 0 32px 80px hsl(240 33% 3% / 0.85), 0 0 60px hsl(217 91% 60% / 0.1)",
+                    zIndex: 1,
+                  }}
+                >
+                  <div
+                    className="flex items-center gap-2 px-4 py-2.5"
+                    style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                    <div
+                      className="mx-3 flex-1 max-w-48 h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/40 font-mono"
+                      style={{ background: "hsl(240 25% 8%)" }}
+                    >
+                      app.valence.ai/mission-board
+                    </div>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      <span className="text-[10px] text-green-400/70 font-mono">LIVE</span>
+                    </div>
+                  </div>
+                  <img
+                    src="/screenshots/mission_board.png"
+                    alt="Valence AI Mission Board"
+                    className="w-full block"
+                  />
+                </motion.div>
+
               </div>
 
               {/* ── Floating chips — outside the screenshot frame ── */}
@@ -1571,6 +1729,9 @@ export default function Landing() {
               Multi-agent missions with real tool calls — across your entire stack.
             </motion.p>
           </RevealSection>
+
+          {/* ── Compact use cases grid ── */}
+          <UseCaseCompactGrid onNavigate={(slug) => navigate(`/use-cases/${slug}`)} />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {USE_CASES.map((uc, i) => (
