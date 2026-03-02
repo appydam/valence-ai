@@ -57,12 +57,13 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
       { name: "Gusto", logo: SI("gusto"), color: "#F45D48", lastCalledBy: "Scout", lastEndpoint: "GET /v1/companies/payrolls", lastStatus: "200 OK", lastMs: "312ms" },
       { name: "Shopify", logo: SI("shopify"), color: "#96BF48", lastCalledBy: "Scout", lastEndpoint: "GET /admin/api/orders.json", lastStatus: "200 OK", lastMs: "267ms" },
       { name: "QuickBooks", logo: SI("quickbooks"), color: "#2CA01C", lastCalledBy: "Scout", lastEndpoint: "POST /invoice", lastStatus: "200 OK", lastMs: "312ms" },
-      { name: "Brex", logo: SI("brex"), color: "#B27BFF", lastCalledBy: "Forge", lastEndpoint: "GET /transactions", lastStatus: "200 OK", lastMs: "189ms" },
+      { name: "AfterShip", logo: SI("aftership"), color: "#9B6BFF", lastCalledBy: "Scout", lastEndpoint: "GET /trackings", lastStatus: "200 OK", lastMs: "189ms" },
     ],
   },
   {
     label: "Data & Analytics",
     integrations: [
+      { name: "PostHog", logo: SI("posthog"), color: "#1D4AFF", lastCalledBy: "Scout", lastEndpoint: "GET /projects/1/events", lastStatus: "200 OK", lastMs: "198ms" },
       { name: "Google Analytics", logo: SI("googleanalytics"), color: "#E37400", lastCalledBy: "Scout", lastEndpoint: "POST /v1beta/reports:runReport", lastStatus: "200 OK", lastMs: "312ms" },
       { name: "Google Sheets", logo: SI("googlesheets"), color: "#34A853", lastCalledBy: "Scout", lastEndpoint: "POST /values:append", lastStatus: "200 OK", lastMs: "156ms" },
       { name: "Airtable", logo: SI("airtable"), color: "#FCB400", lastCalledBy: "Scout", lastEndpoint: "POST /records", lastStatus: "200 OK", lastMs: "156ms" },
@@ -86,6 +87,8 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
       { name: "SAP SuccessFactors", logo: SI("sap"), color: "#F0AB00", lastCalledBy: "Scout", lastEndpoint: "GET /odata/v2/User", lastStatus: "200 OK", lastMs: "612ms" },
       { name: "Zoho Workspace", logo: SI("zoho"), color: "#E42527", lastCalledBy: "Scout", lastEndpoint: "GET /crm/v3/Contacts", lastStatus: "200 OK", lastMs: "412ms" },
       { name: "Workday", logo: "", color: "#F5820F", lastCalledBy: "Scout", lastEndpoint: "GET /v1/workers", lastStatus: "200 OK", lastMs: "534ms" },
+      { name: "Keka", logo: "", color: "#4F46E5", lastCalledBy: "Scout", lastEndpoint: "GET /hris/employees", lastStatus: "200 OK", lastMs: "312ms" },
+      { name: "Rippling", logo: "", color: "#FEC229", lastCalledBy: "Scout", lastEndpoint: "GET /employees", lastStatus: "200 OK", lastMs: "267ms" },
       { name: "ServiceNow", logo: SI("servicenow"), color: "#62D84E", lastCalledBy: "Sentinel", lastEndpoint: "POST /api/now/table/incident", lastStatus: "201 Created", lastMs: "345ms" },
       { name: "Greenhouse", logo: SI("greenhouse"), color: "#24A47F", lastCalledBy: "Scout", lastEndpoint: "GET /v1/candidates", lastStatus: "200 OK", lastMs: "267ms" },
     ],
@@ -106,6 +109,7 @@ const CATEGORIES: { label: string; integrations: Integration[] }[] = [
       { name: "X (Twitter)", logo: SI("x"), color: "#e2e8f0", lastCalledBy: "Ghost", lastEndpoint: "POST /2/tweets", lastStatus: "201 Created", lastMs: "198ms" },
       { name: "TikTok", logo: SI("tiktok"), color: "#69C9D0", lastCalledBy: "Ghost", lastEndpoint: "POST /share/video/upload", lastStatus: "200 OK", lastMs: "445ms" },
       { name: "YouTube", logo: SI("youtube"), color: "#FF0000", lastCalledBy: "Scout", lastEndpoint: "POST /videos?part=snippet", lastStatus: "200 OK", lastMs: "534ms" },
+      { name: "Reddit", logo: SI("reddit"), color: "#FF4500", lastCalledBy: "Ghost", lastEndpoint: "POST /api/submit", lastStatus: "200 OK", lastMs: "312ms" },
     ],
   },
 ];
@@ -264,7 +268,7 @@ function CategoryGrid() {
 
 function LiveCounter() {
   const [count, setCount] = useState(847);
-  const [integCount] = useState(94);
+  const [integCount] = useState(100);
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: false });
 

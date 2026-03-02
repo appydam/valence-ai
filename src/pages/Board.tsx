@@ -167,32 +167,32 @@ const Board = () => {
   // Board mode: normal layout with kanban
   return (
     <DashboardLayout>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="shrink-0">
             <h1 className="text-2xl font-bold text-foreground">Mission Board</h1>
             <p className="text-sm text-muted-foreground mt-1">Track and manage squad tasks</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* View toggle */}
             <div className="flex items-center gap-1 p-0.5 rounded-lg bg-secondary border border-border">
               <button
                 onClick={() => setView("board")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "board" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${view === "board" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
                 Board
               </button>
               <button
                 onClick={() => setView("plan")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${view === "plan" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${view === "plan" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <GitBranch className="w-3.5 h-3.5" />
                 Plan
               </button>
               <button
                 onClick={() => setView("squad")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors ${view === "squad" ? "bg-background text-foreground shadow-sm" : ""}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground transition-colors ${view === "squad" ? "bg-background text-foreground shadow-sm" : ""}`}
               >
                 <Swords className="w-3.5 h-3.5" />
                 Squad Ops
@@ -202,30 +202,30 @@ const Board = () => {
             <button
               onClick={handleWakeAgents}
               disabled={wakingAgents}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-medium hover:from-amber-600 hover:to-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              <Zap className={`w-4 h-4 ${wakingAgents ? 'animate-pulse' : ''}`} />
+              <Zap className={`w-3.5 h-3.5 ${wakingAgents ? 'animate-pulse' : ''}`} />
               {wakingAgents ? 'Waking...' : 'Wake Agents'}
             </button>
             <button onClick={() => setShowNewMission(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-surface-hover transition-colors text-foreground">
-              <FolderPlus className="w-4 h-4" /> New Mission
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-xs font-medium hover:bg-surface-hover transition-colors text-foreground">
+              <FolderPlus className="w-3.5 h-3.5" /> New Mission
             </button>
             <button onClick={() => setShowNewTask(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors">
-              <Plus className="w-4 h-4" /> New Task
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/80 transition-colors">
+              <Plus className="w-3.5 h-3.5" /> New Task
             </button>
           </div>
         </div>
 
         {/* Mission Selector */}
         {missions.length > 0 && (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border">
-            <label className="text-sm font-medium text-foreground">Mission:</label>
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border flex-wrap">
+            <label className="text-xs font-medium text-foreground shrink-0">Mission:</label>
             <select
               value={selectedMissionId || missions[0]?._id || ""}
               onChange={(e) => setSelectedMissionId(e.target.value ? e.target.value as Id<"missions"> : null)}
-              className="flex-1 bg-secondary rounded-lg px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 min-w-0 bg-secondary rounded-lg px-3 py-1.5 text-xs text-foreground border-0 outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="">All Tasks</option>
               {missions.map((m) => (
@@ -234,32 +234,34 @@ const Board = () => {
                 </option>
               ))}
             </select>
-            <Link
-              to="/missions"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium hover:bg-surface-hover transition-colors text-muted-foreground"
-            >
-              <List className="w-4 h-4" />
-              All Missions
-            </Link>
-            {missionIdToUse && (
+            <div className="flex items-center gap-2 shrink-0">
               <Link
-                to={`/missions/${missionIdToUse}`}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary/10 hover:bg-primary/20 transition-colors text-primary border border-primary/20"
+                to="/missions"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-surface-hover transition-colors text-muted-foreground"
               >
-                <FileText className="w-4 h-4" />
-                Mission Report
+                <List className="w-3.5 h-3.5" />
+                All Missions
               </Link>
-            )}
+              {missionIdToUse && (
+                <Link
+                  to={`/missions/${missionIdToUse}`}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary/10 hover:bg-primary/20 transition-colors text-primary border border-primary/20"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  Mission Report
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
         {/* Kanban view */}
         {view === "board" && (
-          <div className="flex gap-3 overflow-x-auto pb-4">
+          <div className="flex gap-2 pb-4">
             {columns.map(col => {
               const colTasks = tasks.filter(t => t.status === col.key);
               return (
-                <div key={col.key} className="flex-shrink-0 w-72">
+                <div key={col.key} className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-3 px-1">
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{col.label}</h3>
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground font-medium">{colTasks.length}</span>

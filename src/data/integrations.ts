@@ -171,6 +171,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "google-analytics-ga4", name: "Google Analytics GA4", category: "Analytics", description: "Access Google Analytics 4 properties", iconUrl: "https://cdn.worldvectorlogo.com/logos/google-analytics-3.svg", status: "available" },
   { slug: "mixpanel", name: "Mixpanel", category: "Analytics", description: "Query Mixpanel product analytics", iconUrl: "https://cdn.worldvectorlogo.com/logos/mixpanel.svg", status: "available" },
   { slug: "heap", name: "Heap", category: "Analytics", description: "Access Heap analytics data", iconUrl: "https://cdn.worldvectorlogo.com/logos/heap.svg", status: "available" },
+  { slug: "posthog", name: "PostHog", category: "Analytics", description: "Product analytics and session recording — query events, manage feature flags, view experiments, and access insights.", iconUrl: "https://cdn.simpleicons.org/posthog/000000", status: "available" },
 
   // Accounting & Finance
   { slug: "quickbooks", name: "QuickBooks", category: "Accounting", description: "Sync QuickBooks invoices and transactions", iconUrl: "https://cdn.worldvectorlogo.com/logos/quickbooks-1.svg", status: "available" },
@@ -188,6 +189,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "woocommerce", name: "WooCommerce", category: "E-commerce", description: "Manage WooCommerce store data", iconUrl: "https://cdn.worldvectorlogo.com/logos/woocommerce-icon-1.svg", status: "available" },
   { slug: "adobe-commerce", name: "Adobe Commerce", category: "E-commerce", description: "Connect with Adobe Commerce (Magento)", iconUrl: "https://cdn.worldvectorlogo.com/logos/adobe-8.svg", status: "available" },
   { slug: "unleashed", name: "Unleashed", category: "E-commerce", description: "Access Unleashed inventory management", iconUrl: "https://cdn.worldvectorlogo.com/logos/unleashed-1.svg", status: "available" },
+  { slug: "aftership", name: "AfterShip", category: "E-commerce", description: "Track shipments across 1,100+ carriers — create trackings, get delivery status, and monitor shipping performance.", iconUrl: "https://cdn.simpleicons.org/aftership/000000", status: "available" },
 
   // Advertising
   { slug: "facebook-ads", name: "Meta Ads", category: "Advertising", description: "Manage Meta (Facebook & Instagram) advertising campaigns", iconUrl: "https://cdn.worldvectorlogo.com/logos/meta-icon.svg", status: "available" },
@@ -219,6 +221,7 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "twitter-x", name: "Twitter / X", category: "Social Media", description: "Post tweets, search public tweets, and read user timelines. Free tier: 500 posts/month.", iconUrl: "https://cdn.simpleicons.org/x/ffffff", status: "available" },
   { slug: "tiktok", name: "TikTok", category: "Social Media", description: "Upload TikTok videos, read your video library, and get video analytics. Public posting requires TikTok app audit.", iconUrl: "https://cdn.simpleicons.org/tiktok/ffffff", status: "available" },
   { slug: "youtube", name: "YouTube", category: "Social Media", description: "Upload videos, search YouTube, manage your channel, and post comments. Free tier: ~6 video uploads/day.", iconUrl: "https://cdn.simpleicons.org/youtube/FF0000", status: "available" },
+  { slug: "reddit", name: "Reddit", category: "Social Media", description: "Browse subreddits, search posts, submit content, comment, vote, and send private messages.", iconUrl: "https://cdn.simpleicons.org/reddit/FF4500", status: "available" },
 
   // Payments
   { slug: "stripe", name: "Stripe", category: "Payments", description: "Access Stripe payments and customer data", iconUrl: "https://cdn.worldvectorlogo.com/logos/stripe-2.svg", status: "available" },
@@ -239,6 +242,8 @@ export const INTEGRATIONS: Integration[] = [
   { slug: "zoho-mail", name: "Zoho Mail", category: "Communication", description: "Send and read emails via Zoho Mail", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
   { slug: "zoho-cliq", name: "Zoho Cliq", category: "Communication", description: "Post messages to Zoho Cliq channels and direct messages", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
   { slug: "zoho-workdrive", name: "Zoho WorkDrive", category: "File Storage", description: "Browse and manage files and team folders in Zoho WorkDrive", iconUrl: "https://cdn.worldvectorlogo.com/logos/zoho.svg", status: "available" },
+  { slug: "keka", name: "Keka", category: "HR", description: "HR and payroll — manage employees, leave requests, attendance, and payroll data.", iconUrl: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%234F46E5%22%2F%3E%3Ctext%20x%3D%2232%22%20y%3D%2244%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2228%22%20fill%3D%22%23fff%22%3EK%3C%2Ftext%3E%3C%2Fsvg%3E", status: "available" },
+  { slug: "rippling", name: "Rippling", category: "HR", description: "Unified HR, IT, and Finance — manage employees, departments, teams, payroll, and company data.", iconUrl: "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23FEC229%22%2F%3E%3Ctext%20x%3D%2232%22%20y%3D%2244%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22900%22%20font-size%3D%2224%22%20fill%3D%22%231a1a1a%22%3ER%3C%2Ftext%3E%3C%2Fsvg%3E", status: "available" },
   { slug: "sap-successfactors", name: "SAP SuccessFactors", category: "HR", description: "Access employee profiles, job info, compensation, time-off, and performance goals via SAP SuccessFactors", iconUrl: "https://logo.clearbit.com/sap.com", status: "available" },
 
   // Design

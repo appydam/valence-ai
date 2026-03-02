@@ -16,7 +16,7 @@ export function DashboardLayout({ children, fullBleed }: { children: ReactNode; 
               {children}
             </div>
           ) : (
-            <div className="p-6 max-w-[1600px] mx-auto h-full">
+            <div className="p-4 h-full">
               {children}
             </div>
           )}

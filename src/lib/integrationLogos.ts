@@ -178,4 +178,15 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "twitter-x":          si("x", "ffffff"),
   "tiktok":             si("tiktok", "ffffff"),
   "youtube":            si("youtube", "FF0000"),
+  "reddit":             si("reddit", "FF4500"),
+
+  // E-commerce
+  "aftership":          si("aftership", "ffffff"),
+
+  // Analytics
+  "posthog":            si("posthog", "ffffff"),
+
+  // HR
+  "keka":               svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#4F46E5"/><text x="32" y="44" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="28" fill="#fff">K</text></svg>`),
+  "rippling":           svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#FEC229"/><text x="32" y="44" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="24" fill="#1a1a1a">R</text></svg>`),
 };

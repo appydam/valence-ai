@@ -156,9 +156,11 @@ export function buildRequest(args: BuildRequestArgs): BuiltRequest {
   }
 
   // 3. Construct full URL
-  const baseUrl = blueprint.baseUrl.replace(/\/$/, "");
+  // If the tool path is already an absolute URL, use it directly (skips baseUrl)
   const queryString = queryPairs.length > 0 ? `?${queryPairs.join("&")}` : "";
-  const url = `${baseUrl}${resolvedPath}${queryString}`;
+  const url = resolvedPath.startsWith("https://") || resolvedPath.startsWith("http://")
+    ? `${resolvedPath}${queryString}`
+    : `${blueprint.baseUrl.replace(/\/$/, "")}${resolvedPath}${queryString}`;
 
   // 4. Determine content type
   const contentType = resolveContentType(tool, protocol, blueprint.defaultHeaders);

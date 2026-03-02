@@ -20,7 +20,7 @@ export function Navbar() {
   const Icon = config.icon;
 
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between h-16 px-6 bg-card/80 backdrop-blur-md border-b border-border">
+    <nav className="sticky top-0 z-50 flex items-center justify-between h-14 px-4 bg-card/80 backdrop-blur-md border-b border-border">
       {/* Left: Current Page */}
       <div className="flex items-center gap-2">
         <Icon className="w-4 h-4 text-muted-foreground" />
