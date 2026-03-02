@@ -1446,55 +1446,22 @@ export default function Landing() {
                 }}
               />
 
-              {/* ── Dual screenshot: offset shadow stack ──
-                  Autopilot card sits behind and above-right of the mission board.
-                  Pure 2D translate + rotate — no 3D, no clipping, both fully visible.
-                  The outer wrapper is sized by the front card; back card is absolutely
-                  positioned offset up+right so its full image shows above/beside front. */}
-              <div className="relative" style={{ paddingTop: "48px", paddingRight: "48px" }}>
+              {/* ── Dual screenshot: main card + floating secondary card ──
+                  Mission board = large primary card, full width.
+                  Autopilot = smaller card floating bottom-right, partially overlapping,
+                  like a second window open behind the primary. Both fully visible. */}
+              <div className="relative" style={{ paddingBottom: "60px" }}>
 
-                {/* BACK: Autopilot — full image, positioned top-right, rotated +3deg */}
-                <motion.div
-                  className="absolute top-0 right-0 rounded-2xl overflow-hidden"
-                  initial={{ opacity: 0, y: 20, rotate: 5 }}
-                  animate={{ opacity: 0.75, y: 0, rotate: 3 }}
-                  transition={{ delay: 0.38, duration: 1.0, type: "spring", stiffness: 52, damping: 20 }}
-                  style={{
-                    width: "88%",
-                    border: "1px solid hsl(38 92% 50% / 0.2)",
-                    boxShadow: "0 20px 60px hsl(240 33% 3% / 0.75)",
-                    zIndex: 0,
-                    transformOrigin: "top right",
-                  }}
-                >
-                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.2)" }}>
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
-                    <div className="mx-3 flex-1 max-w-[180px] h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/25 font-mono" style={{ background: "hsl(240 25% 8%)" }}>
-                      app.valence.ai/autopilot
-                    </div>
-                    <div className="ml-auto flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(38 92% 50%)" }} />
-                      <span className="text-[10px] font-mono" style={{ color: "hsl(38 92% 50% / 0.6)" }}>AUTOPILOT</span>
-                    </div>
-                  </div>
-                  <img src="/screenshots/autopilot_page.png" alt="Autopilot" className="w-full block" />
-                </motion.div>
-
-                {/* FRONT: Mission Board — full image, bottom-left, rotated -1deg */}
+                {/* PRIMARY: Mission Board — full width, main card */}
                 <motion.div
                   className="relative rounded-2xl overflow-hidden"
-                  initial={{ opacity: 0, y: 30, rotate: -3 }}
-                  animate={{ opacity: 1, y: 0, rotate: -1 }}
-                  transition={{ delay: 0.6, duration: 1.0, type: "spring", stiffness: 55, damping: 20 }}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.42, duration: 0.9, type: "spring", stiffness: 60, damping: 20 }}
                   style={{
-                    width: "88%",
-                    marginTop: "auto",
-                    border: "1px solid hsl(217 91% 60% / 0.28)",
-                    boxShadow: "0 32px 80px hsl(240 33% 3% / 0.9), 0 0 50px hsl(217 91% 60% / 0.12)",
+                    border: "1px solid hsl(217 91% 60% / 0.25)",
+                    boxShadow: "0 24px 80px hsl(240 33% 3% / 0.85), 0 0 50px hsl(217 91% 60% / 0.1)",
                     zIndex: 1,
-                    transformOrigin: "bottom left",
                   }}
                 >
                   <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}>
@@ -1510,6 +1477,36 @@ export default function Landing() {
                     </div>
                   </div>
                   <img src="/screenshots/mission_board.png" alt="Mission Board" className="w-full block" />
+                </motion.div>
+
+                {/* SECONDARY: Autopilot — smaller card, bottom-right, floats over primary */}
+                <motion.div
+                  className="absolute rounded-2xl overflow-hidden"
+                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.75, duration: 0.9, type: "spring", stiffness: 60, damping: 20 }}
+                  style={{
+                    bottom: 0,
+                    right: "-16px",
+                    width: "58%",
+                    border: "1px solid hsl(38 92% 50% / 0.25)",
+                    boxShadow: "0 16px 50px hsl(240 33% 3% / 0.9), 0 0 24px hsl(38 92% 50% / 0.1)",
+                    zIndex: 2,
+                  }}
+                >
+                  <div className="flex items-center gap-2 px-3 py-2" style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.3)" }}>
+                    <div className="w-2 h-2 rounded-full bg-red-500/50" />
+                    <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
+                    <div className="w-2 h-2 rounded-full bg-green-500/50" />
+                    <div className="mx-2 flex-1 h-4 rounded flex items-center px-2 text-[9px] text-muted-foreground/30 font-mono" style={{ background: "hsl(240 25% 8%)" }}>
+                      app.valence.ai/autopilot
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: "hsl(38 92% 50%)" }} />
+                      <span className="text-[9px] font-mono" style={{ color: "hsl(38 92% 50% / 0.65)" }}>AUTOPILOT</span>
+                    </div>
+                  </div>
+                  <img src="/screenshots/autopilot_page.png" alt="Autopilot" className="w-full block" />
                 </motion.div>
 
               </div>
