@@ -1447,26 +1447,28 @@ export default function Landing() {
               />
 
               {/* Screenshot stack
-                  Layout: back card sits in normal flow (renders first, lower z-index).
-                  Front card overlaps it via negative marginTop, shifted right.
-                  Back card peeks out: top strip + left edge visible.
-                  overflow:visible on wrapper so back card top isn't clipped. */}
-              <div className="relative" style={{ isolation: "isolate" }}>
+                  Strategy: wrapper has paddingTop to reserve space for back card.
+                  Back card: position absolute, pinned top:0, slightly rotated left.
+                  Front card: position relative, marginTop=60px so back card's top
+                  60px strip peeks above the front card. marginLeft=24px so back
+                  card's left edge also peeks out. */}
+              <div className="relative" style={{ paddingTop: "60px", paddingLeft: "0px" }}>
 
                 {/* ── BACK CARD: Autopilot page ── */}
                 <motion.div
-                  className="rounded-2xl overflow-hidden w-full"
-                  initial={{ opacity: 0, y: -20, rotate: -6 }}
-                  animate={{ opacity: 0.75, y: 0, rotate: -4 }}
-                  transition={{ delay: 0.42, duration: 1.0, type: "spring", stiffness: 55, damping: 18 }}
+                  className="rounded-2xl overflow-hidden"
+                  initial={{ opacity: 0, rotate: -8, scale: 0.94 }}
+                  animate={{ opacity: 0.78, rotate: -4, scale: 0.96 }}
+                  transition={{ delay: 0.4, duration: 1.0, type: "spring", stiffness: 50, damping: 18 }}
                   style={{
-                    transformOrigin: "top center",
-                    border: "1px solid hsl(38 92% 50% / 0.18)",
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: "20px",
+                    transformOrigin: "top left",
+                    border: "1px solid hsl(38 92% 50% / 0.2)",
                     boxShadow: "0 12px 40px hsl(240 33% 3% / 0.7), 0 0 24px hsl(38 92% 50% / 0.06)",
                     zIndex: 0,
-                    position: "relative",
-                    marginLeft: "-16px",
-                    marginRight: "16px",
                   }}
                 >
                   <div
@@ -1495,16 +1497,14 @@ export default function Landing() {
                 </motion.div>
 
                 {/* ── FRONT CARD: Mission Board ── */}
-                {/* Negative top margin pulls it up to overlap the back card.
-                    Positive left margin shifts it right so back card's left edge peeks out. */}
+                {/* position relative so it sits at paddingTop=60px, revealing back card above */}
                 <motion.div
                   className="relative rounded-2xl overflow-hidden"
-                  initial={{ opacity: 0, y: 40 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.68, duration: 0.9, type: "spring", stiffness: 65, damping: 18 }}
+                  transition={{ delay: 0.65, duration: 0.9, type: "spring", stiffness: 65, damping: 18 }}
                   style={{
-                    marginTop: "-72%",
-                    marginLeft: "20px",
+                    marginLeft: "24px",
                     border: "1px solid hsl(217 91% 60% / 0.25)",
                     boxShadow: "0 0 0 1px hsl(var(--border) / 0.5), 0 32px 80px hsl(240 33% 3% / 0.9), 0 0 60px hsl(217 91% 60% / 0.12)",
                     zIndex: 1,
