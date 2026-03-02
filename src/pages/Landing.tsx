@@ -1447,30 +1447,30 @@ export default function Landing() {
               />
 
               {/* Screenshot stack
-                  Strategy: wrapper has paddingTop to reserve space for back card.
-                  Back card: position absolute, pinned top:0, slightly rotated left.
-                  Front card: position relative, marginTop=60px so back card's top
-                  60px strip peeks above the front card. marginLeft=24px so back
-                  card's left edge also peeks out. */}
-              <div className="relative" style={{ paddingTop: "60px", paddingLeft: "0px" }}>
+                  The back card is a FULL screenshot shrunk to 88% width, showing
+                  only its top 130px (browser chrome + headline) via overflow:hidden
+                  on the image container. It sits above the front card with a slight
+                  rotation. The front card overlaps it from below via negative marginTop. */}
+              <div className="relative overflow-visible">
 
-                {/* ── BACK CARD: Autopilot page ── */}
+                {/* ── BACK CARD: Autopilot page — top strip only ── */}
                 <motion.div
-                  className="rounded-2xl overflow-hidden"
-                  initial={{ opacity: 0, rotate: -8, scale: 0.94 }}
-                  animate={{ opacity: 0.78, rotate: -4, scale: 0.96 }}
-                  transition={{ delay: 0.4, duration: 1.0, type: "spring", stiffness: 50, damping: 18 }}
+                  className="rounded-t-2xl overflow-hidden"
+                  initial={{ opacity: 0, x: 20, rotate: -7 }}
+                  animate={{ opacity: 0.82, x: 0, rotate: -3 }}
+                  transition={{ delay: 0.38, duration: 1.0, type: "spring", stiffness: 50, damping: 18 }}
                   style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: "20px",
                     transformOrigin: "top left",
-                    border: "1px solid hsl(38 92% 50% / 0.2)",
-                    boxShadow: "0 12px 40px hsl(240 33% 3% / 0.7), 0 0 24px hsl(38 92% 50% / 0.06)",
+                    width: "90%",
+                    marginLeft: "0px",
+                    border: "1px solid hsl(38 92% 50% / 0.22)",
+                    borderBottom: "none",
+                    boxShadow: "0 -4px 24px hsl(240 33% 3% / 0.5), 0 0 20px hsl(38 92% 50% / 0.06)",
                     zIndex: 0,
+                    position: "relative",
                   }}
                 >
+                  {/* Browser chrome */}
                   <div
                     className="flex items-center gap-2 px-4 py-2.5"
                     style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.25)" }}
@@ -1489,22 +1489,31 @@ export default function Landing() {
                       <span className="text-[10px] font-mono" style={{ color: "hsl(38 92% 50% / 0.6)" }}>AUTOPILOT</span>
                     </div>
                   </div>
-                  <img
-                    src="/screenshots/autopilot_page.png"
-                    alt="Valence AI Autopilot"
-                    className="w-full block"
+                  {/* Clip to top 110px of the screenshot so the headline is visible */}
+                  <div style={{ height: "110px", overflow: "hidden" }}>
+                    <img
+                      src="/screenshots/autopilot_page.png"
+                      alt="Valence AI Autopilot"
+                      className="w-full block"
+                    />
+                  </div>
+                  {/* Fade-out gradient at the bottom edge */}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none"
+                    style={{ background: "linear-gradient(to bottom, transparent, hsl(240 25% 5% / 0.95))" }}
                   />
                 </motion.div>
 
                 {/* ── FRONT CARD: Mission Board ── */}
-                {/* position relative so it sits at paddingTop=60px, revealing back card above */}
+                {/* Negative marginTop pulls it up to overlap the back card strip */}
                 <motion.div
                   className="relative rounded-2xl overflow-hidden"
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.65, duration: 0.9, type: "spring", stiffness: 65, damping: 18 }}
                   style={{
-                    marginLeft: "24px",
+                    marginTop: "-2px",
+                    marginLeft: "20px",
                     border: "1px solid hsl(217 91% 60% / 0.25)",
                     boxShadow: "0 0 0 1px hsl(var(--border) / 0.5), 0 32px 80px hsl(240 33% 3% / 0.9), 0 0 60px hsl(217 91% 60% / 0.12)",
                     zIndex: 1,
