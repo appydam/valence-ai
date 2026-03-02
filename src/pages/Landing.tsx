@@ -1446,75 +1446,67 @@ export default function Landing() {
                 }}
               />
 
-              {/* ── Dual screenshot: perspective tilt layout ──
-                  Left card (Autopilot): rotated back in 3D, slightly smaller, offset left
-                  Right card (Mission Board): rotated forward, larger, overlaps left card
-                  Both fully visible. No clipping. perspective container for 3D effect. */}
-              <div
-                className="relative w-full"
-                style={{ perspective: "1200px", perspectiveOrigin: "50% 40%" }}
-              >
-                {/* LEFT: Autopilot — tilted back-left */}
+              {/* ── Dual screenshot: offset shadow stack ──
+                  Autopilot card sits behind and above-right of the mission board.
+                  Pure 2D translate + rotate — no 3D, no clipping, both fully visible.
+                  The outer wrapper is sized by the front card; back card is absolutely
+                  positioned offset up+right so its full image shows above/beside front. */}
+              <div className="relative" style={{ paddingTop: "48px", paddingRight: "48px" }}>
+
+                {/* BACK: Autopilot — full image, positioned top-right, rotated +3deg */}
                 <motion.div
-                  className="absolute rounded-xl overflow-hidden"
-                  initial={{ opacity: 0, rotateY: -25, x: -40 }}
-                  animate={{ opacity: 0.85, rotateY: -12, x: 0 }}
-                  transition={{ delay: 0.38, duration: 1.1, type: "spring", stiffness: 48, damping: 20 }}
+                  className="absolute top-0 right-0 rounded-2xl overflow-hidden"
+                  initial={{ opacity: 0, y: 20, rotate: 5 }}
+                  animate={{ opacity: 0.75, y: 0, rotate: 3 }}
+                  transition={{ delay: 0.38, duration: 1.0, type: "spring", stiffness: 52, damping: 20 }}
                   style={{
-                    top: "30px",
-                    left: "0px",
-                    width: "62%",
-                    transformStyle: "preserve-3d",
+                    width: "88%",
                     border: "1px solid hsl(38 92% 50% / 0.2)",
-                    boxShadow: "0 24px 60px hsl(240 33% 3% / 0.8), 0 0 30px hsl(38 92% 50% / 0.07)",
+                    boxShadow: "0 20px 60px hsl(240 33% 3% / 0.75)",
                     zIndex: 0,
+                    transformOrigin: "top right",
                   }}
                 >
-                  <div
-                    className="flex items-center gap-2 px-3 py-2"
-                    style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.25)" }}
-                  >
-                    <div className="w-2 h-2 rounded-full bg-red-500/40" />
-                    <div className="w-2 h-2 rounded-full bg-yellow-500/40" />
-                    <div className="w-2 h-2 rounded-full bg-green-500/40" />
-                    <div className="mx-2 flex-1 h-4 rounded text-[9px] text-muted-foreground/25 font-mono flex items-center px-2" style={{ background: "hsl(240 25% 8%)" }}>
+                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.2)" }}>
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
+                    <div className="mx-3 flex-1 max-w-[180px] h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/25 font-mono" style={{ background: "hsl(240 25% 8%)" }}>
                       app.valence.ai/autopilot
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: "hsl(38 92% 50%)" }} />
-                      <span className="text-[9px] font-mono" style={{ color: "hsl(38 92% 50% / 0.55)" }}>AUTOPILOT</span>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(38 92% 50%)" }} />
+                      <span className="text-[10px] font-mono" style={{ color: "hsl(38 92% 50% / 0.6)" }}>AUTOPILOT</span>
                     </div>
                   </div>
                   <img src="/screenshots/autopilot_page.png" alt="Autopilot" className="w-full block" />
                 </motion.div>
 
-                {/* RIGHT: Mission Board — tilted forward-right, overlaps left */}
+                {/* FRONT: Mission Board — full image, bottom-left, rotated -1deg */}
                 <motion.div
-                  className="relative rounded-xl overflow-hidden"
-                  initial={{ opacity: 0, rotateY: 15, x: 60 }}
-                  animate={{ opacity: 1, rotateY: 6, x: 0 }}
-                  transition={{ delay: 0.58, duration: 1.1, type: "spring", stiffness: 50, damping: 20 }}
+                  className="relative rounded-2xl overflow-hidden"
+                  initial={{ opacity: 0, y: 30, rotate: -3 }}
+                  animate={{ opacity: 1, y: 0, rotate: -1 }}
+                  transition={{ delay: 0.6, duration: 1.0, type: "spring", stiffness: 55, damping: 20 }}
                   style={{
-                    marginLeft: "30%",
-                    transformStyle: "preserve-3d",
+                    width: "88%",
+                    marginTop: "auto",
                     border: "1px solid hsl(217 91% 60% / 0.28)",
                     boxShadow: "0 32px 80px hsl(240 33% 3% / 0.9), 0 0 50px hsl(217 91% 60% / 0.12)",
                     zIndex: 1,
+                    transformOrigin: "bottom left",
                   }}
                 >
-                  <div
-                    className="flex items-center gap-2 px-3 py-2"
-                    style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
-                  >
-                    <div className="w-2 h-2 rounded-full bg-red-500/60" />
-                    <div className="w-2 h-2 rounded-full bg-yellow-500/60" />
-                    <div className="w-2 h-2 rounded-full bg-green-500/60" />
-                    <div className="mx-2 flex-1 h-4 rounded text-[9px] text-muted-foreground/40 font-mono flex items-center px-2" style={{ background: "hsl(240 25% 8%)" }}>
+                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}>
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                    <div className="mx-3 flex-1 max-w-[180px] h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/40 font-mono" style={{ background: "hsl(240 25% 8%)" }}>
                       app.valence.ai/mission-board
                     </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-1 h-1 rounded-full bg-green-400 animate-pulse" />
-                      <span className="text-[9px] text-green-400/70 font-mono">LIVE</span>
+                    <div className="ml-auto flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      <span className="text-[10px] text-green-400/70 font-mono">LIVE</span>
                     </div>
                   </div>
                   <img src="/screenshots/mission_board.png" alt="Mission Board" className="w-full block" />
