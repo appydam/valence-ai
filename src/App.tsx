@@ -27,6 +27,8 @@ import UseCasePage from "./pages/UseCase";
 import Autopilot from "./pages/Autopilot";
 import Billing from "./pages/Billing";
 import Onboarding from "./pages/Onboarding";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,8 @@ const App = () => (
           <Routes>
             <Route path="/landing" element={<Landing />} />
             <Route path="/use-cases/:slug" element={<UseCasePage />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dev/login" element={<Login />} />
             <Route path="*" element={<Navigate to="/landing" replace />} />
@@ -78,6 +82,8 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/landing" element={<Landing />} />
             <Route path="/use-cases/:slug" element={<UseCasePage />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

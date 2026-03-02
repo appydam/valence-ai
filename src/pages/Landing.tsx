@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion, useInView, useReducedMotion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { PilotModal } from "@/components/landing/PilotModal";
 import { HeroParticleField } from "@/components/landing/HeroParticleField";
 import { TypingCommand } from "@/components/landing/TypingCommand";
@@ -2091,8 +2091,15 @@ export default function Landing() {
             <span>Command center for autonomous AI workforces</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground/60 font-mono">
-            <span>Questions? Mail to:</span>
-            <a href="mailto:arpitdhamija.ai@gmail.com" className="hover:text-muted-foreground/60 transition-colors">
+            <Link to="/privacy" className="hover:text-muted-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <span>·</span>
+            <Link to="/terms" className="hover:text-muted-foreground transition-colors">
+              Terms of Service
+            </Link>
+            <span>·</span>
+            <a href="mailto:arpitdhamija.ai@gmail.com" className="hover:text-muted-foreground transition-colors">
               arpitdhamija.ai@gmail.com
             </a>
             <span>·</span>
