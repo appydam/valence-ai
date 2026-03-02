@@ -70,65 +70,75 @@ function RevealSection({ children, className }: { children: React.ReactNode; cla
 
 // ─── Compact use cases grid ─────────────────────────────────────────────────
 function UseCaseCompactGrid({ onNavigate }: { onNavigate: (slug: string) => void }) {
-  // Split all use cases into two rows for the dual-marquee
-  const row1 = ALL_USE_CASES.slice(0, Math.ceil(ALL_USE_CASES.length / 2));
-  const row2 = ALL_USE_CASES.slice(Math.ceil(ALL_USE_CASES.length / 2));
-
-  const Pill = ({ uc }: { uc: typeof ALL_USE_CASES[0] }) => (
-    <button
-      onClick={() => onNavigate(uc.slug)}
-      className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap shrink-0 transition-all duration-200"
-      style={{
-        background: "hsl(240 20% 9%)",
-        border: `1px solid hsl(var(--border) / 0.35)`,
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.background = uc.accentColor.replace(")", " / 0.1)").replace("hsl(", "hsl(");
-        el.style.borderColor = uc.accentColor.replace(")", " / 0.5)").replace("hsl(", "hsl(");
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.background = "hsl(240 20% 9%)";
-        el.style.borderColor = "hsl(var(--border) / 0.35)";
-      }}
-    >
-      <span className="text-[11px] leading-none">{uc.icon}</span>
-      <span
-        className="text-[11px] font-medium transition-colors duration-200"
-        style={{ color: "hsl(var(--muted-foreground) / 0.65)" }}
-      >
-        {uc.title}
-      </span>
-    </button>
-  );
-
-  const MarqueeRow = ({ items, reverse = false }: { items: typeof ALL_USE_CASES; reverse?: boolean }) => (
-    <div className="relative flex overflow-hidden">
-      {/* Fade edges */}
-      <div className="absolute left-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
-        style={{ background: "linear-gradient(to right, hsl(var(--background)), transparent)" }} />
-      <div className="absolute right-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
-        style={{ background: "linear-gradient(to left, hsl(var(--background)), transparent)" }} />
-
-      <motion.div
-        className="flex gap-2"
-        animate={{ x: reverse ? ["0%", "50%"] : ["0%", "-50%"] }}
-        transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-        style={{ willChange: "transform" }}
-      >
-        {/* Duplicate for seamless loop */}
-        {[...items, ...items].map((uc, i) => (
-          <Pill key={`${uc.slug}-${i}`} uc={uc} />
-        ))}
-      </motion.div>
-    </div>
-  );
+  const [activeTab, setActiveTab] = useState<UseCaseCategory>(CATEGORY_ORDER[0]);
+  const grouped = getUseCasesByCategory();
+  const activeCases = grouped[activeTab] ?? [];
+  const activeAccent = activeCases[0]?.accentColor ?? "hsl(217, 91%, 60%)";
 
   return (
-    <div className="mb-12 space-y-2 -mx-6">
-      <MarqueeRow items={row1} />
-      <MarqueeRow items={row2} reverse />
+    <div className="mb-12 max-w-2xl mx-auto">
+      {/* Domain tabs — scrollable pill row */}
+      <div className="flex gap-1.5 flex-wrap justify-center mb-5">
+        {CATEGORY_ORDER.map((cat) => {
+          const isActive = cat === activeTab;
+          const accent = grouped[cat]?.[0]?.accentColor ?? "hsl(217,91%,60%)";
+          return (
+            <button
+              key={cat}
+              onClick={() => setActiveTab(cat)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all duration-200"
+              style={{
+                background: isActive ? accent.replace(")", " / 0.12)").replace("hsl(", "hsl(") : "transparent",
+                border: `1px solid ${isActive ? accent.replace(")", " / 0.45)").replace("hsl(", "hsl(") : "hsl(var(--border) / 0.35)"}`,
+                color: isActive ? accent : "hsl(var(--muted-foreground) / 0.45)",
+              }}
+            >
+              {CATEGORY_ICONS[cat]}
+              <span>{CATEGORY_LABELS[cat]}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Use case list — animated swap */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.15 }}
+          className="rounded-xl overflow-hidden"
+          style={{ border: `1px solid ${activeAccent.replace(")", " / 0.15)").replace("hsl(", "hsl(")}` }}
+        >
+          {activeCases.map((uc, i) => (
+            <button
+              key={uc.slug}
+              onClick={() => onNavigate(uc.slug)}
+              className="group w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150"
+              style={{
+                borderBottom: i < activeCases.length - 1 ? `1px solid ${activeAccent.replace(")", " / 0.08)").replace("hsl(", "hsl(")}` : "none",
+                background: "transparent",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = activeAccent.replace(")", " / 0.06)").replace("hsl(", "hsl("); }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            >
+              <span className="text-base leading-none">{uc.icon}</span>
+              <span className="text-[12px] font-medium text-muted-foreground/60 group-hover:text-foreground/80 transition-colors flex-1">
+                {uc.title}
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground/25 group-hover:text-muted-foreground/50 transition-colors shrink-0">
+                {uc.hoursSaved.split("·")[0].trim()}
+              </span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                className="shrink-0 opacity-0 group-hover:opacity-40 transition-opacity"
+                style={{ color: activeAccent }}>
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+          ))}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
@@ -1436,25 +1446,27 @@ export default function Landing() {
                 }}
               />
 
-              {/* Screenshot stack — back card peeks above + left of front card */}
+              {/* Screenshot stack
+                  Layout: back card sits in normal flow (renders first, lower z-index).
+                  Front card overlaps it via negative marginTop, shifted right.
+                  Back card peeks out: top strip + left edge visible.
+                  overflow:visible on wrapper so back card top isn't clipped. */}
               <div className="relative" style={{ isolation: "isolate" }}>
 
                 {/* ── BACK CARD: Autopilot page ── */}
-                {/* Positioned absolutely, shifted up-left and rotated to peek behind front */}
                 <motion.div
-                  className="rounded-2xl overflow-hidden"
-                  initial={{ opacity: 0, x: 60, rotate: -8, scale: 0.9 }}
-                  animate={{ opacity: 0.72, x: 0, rotate: -4, scale: 0.93 }}
-                  transition={{ delay: 0.42, duration: 1.1, type: "spring", stiffness: 52, damping: 18 }}
+                  className="rounded-2xl overflow-hidden w-full"
+                  initial={{ opacity: 0, y: -20, rotate: -6 }}
+                  animate={{ opacity: 0.75, y: 0, rotate: -4 }}
+                  transition={{ delay: 0.42, duration: 1.0, type: "spring", stiffness: 55, damping: 18 }}
                   style={{
-                    position: "absolute",
-                    top: "-22px",
-                    left: "-28px",
-                    right: "28px",
-                    border: "1px solid hsl(217 91% 60% / 0.13)",
-                    boxShadow: "0 12px 40px hsl(240 33% 3% / 0.7), 0 0 24px hsl(38 92% 50% / 0.05)",
-                    transformOrigin: "top left",
+                    transformOrigin: "top center",
+                    border: "1px solid hsl(38 92% 50% / 0.18)",
+                    boxShadow: "0 12px 40px hsl(240 33% 3% / 0.7), 0 0 24px hsl(38 92% 50% / 0.06)",
                     zIndex: 0,
+                    position: "relative",
+                    marginLeft: "-16px",
+                    marginRight: "16px",
                   }}
                 >
                   <div
@@ -1465,19 +1477,14 @@ export default function Landing() {
                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/35" />
                     <div className="w-2.5 h-2.5 rounded-full bg-green-500/35" />
                     <div
-                      className="mx-3 flex-1 max-w-48 h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/25 font-mono"
+                      className="mx-3 flex-1 max-w-48 h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/30 font-mono"
                       style={{ background: "hsl(240 25% 8%)" }}
                     >
                       app.valence.ai/autopilot
                     </div>
                     <div className="ml-auto flex items-center gap-1.5">
-                      <div
-                        className="w-1.5 h-1.5 rounded-full animate-pulse"
-                        style={{ background: "hsl(38 92% 50%)" }}
-                      />
-                      <span className="text-[10px] font-mono" style={{ color: "hsl(38 92% 50% / 0.55)" }}>
-                        AUTOPILOT
-                      </span>
+                      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(38 92% 50%)" }} />
+                      <span className="text-[10px] font-mono" style={{ color: "hsl(38 92% 50% / 0.6)" }}>AUTOPILOT</span>
                     </div>
                   </div>
                   <img
@@ -1488,17 +1495,18 @@ export default function Landing() {
                 </motion.div>
 
                 {/* ── FRONT CARD: Mission Board ── */}
-                {/* mt-5 + ml-5 offsets from wrapper so back card peeks above and to the left */}
+                {/* Negative top margin pulls it up to overlap the back card.
+                    Positive left margin shifts it right so back card's left edge peeks out. */}
                 <motion.div
                   className="relative rounded-2xl overflow-hidden"
-                  initial={{ opacity: 0, y: 30, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.68, duration: 0.9, type: "spring", stiffness: 65, damping: 18 }}
                   style={{
-                    marginTop: "22px",
-                    marginLeft: "24px",
-                    border: "1px solid hsl(217 91% 60% / 0.22)",
-                    boxShadow: "0 0 0 1px hsl(var(--border) / 0.5), 0 32px 80px hsl(240 33% 3% / 0.85), 0 0 60px hsl(217 91% 60% / 0.1)",
+                    marginTop: "-72%",
+                    marginLeft: "20px",
+                    border: "1px solid hsl(217 91% 60% / 0.25)",
+                    boxShadow: "0 0 0 1px hsl(var(--border) / 0.5), 0 32px 80px hsl(240 33% 3% / 0.9), 0 0 60px hsl(217 91% 60% / 0.12)",
                     zIndex: 1,
                   }}
                 >
