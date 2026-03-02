@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
@@ -32,11 +32,10 @@ import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+/** Wraps auth-dependent routes: shows loading spinner, then resolves to unauth or auth routes */
+function AuthRoutes() {
+  return (
+    <>
       <AuthLoading>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
@@ -46,50 +45,65 @@ const App = () => (
         </div>
       </AuthLoading>
       <Unauthenticated>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/landing" element={<Landing />} />
-            <Route path="/use-cases/:slug" element={<UseCasePage />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dev/login" element={<Login />} />
-            <Route path="*" element={<Navigate to="/landing" replace />} />
-          </Routes>
-        </BrowserRouter>
+        <Navigate to="/landing" replace />
       </Unauthenticated>
       <Authenticated>
-        <ErrorBoundary>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/" element={<Index />} />
-            <Route path="/autopilot" element={<Autopilot />} />
-            <Route path="/board" element={<Board />} />
-            <Route path="/missions" element={<Missions />} />
-            <Route path="/missions/:missionId" element={<MissionReport />} />
-            <Route path="/agents" element={<AgentsPage />} />
-
-            <Route path="/integrations" element={<Integrations />} />
-            <Route path="/integrations/blueprint/new" element={<BlueprintWizard />} />
-            <Route path="/integrations/blueprint/:id" element={<BlueprintDetail />} />
-            <Route path="/webhooks" element={<Webhooks />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/memory" element={<MemoryBank />} />
-            <Route path="/memory/:agentName" element={<AgentMemoryDetail />} />
-            <Route path="/soul/review/:versionId" element={<SoulReview />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/landing" element={<Landing />} />
-            <Route path="/use-cases/:slug" element={<UseCasePage />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/login" element={<Navigate to="/" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-        </ErrorBoundary>
+        <AuthenticatedRoutes />
       </Authenticated>
+    </>
+  );
+}
+
+function AuthenticatedRoutes() {
+  const location = useLocation();
+  // Redirect /login to / for authenticated users
+  if (location.pathname === "/login") {
+    return <Navigate to="/" replace />;
+  }
+  return (
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/" element={<Index />} />
+        <Route path="/autopilot" element={<Autopilot />} />
+        <Route path="/board" element={<Board />} />
+        <Route path="/missions" element={<Missions />} />
+        <Route path="/missions/:missionId" element={<MissionReport />} />
+        <Route path="/agents" element={<AgentsPage />} />
+        <Route path="/integrations" element={<Integrations />} />
+        <Route path="/integrations/blueprint/new" element={<BlueprintWizard />} />
+        <Route path="/integrations/blueprint/:id" element={<BlueprintDetail />} />
+        <Route path="/webhooks" element={<Webhooks />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/memory" element={<MemoryBank />} />
+        <Route path="/memory/:agentName" element={<AgentMemoryDetail />} />
+        <Route path="/soul/review/:versionId" element={<SoulReview />} />
+        <Route path="/billing" element={<Billing />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </ErrorBoundary>
+  );
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          {/* Public pages — render instantly, no auth required */}
+          <Route path="/landing" element={<Landing />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/use-cases/:slug" element={<UseCasePage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dev/login" element={<Login />} />
+          {/* Everything else goes through auth */}
+          <Route path="*" element={<AuthRoutes />} />
+        </Routes>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
