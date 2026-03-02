@@ -76,9 +76,9 @@ function UseCaseCompactGrid({ onNavigate }: { onNavigate: (slug: string) => void
   const activeAccent = activeCases[0]?.accentColor ?? "hsl(217, 91%, 60%)";
 
   return (
-    <div className="mb-12 max-w-2xl mx-auto">
-      {/* Domain tabs — scrollable pill row */}
-      <div className="flex gap-1.5 flex-wrap justify-center mb-5">
+    <div className="mb-12 max-w-xl mx-auto">
+      {/* Domain tabs */}
+      <div className="flex gap-1.5 flex-wrap justify-center mb-4">
         {CATEGORY_ORDER.map((cat) => {
           const isActive = cat === activeTab;
           const accent = grouped[cat]?.[0]?.accentColor ?? "hsl(217,91%,60%)";
@@ -89,18 +89,17 @@ function UseCaseCompactGrid({ onNavigate }: { onNavigate: (slug: string) => void
               className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all duration-200"
               style={{
                 background: isActive ? accent.replace(")", " / 0.12)").replace("hsl(", "hsl(") : "transparent",
-                border: `1px solid ${isActive ? accent.replace(")", " / 0.45)").replace("hsl(", "hsl(") : "hsl(var(--border) / 0.35)"}`,
+                border: `1px solid ${isActive ? accent.replace(")", " / 0.4)").replace("hsl(", "hsl(") : "hsl(var(--border) / 0.3)"}`,
                 color: isActive ? accent : "hsl(var(--muted-foreground) / 0.45)",
               }}
             >
-              {CATEGORY_ICONS[cat]}
-              <span>{CATEGORY_LABELS[cat]}</span>
+              {CATEGORY_ICONS[cat]} {CATEGORY_LABELS[cat]}
             </button>
           );
         })}
       </div>
 
-      {/* Use case list — animated swap */}
+      {/* Use case list */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -118,21 +117,19 @@ function UseCaseCompactGrid({ onNavigate }: { onNavigate: (slug: string) => void
               className="group w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150"
               style={{
                 borderBottom: i < activeCases.length - 1 ? `1px solid ${activeAccent.replace(")", " / 0.08)").replace("hsl(", "hsl(")}` : "none",
-                background: "transparent",
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = activeAccent.replace(")", " / 0.06)").replace("hsl(", "hsl("); }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
-              <span className="text-base leading-none">{uc.icon}</span>
+              <span className="text-base leading-none shrink-0">{uc.icon}</span>
               <span className="text-[12px] font-medium text-muted-foreground/60 group-hover:text-foreground/80 transition-colors flex-1">
                 {uc.title}
               </span>
-              <span className="text-[10px] font-mono text-muted-foreground/25 group-hover:text-muted-foreground/50 transition-colors shrink-0">
+              <span className="text-[10px] font-mono text-muted-foreground/25 group-hover:text-muted-foreground/45 transition-colors shrink-0 hidden sm:block">
                 {uc.hoursSaved.split("·")[0].trim()}
               </span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                className="shrink-0 opacity-0 group-hover:opacity-40 transition-opacity"
-                style={{ color: activeAccent }}>
+                className="shrink-0 opacity-0 group-hover:opacity-50 transition-opacity" style={{ color: activeAccent }}>
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </button>
@@ -1446,69 +1443,41 @@ export default function Landing() {
                 }}
               />
 
-              {/* ── Dual screenshot: main card + floating secondary card ──
-                  Mission board = large primary card, full width.
-                  Autopilot = smaller card floating bottom-right, partially overlapping,
-                  like a second window open behind the primary. Both fully visible. */}
-              <div className="relative" style={{ paddingBottom: "60px" }}>
-
-                {/* PRIMARY: Mission Board — full width, main card */}
-                <motion.div
-                  className="relative rounded-2xl overflow-hidden"
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.42, duration: 0.9, type: "spring", stiffness: 60, damping: 20 }}
-                  style={{
-                    border: "1px solid hsl(217 91% 60% / 0.25)",
-                    boxShadow: "0 24px 80px hsl(240 33% 3% / 0.85), 0 0 50px hsl(217 91% 60% / 0.1)",
-                    zIndex: 1,
-                  }}
+              {/* Screenshot frame */}
+              <div
+                className="relative rounded-2xl overflow-hidden"
+                style={{
+                  border: "1px solid hsl(217 91% 60% / 0.2)",
+                  boxShadow: "0 0 0 1px hsl(var(--border) / 0.5), 0 32px 80px hsl(240 33% 3% / 0.8), 0 0 60px hsl(217 91% 60% / 0.08)",
+                }}
+              >
+                {/* Fake browser chrome */}
+                <div
+                  className="flex items-center gap-2 px-4 py-2.5"
+                  style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
                 >
-                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}>
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                    <div className="mx-3 flex-1 max-w-[180px] h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/40 font-mono" style={{ background: "hsl(240 25% 8%)" }}>
-                      app.valence.ai/mission-board
-                    </div>
-                    <div className="ml-auto flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                      <span className="text-[10px] text-green-400/70 font-mono">LIVE</span>
-                    </div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+                  <div
+                    className="mx-3 flex-1 max-w-48 h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/40 font-mono"
+                    style={{ background: "hsl(240 25% 8%)" }}
+                  >
+                    app.valence.ai/mission-board
                   </div>
-                  <img src="/screenshots/mission_board.png" alt="Mission Board" className="w-full block" />
-                </motion.div>
-
-                {/* SECONDARY: Autopilot — smaller card, bottom-right, floats over primary */}
-                <motion.div
-                  className="absolute rounded-2xl overflow-hidden"
-                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 0.75, duration: 0.9, type: "spring", stiffness: 60, damping: 20 }}
-                  style={{
-                    bottom: 0,
-                    right: "-16px",
-                    width: "58%",
-                    border: "1px solid hsl(38 92% 50% / 0.25)",
-                    boxShadow: "0 16px 50px hsl(240 33% 3% / 0.9), 0 0 24px hsl(38 92% 50% / 0.1)",
-                    zIndex: 2,
-                  }}
-                >
-                  <div className="flex items-center gap-2 px-3 py-2" style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.3)" }}>
-                    <div className="w-2 h-2 rounded-full bg-red-500/50" />
-                    <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
-                    <div className="w-2 h-2 rounded-full bg-green-500/50" />
-                    <div className="mx-2 flex-1 h-4 rounded flex items-center px-2 text-[9px] text-muted-foreground/30 font-mono" style={{ background: "hsl(240 25% 8%)" }}>
-                      app.valence.ai/autopilot
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: "hsl(38 92% 50%)" }} />
-                      <span className="text-[9px] font-mono" style={{ color: "hsl(38 92% 50% / 0.65)" }}>AUTOPILOT</span>
-                    </div>
+                  <div className="ml-auto flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-[10px] text-green-400/70 font-mono">LIVE</span>
                   </div>
-                  <img src="/screenshots/autopilot_page.png" alt="Autopilot" className="w-full block" />
-                </motion.div>
+                </div>
 
+                <img
+                  // src="/screenshots/mission_board.png"
+                  src="/screenshots/autopilot_page.png"
+                  alt="Valence AI Mission Board"
+                  className="w-full block"
+                  style={{ display: "block" }}
+                />
               </div>
 
               {/* ── Floating chips — outside the screenshot frame ── */}

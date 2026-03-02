@@ -23,6 +23,7 @@ import MissionReport from "./pages/MissionReport";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
+import UseCasePage from "./pages/UseCase";
 import Autopilot from "./pages/Autopilot";
 import Billing from "./pages/Billing";
 import Onboarding from "./pages/Onboarding";
@@ -46,6 +47,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/landing" element={<Landing />} />
+            <Route path="/use-cases/:slug" element={<UseCasePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dev/login" element={<Login />} />
             <Route path="*" element={<Navigate to="/landing" replace />} />
@@ -75,6 +77,7 @@ const App = () => (
             <Route path="/billing" element={<Billing />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/landing" element={<Landing />} />
+            <Route path="/use-cases/:slug" element={<UseCasePage />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
