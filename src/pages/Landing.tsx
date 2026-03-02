@@ -314,7 +314,7 @@ function LandingNav({ onPilotClick }: { onPilotClick: () => void }) {
         <div className="flex items-center gap-4">
           {/* Logo + branding */}
           <div className="flex items-center gap-2.5">
-            <img src="/logo.svg" alt="Valence AI" className="w-6 h-6" />
+            <img src="/logo.svg" alt="Valence AI" className="w-12 h-12" />
             <span className="font-bold text-sm tracking-tight">Valence AI</span>
             <div
               className="hidden sm:flex items-center gap-1 text-[9px] font-mono tracking-widest px-1.5 py-0.5 rounded"

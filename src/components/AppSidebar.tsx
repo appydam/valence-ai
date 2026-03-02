@@ -48,8 +48,8 @@ export function AppSidebar() {
         "flex items-center gap-3 p-4 border-b border-border",
         collapsed ? "justify-center" : ""
       )}>
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 overflow-hidden shrink-0">
-          <img src="/logo.svg" alt="Valence AI" className="w-6 h-6" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg overflow-hidden shrink-0">
+          <img src="/logo.svg" alt="Valence AI" className="w-12 h-12" />
         </div>
         {!collapsed && (
           <div className="min-w-0">
