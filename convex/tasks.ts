@@ -105,7 +105,8 @@ export const create = mutation({
         v.literal("Kaze"),
         v.literal("Scout"),
         v.literal("Forge"),
-        v.literal("Ghost")
+        v.literal("Ghost"),
+        v.literal("Sentinel")
       )
     ),
     creator: v.string(),
@@ -268,7 +269,8 @@ export const update = mutation({
         v.literal("Kaze"),
         v.literal("Scout"),
         v.literal("Forge"),
-        v.literal("Ghost")
+        v.literal("Ghost"),
+        v.literal("Sentinel")
       )
     ),
     tags: v.optional(v.array(v.string())),
@@ -672,7 +674,8 @@ export const delegateTask = mutation({
           v.literal("Kaze"),
           v.literal("Scout"),
           v.literal("Forge"),
-          v.literal("Ghost")
+          v.literal("Ghost"),
+          v.literal("Sentinel")
         ),
         tags: v.array(v.string()),
         dependsOnIndex: v.optional(v.array(v.number())),

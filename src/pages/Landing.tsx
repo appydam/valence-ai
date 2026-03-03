@@ -1190,7 +1190,7 @@ function AutopilotVisual() {
 const AGENTS: AgentName[] = ["Kaze", "Scout", "Forge", "Ghost", "Sentinel"];
 
 // Landing page shows 3 hero use cases from the shared data
-const LANDING_USE_CASE_SLUGS = ["close-pipeline-faster", "ceo-briefing-autopilot", "new-hire-onboarding"] as const;
+const LANDING_USE_CASE_SLUGS = ["sales-lead-enrichment-outbound", "cs-qbr-health-automation", "support-ticket-intelligence"] as const;
 const USE_CASES = ALL_USE_CASES.filter((uc) =>
   (LANDING_USE_CASE_SLUGS as readonly string[]).includes(uc.slug)
 );

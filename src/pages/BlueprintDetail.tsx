@@ -223,6 +223,11 @@ export default function BlueprintDetail() {
         // Also exclude tools with required query params
         const queryParams = t.queryParams ? JSON.parse(t.queryParams) : null;
         if (Array.isArray(queryParams) && queryParams.some((p: any) => p.required)) return false;
+        // Also exclude tools with required body fields
+        const bodySchema = t.bodySchema ? JSON.parse(t.bodySchema) : null;
+        if (bodySchema?.required && Array.isArray(bodySchema.required) && bodySchema.required.length > 0) return false;
+        // Exclude POST/PATCH/PUT tools that need a body but have no safe default
+        if (["POST", "PATCH", "PUT"].includes(t.method) && bodySchema?.properties && Object.keys(bodySchema.properties).length > 0) return false;
         return true;
       });
 
@@ -235,6 +240,18 @@ export default function BlueprintDetail() {
       const testTool = listToolsNoParams?.[0] || getToolsNoParams?.[0] || postToolsNoParams?.[0] || toolsWithoutRequiredParams?.[0];
 
       if (!testTool) {
+        // For API key integrations, the key is already saved — mark as success
+        if (blueprint.authType === "api_key") {
+          setTestResult({
+            success: true,
+            message: "API key saved successfully. All tools require parameters so automatic testing is not available, but your connection is ready to use."
+          });
+          toast({
+            title: "Connection Ready",
+            description: `${blueprint.name} API key saved — ready for use`,
+          });
+          return;
+        }
         setTestResult({
           success: false,
           message: "No suitable test tool found. All tools require parameters. Your connection is established but cannot be automatically tested."

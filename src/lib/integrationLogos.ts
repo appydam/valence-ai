@@ -55,13 +55,6 @@ const LOGO_GONG = svg(
   `</svg>`
 );
 
-// MindTickle: purple MT initials
-const LOGO_MINDTICKLE = svg(
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
-  `<rect width="64" height="64" rx="14" fill="#5F2EEA"/>` +
-  `<text x="32" y="44" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="24" fill="#fff">MT</text>` +
-  `</svg>`
-);
 
 // Productboard: official 3-triangle mark — Red #FF2638, Yellow #FFC600, Blue #0079F2
 // Source: logos:productboard-icon on Iconify (CC0)
@@ -121,18 +114,18 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "google-sheets":      si("googlesheets", "34A853"),
 
   // CRM & Sales
-  "salesforce":         LOGO_SALESFORCE,
+  "salesforce":         "https://cdn.brandfetch.io/idVE84WdIN/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1667559911541",
   "hubspot":            si("hubspot", "FF7A59"),
   "gong":               LOGO_GONG,
-  "pipedrive":          "https://cdn.worldvectorlogo.com/logos/pipedrive.svg",
+  "pipedrive":          "https://cdn.brandfetch.io/idZG_U1qqs/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1668515967517",
 
   // Payments
-  "stripe-api":         si("stripe", "635BFF"),
+  "stripe-api":         "https://cdn.brandfetch.io/idxAg10C0L/w/480/h/480/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1761194563315",
 
   // Support
   "intercom":           si("intercom", "6AFDEF"),
   "zendesk":            LOGO_ZENDESK,
-  "servicenow":         LOGO_SERVICENOW,
+  "servicenow":         "https://cdn.brandfetch.io/idn6njzi5Z/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1677205846664",
 
   // Design
   "figma":              si("figma", "F24E1E"),
@@ -149,7 +142,7 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
 
   // HR & Payroll
   "gusto":              si("gusto", "F45D48"),
-  "workday":            LOGO_WORKDAY,
+  "workday":            "https://cdn.brandfetch.io/id0V-YF4nE/w/2048/h/2048/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1761286530298",
   "greenhouse":         LOGO_GREENHOUSE,
   "sap-successfactors": si("sap", "0FAAFF"),
   "sap-s4hana":         si("sap", "0FAAFF"),
@@ -158,7 +151,7 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "looker":             si("looker", "4285F4"),
 
   // Sales Enablement
-  "mindtickle":         LOGO_MINDTICKLE,
+  "mindtickle":         "https://cdn.brandfetch.io/idJheAuto1/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1702595441572",
 
   // Payments
   "razorpay":           si("razorpay", "0C2451"),
@@ -168,7 +161,7 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
 
   // Marketing
   "mailchimp":          si("mailchimp", "FFE01B"),
-  "hunter":             svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#FF4800"/><text x="32" y="44" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="28" fill="#fff">H</text></svg>`),
+  "hunter":             "https://cdn.brandfetch.io/id0zjcB8R3/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1762332603749",
 
   // Analytics
   "google-analytics":   si("googleanalytics", "E37400"),
@@ -187,6 +180,18 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "posthog":            si("posthog", "ffffff"),
 
   // HR
-  "keka":               svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#4F46E5"/><text x="32" y="44" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="28" fill="#fff">K</text></svg>`),
-  "rippling":           svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#FEC229"/><text x="32" y="44" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="24" fill="#1a1a1a">R</text></svg>`),
+  "keka":               "https://cdn.brandfetch.io/idwZdsybos/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1766485549086",
+  "rippling":           "https://cdn.brandfetch.io/idyS3r5vpr/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1667595026388",
+
+  // Productivity
+  "airtable":           "https://cdn.brandfetch.io/iddsnRzkxS/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1675163448780",
+  "typeform":           "https://cdn.brandfetch.io/idPkJ70vyb/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1699355444200",
+
+  // Sales & Outreach
+  "lagrowthmachine":    svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#231932"/><line x1="32" y1="14" x2="32" y2="50" stroke="#3DC778" stroke-width="7" stroke-linecap="round"/><line x1="14" y1="32" x2="50" y2="32" stroke="#3DC778" stroke-width="7" stroke-linecap="round"/><line x1="18" y1="18" x2="46" y2="46" stroke="#3DC778" stroke-width="7" stroke-linecap="round"/><line x1="46" y1="18" x2="18" y2="46" stroke="#3DC778" stroke-width="7" stroke-linecap="round"/></svg>`),
+  "clay":               "https://cdn.brandfetch.io/idBx-psh22/w/1024/h/768/theme/dark/symbol.png?c=1bxid64Mup7aczewSAYMX&t=1746741442695",
+  "outreach":           "https://cdn.brandfetch.io/idppFLnf4N/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1668515598143",
+  "salesloft":          "https://cdn.brandfetch.io/idLO9lFZj5/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1667568420757",
+  "instantly":          "https://cdn.brandfetch.io/idlwotiiZv/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1770028826605",
+  "smartlead":          "https://cdn.brandfetch.io/idO61Knu2T/w/301/h/301/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1766562082415",
 };

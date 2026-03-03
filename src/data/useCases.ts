@@ -68,214 +68,7 @@ export const CATEGORY_ICONS: Record<UseCaseCategory, string> = {
 
 export const USE_CASES: UseCase[] = [
   // ─── Sales ────────────────────────────────────────────────────────────────
-  {
-    slug: "close-pipeline-faster",
-    title: "Close pipeline 3× faster",
-    icon: "🚀",
-    category: "sales",
-    categoryLabel: "Sales",
-    buyer: "VP Sales / Head of Revenue, B2B SaaS (50–500 employees)",
-    painPoint:
-      "SDRs spend 70% of their time on research and email writing, not selling. For every 50 leads, a human SDR spends 15–20 minutes per account just pulling data from LinkedIn, Gong, and HubSpot. Then another 10 minutes writing a personalized email. That's 25+ hours of manual work — for one batch. Meanwhile, hot leads go cold and reps burn out on admin, not closing.",
-    trigger:
-      "Research our top 50 Salesforce leads and book demos this week",
-    accentColor: "hsl(217, 91%, 60%)",
-    metric: "48 hrs · 12 demos booked · saves 14 hrs/week",
-    hoursSaved: "14 hrs/week saved · replaces 1 SDR ($65k/yr)",
-    roi: [
-      "14 hrs/week saved per SDR — time redirected to live calls",
-      "Replaces 1 full SDR headcount ($65k/yr fully loaded)",
-      "12 demos booked from 50 leads in 48 hours",
-      "Zero generic emails sent — Sentinel quality-gates every single one",
-      "3× pipeline velocity: leads contacted same-day instead of waiting in queue",
-    ],
-    uniqueAngle:
-      "Sentinel quality-gates every email — no generic AI slop gets sent to your prospects. Multi-agent coordination means Scout's deep research (Gong call transcripts, HubSpot deal history, LinkedIn activity, company news) directly feeds Ghost's hyper-personalization. The result: emails that reference the prospect's last Gong call, their Q3 pipeline gap, and their recent LinkedIn post. No single tool or chatbot can do research → write → review → send → book across 6 platforms autonomously.",
-    steps: [
-      {
-        agent: "Kaze",
-        emoji: "🌀",
-        color: "hsl(217, 91%, 60%)",
-        action: "Pulls 50 open leads from Salesforce, cross-references HubSpot engagement scores",
-        tools: [
-          { label: "Salesforce", color: "#00A1E0" },
-          { label: "HubSpot", color: "#FF7A59" },
-          { label: "Slack", color: "#4A154B" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "50 leads loaded · priority-ranked by deal size + last touch · assigned to Scout + Ghost",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Deep-researches each account — Gong calls, LinkedIn activity, company news, tech stack",
-        tools: [
-          { label: "Gong", color: "#9B59B6" },
-          { label: "HubSpot", color: "#FF7A59" },
-          { label: "Apollo.io", color: "#4A90D9" },
-          { label: "LinkedIn", color: "#0A66C2" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "12 high-intent signals found · 3 accounts re-opened stalled deals · 8 buying committee members identified via Apollo",
-      },
-      {
-        agent: "Ghost",
-        emoji: "👻",
-        color: "hsl(258, 90%, 66%)",
-        action: "Writes 50 hyper-personalized outreach emails referencing research findings",
-        tools: [
-          { label: "Gmail", color: "#EA4335" },
-          { label: "HubSpot", color: "#FF7A59" },
-          { label: "Outreach", color: "#5951FF" },
-          { label: "Notion", color: "#8B8B8B" },
-        ],
-        detail: "Each email references last Gong call + deal history + company news · 50 drafts created in Outreach sequences",
-      },
-      {
-        agent: "Sentinel",
-        emoji: "🔍",
-        color: "hsl(330, 81%, 60%)",
-        action: "Reviews every email against quality rubric — rejects 8 generic ones",
-        tools: [
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "Quality gate: PASS 42 · REJECTED 8 (too generic, missing personalization, wrong tone)",
-      },
-      {
-        agent: "Ghost",
-        emoji: "👻",
-        color: "hsl(258, 90%, 66%)",
-        action: "Rewrites rejected 8 with MindTickle sales playbook applied + Salesloft cadence alignment",
-        tools: [
-          { label: "Gmail", color: "#EA4335" },
-          { label: "MindTickle", color: "#E44D26" },
-          { label: "Salesloft", color: "#00B8A9" },
-        ],
-        detail: "Sentinel re-check: all 50 PASS · playbook-compliant messaging confirmed",
-      },
-      {
-        agent: "Kaze",
-        emoji: "🌀",
-        color: "hsl(217, 91%, 60%)",
-        action: "Sends emails, books demos via Calendly, logs everything in Salesforce + Slack notification",
-        tools: [
-          { label: "Salesforce", color: "#00A1E0" },
-          { label: "Gmail", color: "#EA4335" },
-          { label: "Google Calendar", color: "#4285F4" },
-          { label: "Calendly", color: "#006BFF" },
-          { label: "Zoom", color: "#2D8CFF" },
-          { label: "Slack", color: "#4A154B" },
-        ],
-        detail: "12 demos booked · Zoom links auto-generated · CRM updated · #sales-wins notified",
-      },
-    ],
-    result:
-      "50 personalized emails sent. 12 demos booked. Salesforce, HubSpot, Calendly & Zoom synced. Pipeline moved $340k forward in 48 hours.",
-  },
-  {
-    slug: "enrich-score-leads",
-    title: "Enrich & score every inbound lead in 90 seconds",
-    icon: "⚡",
-    category: "sales",
-    categoryLabel: "Sales",
-    buyer: "RevOps Manager / SDR Team Lead, B2B SaaS (Series A–C)",
-    painPoint:
-      "Inbound leads sit in HubSpot or Salesforce for hours — sometimes days — before anyone researches them. Harvard Business Review found that responding within 5 minutes makes you 100× more likely to connect. But manual enrichment takes 15–20 minutes per lead: check LinkedIn, look up the company, find the tech stack, assess ICP fit. By the time your SDR gets to it, the lead has already booked a demo with your competitor.",
-    trigger:
-      "New lead hits HubSpot → auto-enrich, score, and route to the right rep within 90 seconds",
-    accentColor: "hsl(45, 93%, 47%)",
-    metric: "90 sec response · 2.5× conversion · saves 3 hrs/day",
-    hoursSaved: "3 hrs/day saved per SDR · speed-to-lead under 2 min",
-    roi: [
-      "90-second response time (vs 4+ hours industry average)",
-      "2.5× higher conversion on inbound leads",
-      "3 hrs/day saved on manual SDR research per rep",
-      "Every lead gets a personalized first-touch email before a human even looks",
-      "Lead routing accuracy: right rep gets right lead every time based on territory + ICP fit",
-    ],
-    uniqueAngle:
-      "Not just enrichment (Apollo does that) and not just scoring (HubSpot has lead scoring). It's enrichment + ICP scoring + personalized email draft + intelligent routing + quality audit — all in 90 seconds, fully autonomous. No human touches the lead until it's research-complete, scored, email-drafted, and routed. The combination of Scout's deep enrichment feeding Ghost's personalized email is what makes this impossible for any single tool.",
-    steps: [
-      {
-        agent: "Sentinel",
-        emoji: "🔍",
-        color: "hsl(330, 81%, 60%)",
-        action: "Detects new lead via HubSpot webhook, checks for duplicates in Salesforce",
-        tools: [
-          { label: "HubSpot", color: "#FF7A59" },
-          { label: "Salesforce", color: "#00A1E0" },
-        ],
-        detail: "Lead captured: Jane Smith, VP Engineering @ Acme Corp · no duplicate found · processing started",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Enriches via Apollo + LinkedIn — company size, funding, tech stack, org chart",
-        tools: [
-          { label: "Apollo.io", color: "#4A90D9" },
-          { label: "LinkedIn", color: "#0A66C2" },
-          { label: "HubSpot", color: "#FF7A59" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "Series B · 120 employees · uses React + AWS · $18M raised · CTO reports to CEO directly",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Scores lead against ICP matrix + checks Mixpanel for product usage signals",
-        tools: [
-          { label: "Mixpanel", color: "#7856FF" },
-          { label: "Google Analytics", color: "#E37400" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "ICP score: 87/100 · High intent: visited pricing page 3×, read case study, watched demo video",
-      },
-      {
-        agent: "Ghost",
-        emoji: "👻",
-        color: "hsl(258, 90%, 66%)",
-        action: "Drafts personalized first-touch email referencing their tech stack + funding",
-        tools: [
-          { label: "Gmail", color: "#EA4335" },
-          { label: "Outreach", color: "#5951FF" },
-          { label: "Notion", color: "#8B8B8B" },
-        ],
-        detail: "Email references their React migration, recent Series B, and how our tool fits their stack · loaded into Outreach sequence",
-      },
-      {
-        agent: "Kaze",
-        emoji: "🌀",
-        color: "hsl(217, 91%, 60%)",
-        action: "Routes to best-fit rep in Salesforce + sends Slack alert with full dossier + Calendly link",
-        tools: [
-          { label: "Salesforce", color: "#00A1E0" },
-          { label: "Slack", color: "#4A154B" },
-          { label: "Calendly", color: "#006BFF" },
-          { label: "Microsoft Teams", color: "#6264A7" },
-        ],
-        detail: "Assigned to Sarah (enterprise rep, West Coast territory) · full research dossier attached · Calendly booking link included",
-      },
-      {
-        agent: "Sentinel",
-        emoji: "🔍",
-        color: "hsl(330, 81%, 60%)",
-        action: "Logs enrichment quality + updates Looker dashboard for RevOps tracking",
-        tools: [
-          { label: "Looker", color: "#4285F4" },
-          { label: "Google Sheets", color: "#34A853" },
-          { label: "Airtable", color: "#18BFFF" },
-        ],
-        detail: "Enrichment accuracy: 94% · Model confidence: high · RevOps dashboard auto-updated",
-      },
-    ],
-    result:
-      "Lead fully enriched, scored 87/100, email drafted, loaded into Outreach, and routed to the right rep — all in under 90 seconds. Rep picks up the phone with a full dossier.",
-  },
-
-  // ─── Marketing ────────────────────────────────────────────────────────────
+// ─── Marketing ────────────────────────────────────────────────────────────
   {
     slug: "case-study-pipeline",
     title: "Turn every closed deal into a case study",
@@ -481,328 +274,9 @@ export const USE_CASES: UseCase[] = [
   },
 
   // ─── Customer Success ─────────────────────────────────────────────────────
-  {
-    slug: "predict-prevent-churn",
-    title: "Predict & prevent churn before renewal",
-    icon: "🛡️",
-    category: "customer-success",
-    categoryLabel: "Customer Success",
-    buyer: "VP Customer Success / CS Ops, SaaS with annual contracts ($2M+ ARR)",
-    painPoint:
-      "Churn signals are scattered across 6+ systems and no one connects the dots. Support ticket volume is in Zendesk, engagement metrics in Intercom, payment failures in Stripe, product usage in Mixpanel, NPS in Typeform, and renewal dates in Salesforce. Your CSMs manually review 50+ accounts each — spending hours pulling data from different tabs. By the time someone notices the churn risk, the renewal is 30 days out and the customer has already mentally churned. A single churned enterprise account costs you $100k+ in lost ARR.",
-    trigger:
-      "Daily: scan all accounts renewing in 90 days for churn risk signals across all platforms",
-    accentColor: "hsl(160, 84%, 39%)",
-    metric: "Daily scans · catch risks 60 days early · save 15–25% churn",
-    hoursSaved: "20 hrs/week saved on manual account reviews",
-    roi: [
-      "Catch churn risks 60 days earlier than manual review",
-      "Reduce churn by 15–25% through proactive intervention",
-      "Save $500k+ ARR for a company with $5M ARR",
-      "Proactive outreach triggered automatically for at-risk accounts — no CSM has to remember",
-      "Prediction accuracy improves over time via Valence AI's memory system",
-    ],
-    uniqueAngle:
-      "Not a churn prediction tool (those cost $50k+/yr, take 6 months to implement, and only show scores in a dashboard). This connects 6+ data sources you already have, synthesizes signals no single tool can see (support volume + payment failures + usage decline + NPS drop = definitive churn signal), generates personalized save emails, books proactive meetings, and alerts the right CSM — all autonomously. The memory system means it learns from every prediction: which signals actually predicted churn, which save emails worked, which accounts were false alarms.",
-    steps: [
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Pulls renewal calendar from Salesforce — next 90 days — enriched with deal size + CSM owner",
-        tools: [
-          { label: "Salesforce", color: "#00A1E0" },
-          { label: "HubSpot", color: "#FF7A59" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "23 accounts renewing · $1.8M total ARR at risk · sorted by deal size descending",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Cross-references health signals: Zendesk tickets, Intercom engagement, Stripe payments, Mixpanel usage, NPS",
-        tools: [
-          { label: "Zendesk", color: "#03363D" },
-          { label: "Intercom", color: "#286EFA" },
-          { label: "Stripe", color: "#6772E5" },
-          { label: "Mixpanel", color: "#7856FF" },
-          { label: "Typeform", color: "#262627" },
-        ],
-        detail: "5 accounts flagged: 2 Red (usage -40% + 8 tickets + NPS dropped) · 3 Yellow (usage flat + payment failed once)",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Scores each account: Green / Yellow / Red with specific risk factors + confidence level",
-        tools: [
-          { label: "Google Sheets", color: "#34A853" },
-          { label: "Looker", color: "#4285F4" },
-          { label: "Airtable", color: "#18BFFF" },
-        ],
-        detail: "Red: Acme Corp ($180k, usage -40%, 8 tickets, NPS 4→2) · Red: Beta Inc ($95k, payment failed 2×, no login 21 days)",
-      },
-      {
-        agent: "Ghost",
-        emoji: "👻",
-        color: "hsl(258, 90%, 66%)",
-        action: "Drafts personalized check-in emails for Yellow/Red accounts — each references their specific usage patterns",
-        tools: [
-          { label: "Gmail", color: "#EA4335" },
-          { label: "Notion", color: "#8B8B8B" },
-          { label: "Outreach", color: "#5951FF" },
-        ],
-        detail: "5 save emails drafted · Acme: references their declining feature usage and offers training · Beta: acknowledges billing issue and offers a call",
-      },
-      {
-        agent: "Kaze",
-        emoji: "🌀",
-        color: "hsl(217, 91%, 60%)",
-        action: "Alerts CSM via Slack with full account dossier + books proactive review meetings + updates Salesforce",
-        tools: [
-          { label: "Slack", color: "#4A154B" },
-          { label: "Google Calendar", color: "#4285F4" },
-          { label: "Zoom", color: "#2D8CFF" },
-          { label: "Salesforce", color: "#00A1E0" },
-        ],
-        detail: "2 urgent Slack alerts with full dossiers · 5 Zoom review meetings booked this week · Salesforce renewal risk field updated",
-      },
-      {
-        agent: "Sentinel",
-        emoji: "🔍",
-        color: "hsl(330, 81%, 60%)",
-        action: "Tracks prediction accuracy over time + monitors which save strategies work best",
-        tools: [
-          { label: "Google Sheets", color: "#34A853" },
-          { label: "Looker", color: "#4285F4" },
-          { label: "Gainsight", color: "#FF5B27" },
-        ],
-        detail: "Last month: 4/5 Red accounts predicted correctly · training-offer emails had 3× response rate vs generic check-ins",
-      },
-    ],
-    result:
-      "5 at-risk accounts identified 60 days before renewal. CSMs got full dossiers + personalized save emails + booked meetings. 3 of 5 Red accounts saved after proactive outreach. Net churn reduced 22%.",
-  },
-
-  // ─── Operations ───────────────────────────────────────────────────────────
-  {
-    slug: "ceo-briefing-autopilot",
-    title: "Weekly CEO briefing, on autopilot",
-    icon: "📊",
-    category: "operations",
-    categoryLabel: "Operations",
-    buyer: "Chief of Staff / Head of Ops / CEO, companies with 50–200 employees",
-    painPoint:
-      "Someone — usually the Chief of Staff or ops lead — spends 4–6 hours every Friday manually pulling numbers from Stripe (revenue), Salesforce (pipeline), Zendesk (support), Google Ads (marketing), Google Analytics (traffic), and Gusto (headcount). Then they paste it all into a Google Doc, write the narrative, format it for the board, and pray the numbers are correct. The CFO always finds an error. The CEO always asks for one more data point. This cycle repeats 52 times per year — that's 250+ hours of one person's time on a task that should take zero.",
-    trigger:
-      "Every Friday 6pm: prepare the Monday morning executive briefing across all departments",
-    accentColor: "hsl(38, 92%, 50%)",
-    metric: "Weekly · saves 4 hrs every Friday · 200 hrs/year",
-    hoursSaved: "4 hrs/week saved · 200 hrs/year per company",
-    roi: [
-      "4 hrs/week saved (200+ hrs/year)",
-      "Board-ready brief every Monday morning — never late, never missed",
-      "Every number verified against source data — zero embarrassing errors in front of the board",
-      "Replaces a full-time ops analyst's weekly reporting duty",
-      "Historical trend analysis included automatically — WoW and MoM comparisons",
-    ],
-    uniqueAngle:
-      "Not a BI dashboard (executives don't log into dashboards — they want a brief in Slack). Not a Zapier automation (can't write narrative insights). This pulls from 8+ real data sources, writes a 1,200-word narrative brief with insights, risks and recommendations, fact-checks every number against raw source data, and delivers it to Slack + Notion + email before Monday — with a review meeting already booked. The full exec-ready package, autonomously produced every week.",
-    steps: [
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Pulls revenue + pipeline + ARR metrics from Stripe, Salesforce, and QuickBooks",
-        tools: [
-          { label: "Stripe", color: "#6772E5" },
-          { label: "Salesforce", color: "#00A1E0" },
-          { label: "QuickBooks", color: "#2CA01C" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "$284k MRR (+3.2% WoW) · 12 deals closing this month · 3 churn risks flagged · burn rate on track",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Pulls support health from Zendesk + Intercom + Freshdesk + product NPS from Typeform",
-        tools: [
-          { label: "Zendesk", color: "#03363D" },
-          { label: "Intercom", color: "#286EFA" },
-          { label: "Freshdesk", color: "#2DB875" },
-          { label: "Typeform", color: "#262627" },
-        ],
-        detail: "CSAT 4.6/5 · 8 critical tickets (down from 12 last week) · avg 2.1hr response · NPS +42",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Pulls marketing performance from ad platforms + analytics + social",
-        tools: [
-          { label: "Meta Ads", color: "#1877F2" },
-          { label: "Google Ads", color: "#4285F4" },
-          { label: "Google Analytics", color: "#E37400" },
-          { label: "Looker", color: "#4285F4" },
-          { label: "LinkedIn", color: "#0A66C2" },
-        ],
-        detail: "$42k ad spend · 3.2× ROAS · CPL down 18% WoW · website traffic +12% · LinkedIn impressions +45%",
-      },
-      {
-        agent: "Ghost",
-        emoji: "👻",
-        color: "hsl(258, 90%, 66%)",
-        action: "Writes 1,200-word executive brief with highlights, risks, recommendations + WoW/MoM trends",
-        tools: [
-          { label: "Notion", color: "#8B8B8B" },
-          { label: "Google Docs", color: "#4285F4" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "1,200-word brief · 3 risks flagged · 2 opportunities identified · WoW + MoM trend charts included",
-      },
-      {
-        agent: "Sentinel",
-        emoji: "🔍",
-        color: "hsl(330, 81%, 60%)",
-        action: "Fact-checks every number against raw source data — flags any discrepancies with explanations",
-        tools: [
-          { label: "Stripe", color: "#6772E5" },
-          { label: "Salesforce", color: "#00A1E0" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "All 28 figures verified · 1 MRR discrepancy corrected (Stripe had pending refund not yet processed)",
-      },
-      {
-        agent: "Kaze",
-        emoji: "🌀",
-        color: "hsl(217, 91%, 60%)",
-        action: "Delivers brief via Slack + Notion + email to C-suite + books Monday review meeting",
-        tools: [
-          { label: "Slack", color: "#4A154B" },
-          { label: "Notion", color: "#8B8B8B" },
-          { label: "Gmail", color: "#EA4335" },
-          { label: "Google Calendar", color: "#4285F4" },
-          { label: "Zoom", color: "#2D8CFF" },
-        ],
-        detail: "Brief live in #leadership by 7pm Friday · email to CEO/CFO/CRO · review booked Monday 9am with Zoom link",
-      },
-    ],
-    result:
-      "Board-ready brief every Monday. 28 metrics from 8 sources, all verified. Delivered Friday 7pm to Slack, Notion, and email. CEO opens Monday with zero prep needed.",
-  },
-
-  // ─── HR ───────────────────────────────────────────────────────────────────
-  {
-    slug: "new-hire-onboarding",
-    title: "New hire fully set up before day 1",
-    icon: "🎯",
-    category: "hr",
-    categoryLabel: "HR & People",
-    buyer: "Head of People / HR Ops, growing companies (20+ hires/year)",
-    painPoint:
-      "New hire onboarding involves 4–6 hours of manual work spread across IT, HR, and the hiring manager: provisioning accounts across 8+ tools that don't talk to each other, setting up payroll and benefits, writing welcome emails, creating a 30/60/90 plan, booking intro meetings, and confirming everything is live. Half the time something is missed — a Jira account that wasn't provisioned, a Gusto enrollment that slipped through — and IT gets a ticket on day 1. For companies hiring 50+ people per year, that's 300+ hours wasted on repetitive provisioning that should be automated.",
-    trigger:
-      "Offer accepted in Greenhouse — onboard Alex Chen, Sales Engineer, start date March 3",
-    accentColor: "hsl(160, 84%, 39%)",
-    metric: "Day 0 · saves 6 hrs per hire · zero IT tickets",
-    hoursSaved: "6 hrs/hire saved · zero IT tickets on day 1",
-    roi: [
-      "6 hrs saved per new hire (from offer acceptance to day 1)",
-      "Zero IT tickets on first day — 100% tool provisioning accuracy",
-      "Personalized 30/60/90 plan + welcome email automatically drafted based on role",
-      "Manager gets a fully prepped hire: accounts live, meetings booked, buddy assigned",
-      "For 50 hires/year: 300 hrs saved = 1.5 full-time IT coordinator replaced",
-    ],
-    uniqueAngle:
-      "Not an HRIS feature (BambooHR can't provision GitHub or Jira). Not an IT automation tool (SailPoint can't write welcome emails or book intro meetings). This orchestrates across 10+ tools that don't talk to each other — Greenhouse, GitHub, Notion, Jira, Confluence, Gusto, Workday, Gmail, Calendar, Zoom, ServiceNow — and confirms everything is live before day 1. Forge provisions, Ghost writes, Kaze books, Sentinel verifies. The entire HR + IT + manager workflow in one trigger.",
-    steps: [
-      {
-        agent: "Sentinel",
-        emoji: "🔍",
-        color: "hsl(330, 81%, 60%)",
-        action: "Detects offer accepted in Greenhouse, pulls role details + start date + team info",
-        tools: [
-          { label: "Greenhouse", color: "#24A47F" },
-          { label: "BambooHR", color: "#73C41D" },
-          { label: "Slack", color: "#4A154B" },
-        ],
-        detail: "Role: Sales Engineer · Start: March 3 · Team: Revenue · Manager: Sarah Kim · #hr-ops notified",
-      },
-      {
-        agent: "Forge",
-        emoji: "🔨",
-        color: "hsl(38, 92%, 50%)",
-        action: "Provisions access across all dev + collaboration tools based on role template",
-        tools: [
-          { label: "GitHub", color: "#e2e8f0" },
-          { label: "Notion", color: "#8B8B8B" },
-          { label: "JIRA", color: "#0052CC" },
-          { label: "Confluence", color: "#0052CC" },
-          { label: "Asana", color: "#F06A6A" },
-          { label: "Figma", color: "#F24E1E" },
-        ],
-        detail: "6 accounts created · permissions set by role template (Sales Engineer) · added to correct teams + projects",
-      },
-      {
-        agent: "Forge",
-        emoji: "🔨",
-        color: "hsl(38, 92%, 50%)",
-        action: "Sets up payroll in Gusto + benefits in Workday + orders equipment via ServiceNow",
-        tools: [
-          { label: "Gusto", color: "#FB4F14" },
-          { label: "Workday", color: "#F5820D" },
-          { label: "ServiceNow", color: "#62D84E" },
-          { label: "ADP Workforce Now", color: "#D0271D" },
-        ],
-        detail: "Payroll enrolled · benefits portal invite sent · MacBook Pro ordered (arriving March 1) · ADP records synced",
-      },
-      {
-        agent: "Ghost",
-        emoji: "👻",
-        color: "hsl(258, 90%, 66%)",
-        action: "Sends personalized welcome email + creates role-specific 30/60/90 plan in Notion + assigns buddy",
-        tools: [
-          { label: "Gmail", color: "#EA4335" },
-          { label: "Notion", color: "#8B8B8B" },
-          { label: "Google Docs", color: "#4285F4" },
-          { label: "Slack", color: "#4A154B" },
-        ],
-        detail: "Welcome email sent from HR · 30/60/90 plan with Sales Engineer-specific milestones · buddy: Mark (Senior SE) pinged in Slack",
-      },
-      {
-        agent: "Kaze",
-        emoji: "🌀",
-        color: "hsl(217, 91%, 60%)",
-        action: "Books week 1 intro meetings with team, skip-level, and cross-functional partners",
-        tools: [
-          { label: "Google Calendar", color: "#4285F4" },
-          { label: "Calendly", color: "#006BFF" },
-          { label: "Zoom", color: "#2D8CFF" },
-          { label: "Microsoft Teams", color: "#6264A7" },
-        ],
-        detail: "8 intros scheduled · manager 1:1 booked day 1 · skip-level with VP on day 3 · cross-team intros days 2–5",
-      },
-      {
-        agent: "Sentinel",
-        emoji: "🔍",
-        color: "hsl(330, 81%, 60%)",
-        action: "Confirms all 10 systems are live + runs verification checklist + logs completion in ServiceNow",
-        tools: [
-          { label: "ServiceNow", color: "#62D84E" },
-          { label: "Slack", color: "#4A154B" },
-          { label: "Google Sheets", color: "#34A853" },
-          { label: "JIRA", color: "#0052CC" },
-        ],
-        detail: "All 10 systems green · equipment shipped · HR, IT, and manager confirmed · zero open items · ServiceNow ticket auto-closed",
-      },
-    ],
-    result:
-      "New hire fully onboarded across 10 tools before day 1. Zero IT tickets. Zero missed accounts. Manager gets a prepped employee with meetings booked, buddy assigned, and 30/60/90 plan ready.",
-  },
-
-  // ─── E-commerce ───────────────────────────────────────────────────────────
+// ─── Operations ───────────────────────────────────────────────────────────
+// ─── HR ───────────────────────────────────────────────────────────────────
+// ─── E-commerce ───────────────────────────────────────────────────────────
   {
     slug: "competitor-price-response",
     title: "React to competitor price changes in real-time",
@@ -1638,110 +1112,6 @@ export const USE_CASES: UseCase[] = [
     ],
     result:
       "6 high-priority upsell opportunities surfaced from product usage data. CSMs received full dossiers + personalized emails + booked meetings. $420k expansion pipeline identified. Zero manual dashboard monitoring required.",
-  },
-  {
-    slug: "qbr-prep-autopilot",
-    title: "QBR prep that pulls itself together",
-    icon: "📑",
-    category: "customer-success",
-    categoryLabel: "Customer Success",
-    buyer: "VP Customer Success / Enterprise CSM, SaaS companies with $50k+ ACV accounts",
-    painPoint:
-      "Quarterly Business Reviews (QBRs) are the most important customer touchpoint for enterprise SaaS — they're where renewals are secured and expansion deals are planted. But CSMs spend 4–8 hours preparing each one: manually pulling product usage from Mixpanel, support ticket history from Zendesk, renewal/expansion data from Salesforce, feature requests from Intercom, and ROI metrics from customer data. Then they build a slide deck. For a CSM with 15 enterprise accounts doing quarterly QBRs, that's 60–120 hours per quarter — a full month of work — just on prep. And the QBR often still misses key data because the CSM forgot to check one of 6 systems.",
-    trigger:
-      "QBR scheduled in 5 days: auto-prepare full QBR package for the enterprise account",
-    accentColor: "hsl(195, 75%, 48%)",
-    metric: "5 days out · 4–8 hrs saved per QBR · 240–480 hrs/year",
-    hoursSaved: "4–8 hrs saved per QBR · 240–480 hrs/year per CSM",
-    roi: [
-      "4–8 hrs saved per QBR × 15 accounts × 4 quarters = 240–480 hrs/year saved per CSM",
-      "QBRs backed by comprehensive data from 6+ sources — no blind spots",
-      "ROI calculations auto-generated from real product + revenue data — defensible, not guesses",
-      "Higher renewal rates from consistently high-quality, data-rich QBRs",
-      "Expansion opportunities auto-identified during QBR prep — upsell naturally built into the conversation",
-    ],
-    uniqueAngle:
-      "Not a CS platform feature (Gainsight has some QBR templates but doesn't pull data from Mixpanel, Zendesk, Stripe and doesn't write the narrative). Not a slide deck tool (Google Slides doesn't auto-populate with customer data). This assembles the full QBR package from 6+ data sources, calculates actual ROI the customer has achieved, identifies expansion opportunities, maps feature requests to your roadmap, and delivers a ready-to-present deck. The CSM reviews and personalizes in 30 minutes — they don't build from scratch over 2 days.",
-    steps: [
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Pulls product usage trends from Mixpanel — adoption rate, feature usage, power users, usage growth/decline, compared to benchmarks",
-        tools: [
-          { label: "Mixpanel", color: "#7856FF" },
-          { label: "Segment", color: "#52BD94" },
-          { label: "Google Sheets", color: "#34A853" },
-          { label: "Heap", color: "#FF6B35" },
-        ],
-        detail: "Usage up 22% QoQ · 3 new departments onboarded · feature X adopted by 85% of users (vs 40% benchmark) · 2 underutilized features identified",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Pulls support history from Zendesk + Intercom — ticket volume, CSAT, outstanding issues, feature requests, escalations",
-        tools: [
-          { label: "Zendesk", color: "#03363D" },
-          { label: "Intercom", color: "#286EFA" },
-          { label: "Freshdesk", color: "#2DB875" },
-        ],
-        detail: "CSAT 4.7/5 (+0.3 QoQ) · 12 tickets (down from 18) · 2 outstanding feature requests · 0 escalations · avg response time: 1.4 hrs",
-      },
-      {
-        agent: "Scout",
-        emoji: "🔭",
-        color: "hsl(160, 84%, 39%)",
-        action: "Pulls account health from Salesforce + Stripe — contract value, renewal date, expansion history, stakeholder map, revenue trends",
-        tools: [
-          { label: "Salesforce", color: "#00A1E0" },
-          { label: "Stripe", color: "#6772E5" },
-          { label: "Looker", color: "#4285F4" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "$120k ACV · renews in 68 days · 2 previous expansions ($80k → $100k → $120k) · 4 stakeholders mapped · Stripe payments healthy",
-      },
-      {
-        agent: "Ghost",
-        emoji: "👻",
-        color: "hsl(258, 90%, 66%)",
-        action: "Creates QBR deck content: executive summary, usage highlights, ROI achieved, support review, roadmap alignment, growth recommendations",
-        tools: [
-          { label: "Google Docs", color: "#4285F4" },
-          { label: "Notion", color: "#8B8B8B" },
-          { label: "Google Sheets", color: "#34A853" },
-        ],
-        detail: "8-section QBR deck · ROI calculated: $340k value delivered (2.8× contract value) · 3 expansion recommendations · roadmap alignment: 4 of their 6 requests on next 2 sprints",
-      },
-      {
-        agent: "Sentinel",
-        emoji: "🔍",
-        color: "hsl(330, 81%, 60%)",
-        action: "Verifies all metrics are current and accurate + ensures ROI calculations are defensible with source documentation",
-        tools: [
-          { label: "Salesforce", color: "#00A1E0" },
-          { label: "Stripe", color: "#6772E5" },
-          { label: "Mixpanel", color: "#7856FF" },
-        ],
-        detail: "All figures verified · ROI methodology documented · 1 usage stat updated (was cached from last week) · source links embedded in deck",
-      },
-      {
-        agent: "Kaze",
-        emoji: "🌀",
-        color: "hsl(217, 91%, 60%)",
-        action: "Delivers QBR draft to CSM via Gmail + Slack + creates Google Docs/Slides template + books internal prep call before the QBR",
-        tools: [
-          { label: "Gmail", color: "#EA4335" },
-          { label: "Slack", color: "#4A154B" },
-          { label: "Google Calendar", color: "#4285F4" },
-          { label: "Zoom", color: "#2D8CFF" },
-          { label: "Google Drive", color: "#34A853" },
-        ],
-        detail: "QBR package delivered to CSM Sarah · Google Doc + Slides shared · internal prep call booked 2 days before QBR · all materials in shared Drive folder",
-      },
-    ],
-    result:
-      "Full QBR package assembled from 6 data sources. Usage trends, support review, ROI calculation ($340k value = 2.8× contract), expansion recommendations — all in one deck. CSM spent 30 minutes personalizing instead of 6 hours building from scratch.",
   },
 
   // ─── Operations (new) ─────────────────────────────────────────────────────
@@ -2691,6 +2061,957 @@ export const USE_CASES: UseCase[] = [
     ],
     result:
       "28-page contract reviewed in 90 minutes instead of 3 hours. 3 critical risks flagged (uncapped liability, missing DPA, excessive termination notice). Redline language pre-written. Legal team reviewed AI analysis in 30 minutes and sent back redlines same day. Deal unblocked — didn't stall for a week in the legal queue.",
+  },
+
+  // ─── NEW: High-ROI Team-Sellable Use Cases ─────────────────────────────────
+
+  // ─── Sales (team) ──────────────────────────────────────────────────────────
+  {
+    slug: "sales-lead-enrichment-outbound",
+    title: "Enrich leads & run outbound on autopilot",
+    icon: "🎯",
+    category: "sales",
+    categoryLabel: "Sales",
+    buyer: "Head of RevOps / SDR Team Lead, B2B SaaS or services (Series A–C, 50–500 employees)",
+    painPoint:
+      "SDRs spend 37% of their workday researching prospects — scrolling LinkedIn, checking company websites, pulling tech stack data from Apollo, then writing personalized emails one by one. For a 5-person SDR team, that's 75 hours/week of non-selling activity. Meanwhile, leads go cold: Harvard Business Review found responding within 5 minutes makes you 100× more likely to connect. But your team takes 4+ hours because they're stuck in research mode. Every hour an SDR spends on data entry is an hour they're not on the phone closing.",
+    trigger:
+      "New leads hit CRM → auto-enrich, score, personalize outreach, and enroll in sequences for the entire SDR team",
+    accentColor: "hsl(217, 91%, 60%)",
+    metric: "75 hrs/week saved · 5–10 seats · $2k+ MRR",
+    hoursSaved: "15 hrs/week saved per SDR · 75 hrs/week across a 5-person team",
+    roi: [
+      "75 hrs/week of SDR research time eliminated — redirected to live calls and demos",
+      "90-second lead response time (vs 4+ hour industry average) — 100× more likely to connect",
+      "2.5× higher conversion on inbound leads with instant personalized outreach",
+      "Every rep gets research-complete dossiers + pre-written emails — zero manual CRM data entry",
+      "Lead routing accuracy: right rep gets right lead based on territory, ICP fit, and deal size",
+    ],
+    uniqueAngle:
+      "Not just enrichment (Apollo does that) or just sequencing (Outreach does that). This runs the full loop autonomously: new lead → deep research across LinkedIn + CRM + web → ICP scoring → personalized email draft referencing specific company context → quality review → sequence enrollment → CRM logging. Every SDR on the team gets this for every lead, simultaneously. No single tool chains research → write → review → send → log across 6 platforms.",
+    steps: [
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Detects new leads via CRM webhook, deduplicates against existing contacts, and assigns to enrichment queue",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Zoho CRM", color: "#DC2626" },
+        ],
+        detail: "15 new leads detected · 2 duplicates merged · 13 unique leads queued for enrichment · assigned to SDR territories",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Deep-researches each lead — company size, funding, tech stack, org chart, recent news, intent signals",
+        tools: [
+          { label: "Apollo.io", color: "#4A90D9" },
+          { label: "LinkedIn", color: "#0A66C2" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Mixpanel", color: "#7856FF" },
+          { label: "Google Analytics", color: "#E37400" },
+        ],
+        detail: "13 leads enriched · 8 high-intent signals found (pricing page visits, case study downloads) · 4 buying committee members identified per account",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Scores each lead against ICP matrix — company fit, buyer persona match, intent strength, timing signals",
+        tools: [
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Looker", color: "#4285F4" },
+          { label: "Airtable", color: "#18BFFF" },
+        ],
+        detail: "ICP scoring complete · 5 leads scored 80+ (hot) · 6 leads scored 50–79 (warm) · 2 leads scored below 50 (nurture) · routing rules applied",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Writes personalized outreach emails for each lead, referencing research findings — not generic templates",
+        tools: [
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Outreach", color: "#5951FF" },
+          { label: "Salesloft", color: "#00B8A9" },
+          { label: "Notion", color: "#8B8B8B" },
+        ],
+        detail: "13 personalized emails drafted · each references company context, tech stack, and specific pain point · loaded into rep-specific Outreach sequences",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Quality-gates every email — rejects generic ones, checks brand voice, verifies personalization accuracy",
+        tools: [
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Quality gate: 11 PASS · 2 REJECTED (weak personalization) · Ghost rewrites rejected emails with deeper context · all 13 pass on second review",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Routes leads to correct SDR, enrolls in sequences, logs everything in CRM, notifies team in Slack",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Slack", color: "#4A154B" },
+          { label: "Calendly", color: "#006BFF" },
+          { label: "Google Calendar", color: "#4285F4" },
+        ],
+        detail: "13 leads routed to 5 SDRs by territory · sequences activated · CRM fully updated · #sales-pipeline Slack channel notified with daily summary",
+      },
+    ],
+    result:
+      "13 leads fully enriched, scored, personalized, and enrolled in sequences — all within 90 seconds of hitting the CRM. 5 SDRs saved 15 hrs/week each. Pipeline velocity increased 3× with same-day outreach on every inbound lead.",
+  },
+  {
+    slug: "sales-crm-hygiene",
+    title: "CRM hygiene + activity logging on autopilot",
+    icon: "🧹",
+    category: "sales",
+    categoryLabel: "Sales",
+    buyer: "VP Sales / RevOps Manager, B2B companies with 5+ sales reps (Series A–C)",
+    painPoint:
+      "Sales reps spend 20% of their day on manual CRM data entry — after every call, meeting, or email, they must log activities, update deal stages, add notes, and tag contacts. Nobody does it properly. CRM data quality is always terrible: 40% of deals have missing fields, stages are outdated, and notes are empty. Sales managers can't trust pipeline reports because reps don't update consistently. The average rep touches the CRM 15–20 times/day for 2–3 minutes each — that's 30–60 minutes/day of context-switching hell that kills productivity and morale.",
+    trigger:
+      "After every call, meeting, or email — auto-log activities, update deal stages, and audit CRM data quality weekly",
+    accentColor: "hsl(190, 80%, 45%)",
+    metric: "165 hrs/month saved · 5–15 seats · $3k MRR",
+    hoursSaved: "30–60 min/day per rep · 165 hrs/month across 10-person team",
+    roi: [
+      "Every rep saves 30–60 min/day on CRM data entry — 165 hrs/month across a 10-person team",
+      "CRM data quality jumps from 60% to 95%+ field completion — pipeline reports finally trustworthy",
+      "Deal stages auto-updated based on conversation signals — no more stale 'Negotiation' deals from 3 months ago",
+      "Weekly CRM audit catches stuck deals, missing fields, and outdated contacts before they rot",
+      "Sales managers get accurate forecasts for the first time — based on real data, not rep guesses",
+    ],
+    uniqueAngle:
+      "Not a CRM plugin that adds one button (Gong logs calls but doesn't update deal stages). Not a data cleaning tool (those run once and data goes stale again). This is continuous, autonomous CRM maintenance: every call auto-logged with structured notes, every email captured, every deal stage evaluated against conversation signals, every field audited weekly. The result: a CRM that reflects reality without reps ever touching it. Every rep on the team benefits — this is a 5–15 seat use case by design.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Captures activities from Gmail, Calendar, and Gong — calls, meetings, emails automatically detected and parsed",
+        tools: [
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Google Calendar", color: "#4285F4" },
+          { label: "Gong", color: "#9B59B6" },
+          { label: "Zoom", color: "#2D8CFF" },
+        ],
+        detail: "42 activities captured today across 10 reps · 18 calls, 12 meetings, 12 email threads · all matched to CRM contacts and deals",
+      },
+      {
+        agent: "Forge",
+        emoji: "⚒️",
+        color: "hsl(25, 95%, 53%)",
+        action: "Auto-logs every activity in CRM with structured notes — call outcomes, next steps, key quotes, sentiment",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Zoho CRM", color: "#DC2626" },
+        ],
+        detail: "42 activities logged · each with structured notes (outcome, next steps, sentiment) · zero manual data entry by reps",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Analyzes conversation signals to recommend deal stage updates — identifies stalled, progressing, or at-risk deals",
+        tools: [
+          { label: "Gong", color: "#9B59B6" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Slack", color: "#4A154B" },
+        ],
+        detail: "6 deal stage updates recommended · 2 deals moved to 'Negotiation' (budget discussed on call) · 1 deal flagged at-risk (competitor mentioned) · 3 deals confirmed on track",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Weekly CRM audit — flags stale deals, missing fields, duplicate contacts, and data quality issues",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Looker", color: "#4285F4" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Weekly audit: 8 stale deals (no activity 30+ days) · 12 missing required fields · 3 duplicate contacts merged · data quality score: 94% (up from 61%)",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Alerts reps and managers about needed actions — stale deals, missing updates, coaching opportunities",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Slack alerts sent: 3 reps pinged about stale deals · manager notified of 2 coaching opportunities · weekly CRM health report delivered to VP Sales",
+      },
+    ],
+    result:
+      "42 activities auto-logged across 10 reps with zero manual entry. 6 deal stages auto-updated. Weekly audit found 8 stale deals and 12 missing fields. CRM data quality improved from 61% to 94%. Sales managers finally trust the pipeline numbers.",
+  },
+
+  // ─── Customer Success (team) ───────────────────────────────────────────────
+  {
+    slug: "cs-qbr-health-automation",
+    title: "QBR prep + health scores across your entire book",
+    icon: "💚",
+    category: "customer-success",
+    categoryLabel: "Customer Success",
+    buyer: "VP Customer Success / CS Ops Lead, SaaS companies with 5+ CSMs (Series A–C)",
+    painPoint:
+      "Each CSM manages 30–50 accounts and must manually check 4–6 tools per account: product usage in Mixpanel, support tickets in Zendesk, billing in Stripe, CRM notes in Salesforce, engagement signals in Intercom. QBR prep alone takes 4–8 hours per account — for a CSM with 15 enterprise accounts doing quarterly QBRs, that's 60–120 hours per quarter on prep alone. And between QBRs, nobody is consistently monitoring health signals. By the time a CSM notices usage dropping, the customer is already evaluating competitors. One org cut QBR prep time by 83% with automation.",
+    trigger:
+      "Daily: monitor health scores across all accounts. QBR scheduled: auto-prepare full package 5 days before",
+    accentColor: "hsl(160, 84%, 39%)",
+    metric: "83% less QBR prep · 5–15 seats · $3k MRR",
+    hoursSaved: "4–8 hrs saved per QBR · 5–8 hrs/week per CSM on health monitoring",
+    roi: [
+      "QBR prep reduced from 6 hours to 45 minutes per account — CSMs review and personalize, not build from scratch",
+      "At-risk accounts flagged 60 days before renewal — not 2 weeks before when it's too late",
+      "10 CSMs × 200 hrs/quarter QBR prep = $112k/quarter in labor saved (US rates)",
+      "Health scores calculated daily from real product usage, not quarterly gut-feel check-ins",
+      "Upsell opportunities auto-identified: accounts at 90%+ usage, growing teams, feature requests matching higher tiers",
+    ],
+    uniqueAngle:
+      "Not a CS platform feature (Gainsight has templates but doesn't pull data from Mixpanel, Zendesk, Stripe). Not a slide deck tool (Google Slides doesn't auto-populate with customer data). This runs two loops simultaneously: (1) daily health monitoring across every account in every CSM's book, and (2) full QBR package assembly from 6+ data sources when a review is scheduled. Every CSM on the team gets both — health alerts for their accounts and ready-to-present QBR decks. That's 5–15 seats of value.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Pulls product usage trends from analytics — adoption rate, feature usage, power users, growth/decline signals",
+        tools: [
+          { label: "Mixpanel", color: "#7856FF" },
+          { label: "Amplitude", color: "#1E61F0" },
+          { label: "Segment", color: "#52BD94" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Usage data pulled for 150 accounts · 12 showing declining usage (>20% drop MoM) · 8 approaching tier limits · 3 new departments onboarded",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Pulls support history + billing data — ticket volume, CSAT, outstanding issues, payment health, contract terms",
+        tools: [
+          { label: "Zendesk", color: "#03363D" },
+          { label: "Freshdesk", color: "#2DB875" },
+          { label: "Intercom", color: "#286EFA" },
+          { label: "Stripe", color: "#6772E5" },
+          { label: "Razorpay", color: "#072654" },
+        ],
+        detail: "Support: avg CSAT 4.5/5 · 3 accounts with escalated tickets · Billing: all payments current except 2 accounts with failed charges",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Calculates composite health scores + generates QBR deck narratives for scheduled reviews",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Notion", color: "#8B8B8B" },
+        ],
+        detail: "Health scores: 120 Green · 22 Yellow · 8 Red · 3 QBR decks prepared with exec summary, ROI calculation ($340k value = 2.8× contract), expansion recommendations",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Verifies all metrics, cross-checks data sources, flags accounts where signals conflict",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "Stripe", color: "#6772E5" },
+          { label: "Mixpanel", color: "#7856FF" },
+          { label: "Looker", color: "#4285F4" },
+        ],
+        detail: "All figures verified · 2 conflicting signals found (high usage but low CSAT — investigating) · ROI methodology documented · source links embedded",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Routes alerts to CSMs — at-risk accounts in Slack, QBR packages via email, upsell opportunities flagged",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Google Calendar", color: "#4285F4" },
+          { label: "Zoom", color: "#2D8CFF" },
+          { label: "Google Drive", color: "#34A853" },
+        ],
+        detail: "8 Red account alerts sent to respective CSMs · 3 QBR packages delivered · 5 upsell opportunities flagged · internal prep calls booked",
+      },
+    ],
+    result:
+      "150 accounts health-scored daily. 8 at-risk accounts flagged 60 days before renewal — 3 saved with proactive outreach. 3 QBR packages assembled from 6 data sources in 45 minutes instead of 6 hours each. Net churn reduced 22%. Expansion pipeline: $420k identified.",
+  },
+  {
+    slug: "cs-onboarding-orchestration",
+    title: "Customer onboarding that runs itself",
+    icon: "🚀",
+    category: "customer-success",
+    categoryLabel: "Customer Success",
+    buyer: "VP Customer Success / Head of Onboarding, SaaS companies onboarding 10+ customers/month",
+    painPoint:
+      "Every closed deal triggers a 15–25 step onboarding process: create project, assign tasks to customer + internal team (CS, engineering, sales handoff), track completion, send reminders, escalate blockers, hand off to ongoing CSM. Each onboarding takes 8–12 hours of coordination. At 20 new customers/month, that's 160–240 hours/month of manual project management. Users who reach first value within 2 weeks are 3× more likely to renew — so speed matters enormously. But coordination bottlenecks mean average time-to-value is 4–6 weeks, not 2.",
+    trigger:
+      "Deal marked Closed-Won in CRM → auto-create onboarding project, assign tasks, track progress, escalate blockers",
+    accentColor: "hsl(45, 93%, 47%)",
+    metric: "50% faster onboarding · 5–10 seats · $2k MRR",
+    hoursSaved: "8–12 hrs saved per customer · 160–240 hrs/month at 20 customers",
+    roi: [
+      "Onboarding time cut by 50% — time-to-value goes from 4–6 weeks to 2 weeks",
+      "3× higher renewal rate for customers who onboard within 2 weeks (industry data)",
+      "160–240 hrs/month saved on onboarding coordination at 20 customers/month",
+      "Zero dropped tasks: every onboarding step tracked, assigned, and deadline-monitored automatically",
+      "CSM handoff is seamless — ongoing CSM inherits full context, not a blank account",
+    ],
+    uniqueAngle:
+      "Not a project management tool (Asana has templates but doesn't auto-populate from CRM data, doesn't monitor task completion, doesn't escalate blockers to Slack, doesn't track time-to-value). This is the full orchestration loop: deal closes → project auto-created with customer-specific tasks → daily progress monitoring → automatic reminders to customer and internal team → blocker escalation → time-to-value tracking → handoff to ongoing CSM with full context. Every CSM and onboarding specialist uses it — 5–10 seats.",
+    steps: [
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Detects Closed-Won deal, creates onboarding project with templated tasks personalized to customer tier and product",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Asana", color: "#F06A6A" },
+          { label: "JIRA", color: "#0052CC" },
+          { label: "Monday.com", color: "#FF3D57" },
+        ],
+        detail: "Deal detected: Acme Corp ($80k ACV, Enterprise tier) · 22-step onboarding project created · tasks assigned to CSM Sarah, Solutions Engineer Mike, and customer champion Jane",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Sends personalized welcome email to customer with onboarding timeline, first steps, and scheduling link",
+        tools: [
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Calendly", color: "#006BFF" },
+          { label: "Notion", color: "#8B8B8B" },
+          { label: "Google Docs", color: "#4285F4" },
+        ],
+        detail: "Welcome package sent to Acme Corp · includes onboarding timeline, Notion checklist, and Calendly link for kickoff call · kickoff booked for Tuesday 2pm",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Monitors task completion daily — tracks progress, identifies blockers, checks if customer has started using the product",
+        tools: [
+          { label: "Asana", color: "#F06A6A" },
+          { label: "Mixpanel", color: "#7856FF" },
+          { label: "Intercom", color: "#286EFA" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Day 5: 12/22 tasks complete · customer logged in 8 times · API integration not started (blocker: engineering team hasn't received credentials) · blocker flagged",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Escalates blockers in Slack, sends reminders to overdue task owners, updates progress dashboards",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Asana", color: "#F06A6A" },
+        ],
+        detail: "Blocker escalated: #cs-escalations Slack channel pinged · Solutions Engineer Mike reminded about API credentials · customer notified of revised timeline",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Tracks time-to-value metrics, compares against benchmarks, generates onboarding health report",
+        tools: [
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Looker", color: "#4285F4" },
+          { label: "Salesforce", color: "#00A1E0" },
+        ],
+        detail: "Time-to-value: 11 days (benchmark: 14 days — ahead of schedule) · Onboarding NPS: pending · 1 blocker resolved · overall health: Green",
+      },
+    ],
+    result:
+      "Customer fully onboarded in 11 days (vs 28-day average). Zero dropped tasks across 22 steps. Blocker resolved in 4 hours via automated escalation. CSM handoff included full context. Customer rated onboarding 9/10.",
+  },
+
+  // ─── Marketing (team) ──────────────────────────────────────────────────────
+  {
+    slug: "marketing-cross-channel-reporting",
+    title: "Cross-channel marketing reports, every Monday",
+    icon: "📊",
+    category: "marketing",
+    categoryLabel: "Marketing",
+    buyer: "VP Marketing / Marketing Ops Manager, B2B SaaS or D2C (Series A–C, 50–300 employees)",
+    painPoint:
+      "Every Monday, the marketing team logs into 6–8 platforms — Google Ads, Meta Ads, GA4, Search Console, HubSpot, Klaviyo, Mixpanel — pulls numbers into spreadsheets, reconciles different metric definitions, and tries to build a unified view of what's working. 56% of marketers say they don't have enough time to analyze data thoroughly. A 5-person marketing team spends 10–15 hours/week just on reporting. And the reports are always late, always inconsistent, and always missing someone's favorite metric. Attribution is a nightmare because no single tool connects ad spend to pipeline to revenue.",
+    trigger:
+      "Every Monday 8am: pull data from all channels, build unified performance report, recommend budget reallocation",
+    accentColor: "hsl(280, 65%, 55%)",
+    metric: "10–15 hrs/week saved · 3–6 seats · $1.5k MRR",
+    hoursSaved: "10–15 hrs/week across marketing team · reports delivered Monday 8am, not Wednesday",
+    roi: [
+      "10–15 hrs/week saved on manual reporting — team focuses on strategy, not spreadsheets",
+      "Reports delivered Monday 8am automatically — not Wednesday afternoon after 2 days of data-pulling",
+      "Unified attribution: ad spend → leads → pipeline → revenue connected across all channels",
+      "Budget reallocation recommendations based on cross-channel ROAS — not gut feel",
+      "Every marketer gets their own view: performance marketer sees ROAS, content lead sees SEO metrics, CMO sees revenue impact",
+    ],
+    uniqueAngle:
+      "Not a BI dashboard (Looker shows data but doesn't write insights or recommendations). Not a single-channel tool (Google Ads reports don't include Meta or email). This pulls from every channel, normalizes metrics, writes the narrative ('Meta ROAS dropped 30% last week — here's why and what to do'), and recommends specific budget moves. Every person on the marketing team gets the view they need. 3–6 seats: performance marketer, content lead, SEO specialist, marketing manager, CMO.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Pulls performance data from all ad platforms, analytics, email, and CRM — normalizes metrics across sources",
+        tools: [
+          { label: "Google Ads", color: "#4285F4" },
+          { label: "Meta Ads", color: "#1877F2" },
+          { label: "TikTok Ads", color: "#010101" },
+          { label: "Google Analytics", color: "#E37400" },
+          { label: "Google Search Console", color: "#4285F4" },
+        ],
+        detail: "Last 7 days: $42k ad spend across 3 platforms · 2,400 clicks · 180 leads · GA4 shows 12% traffic increase · 8 keywords gained top-3 positions",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Pulls email/marketing automation + CRM pipeline data to connect spend to revenue",
+        tools: [
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Klaviyo", color: "#000000" },
+          { label: "Mailchimp", color: "#FFE01B" },
+          { label: "Mixpanel", color: "#7856FF" },
+          { label: "Salesforce", color: "#00A1E0" },
+        ],
+        detail: "Email: 45% open rate, 3.2% CTR · 180 leads → 34 MQLs → 12 SQLs · pipeline influence: $280k · blended CAC: $233",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Writes unified performance report with insights, trends, and specific budget reallocation recommendations",
+        tools: [
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Notion", color: "#8B8B8B" },
+        ],
+        detail: "Report generated: 'Meta ROAS dropped 28% — recommend shifting $5k to Google Search which gained 3 top-3 keywords. Email revenue up 40% — double down on abandoned cart sequence.' 4 specific actions recommended.",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Verifies all numbers against source platforms, catches metric discrepancies, validates attribution logic",
+        tools: [
+          { label: "Google Ads", color: "#4285F4" },
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "Looker", color: "#4285F4" },
+        ],
+        detail: "All metrics verified · 1 discrepancy found (GA4 vs HubSpot lead count — 180 vs 176 due to bot filtering) · noted in report · attribution model consistent",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Delivers report to team — Slack summary, full report in Sheets, CMO gets email digest with key decisions needed",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Google Drive", color: "#34A853" },
+        ],
+        detail: "Monday 8am: #marketing Slack gets TL;DR · full report auto-saved in Drive · CMO email digest sent with 3 decisions needed · performance marketer gets channel-specific view",
+      },
+    ],
+    result:
+      "Unified marketing report delivered Monday 8am — all 6 channels, one view. $5k budget reallocation recommended (Meta → Google Search). Team saved 12 hrs/week. CMO made budget decision by Monday lunch instead of waiting until Wednesday.",
+  },
+  {
+    slug: "content-repurpose-distribute",
+    title: "One blog post → 15 content assets, distributed",
+    icon: "♻️",
+    category: "marketing",
+    categoryLabel: "Marketing",
+    buyer: "Head of Content / Marketing Manager, B2B SaaS or D2C with active content calendar",
+    painPoint:
+      "94% of marketers repurpose content, but it's almost entirely manual. A single blog post needs to become 5 LinkedIn posts, 3 Twitter threads, an email newsletter section, Instagram carousel copy, and a YouTube Shorts script. Then each needs scheduling across platforms. This takes 3–5 hours per piece of content. If you're publishing 4 pieces/week, that's 12–20 hours/week just on repurposing — almost a full-time person. And most teams don't have that person, so 80% of content never gets repurposed, dying after its initial publish.",
+    trigger:
+      "Blog post published in Notion/WordPress → auto-create multi-format content for every channel and schedule distribution",
+    accentColor: "hsl(320, 70%, 50%)",
+    metric: "3× content output · 3–6 seats · $1.2k MRR",
+    hoursSaved: "3–5 hrs saved per content piece · 12–20 hrs/week at 4 pieces/week",
+    roi: [
+      "3× content output from same team — every piece gets distributed across 5+ channels instead of dying after initial publish",
+      "12–20 hrs/week saved on manual repurposing and scheduling",
+      "80% of content that was never repurposed now gets distributed automatically",
+      "Consistent brand voice across all channels — Sentinel enforces tone and messaging guidelines",
+      "Content ROI visible: track which formats and channels drive the most engagement per piece",
+    ],
+    uniqueAngle:
+      "Not a social media scheduler (Buffer schedules but doesn't write the content). Not an AI writer (ChatGPT writes but doesn't know your brand voice, doesn't schedule, doesn't track performance). This is the full content multiplication loop: source piece published → extracted into platform-specific formats → brand voice verified → scheduled across channels → performance tracked. Content writer, social manager, and email marketer all benefit — 3–6 seats.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Detects new blog post published, extracts key points, identifies best angles for each platform",
+        tools: [
+          { label: "Notion", color: "#8B8B8B" },
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Google Analytics", color: "#E37400" },
+        ],
+        detail: "New post detected: '10 Ways AI Agents Transform Sales' (2,200 words) · 5 key insights extracted · 3 data points identified · best angles mapped to LinkedIn (thought leadership), Twitter (tactical tips), email (case study highlight)",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Creates platform-specific content — LinkedIn posts, Twitter threads, email snippets, Instagram captions, newsletter sections",
+        tools: [
+          { label: "Notion", color: "#8B8B8B" },
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "15 assets created: 5 LinkedIn posts (different angles) · 3 Twitter threads · 2 email newsletter blocks · 3 Instagram captions · 2 YouTube Shorts scripts — each tailored to platform norms",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Reviews every piece for brand voice consistency, accuracy, and platform best practices",
+        tools: [
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Notion", color: "#8B8B8B" },
+        ],
+        detail: "Quality gate: 13 PASS · 2 revised (Twitter thread too promotional, LinkedIn post missing CTA) · brand voice score: 92/100 across all pieces",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Schedules content across all channels, adds to email newsletter queue, creates tasks for design team",
+        tools: [
+          { label: "LinkedIn", color: "#0A66C2" },
+          { label: "Twitter/X", color: "#1DA1F2" },
+          { label: "Instagram", color: "#E4405F" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Klaviyo", color: "#000000" },
+          { label: "Asana", color: "#F06A6A" },
+          { label: "Slack", color: "#4A154B" },
+        ],
+        detail: "5 LinkedIn posts scheduled (Mon–Fri) · 3 Twitter threads queued · email snippet added to next newsletter · Asana task created for design team (carousel graphics needed) · #content-calendar Slack updated",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Tracks performance of each content piece across channels — engagement, clicks, conversions — reports back weekly",
+        tools: [
+          { label: "Google Analytics", color: "#E37400" },
+          { label: "LinkedIn", color: "#0A66C2" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Looker", color: "#4285F4" },
+        ],
+        detail: "Week 1 results: LinkedIn post #3 got 12k impressions (best performer) · Twitter thread drove 340 clicks · email snippet had 4.2% CTR · total: 3× more distribution than manual process",
+      },
+    ],
+    result:
+      "One blog post became 15 content assets across 5 channels. All scheduled and distributed within 2 hours of publish. Content team saved 4 hours. LinkedIn post #3 went semi-viral (12k impressions). Email snippet drove 340 clicks to the original article.",
+  },
+
+  // ─── Support (team — new category usage) ───────────────────────────────────
+  {
+    slug: "support-ticket-intelligence",
+    title: "Support tickets triaged & routed in seconds",
+    icon: "🎫",
+    category: "customer-success",
+    categoryLabel: "Customer Success",
+    buyer: "Head of Support / VP Customer Success, SaaS or e-commerce with 5+ support agents",
+    painPoint:
+      "Manual ticket triage takes 2–3 hours per 100 tickets. Every ticket needs: categorization (bug vs feature request vs billing vs how-to), priority assessment, routing to the correct agent, checking if it's a known issue, and drafting an initial response. Self-serviced tickets cost $2 vs $104 for agent-handled (Harvard Business Review). But without intelligent triage, everything lands in a general queue. Agents spend 30% of their time just reading, categorizing, and routing — before they even start solving the problem. For a team handling 500 tickets/week, that's 30–50 hours/week of pure triage overhead.",
+    trigger:
+      "Every new support ticket → auto-categorize, prioritize, route to correct agent, draft response if known issue",
+    accentColor: "hsl(195, 75%, 48%)",
+    metric: "90%+ auto-triage · 5–20 seats · $3k MRR",
+    hoursSaved: "30–50 hrs/week saved on triage · first-response time cut by 60%",
+    roi: [
+      "90%+ tickets auto-categorized and prioritized — agents start solving, not sorting",
+      "First-response time cut by 60% — customers get acknowledgment in minutes, not hours",
+      "Support team handles 2× ticket volume without hiring — triage overhead eliminated",
+      "Known issues auto-resolved with pre-written responses — $2/ticket vs $104 for agent-handled",
+      "Trending issue detection: if 15 tickets mention the same bug in 2 hours, engineering gets alerted immediately",
+    ],
+    uniqueAngle:
+      "Not a chatbot (those handle simple FAQs but can't categorize, prioritize, and route complex tickets). Not a canned response tool (those don't understand context). This is intelligent triage: understand the ticket content, categorize it (bug/feature/billing/how-to), assess priority (P1 if customer is enterprise + production-down), route to the specialist, check knowledge base for known solutions, draft a response if applicable, and escalate to engineering if it's a new bug. Every support agent gets AI-powered context — 5–20 seats.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Reads incoming ticket, analyzes content, categorizes (bug/feature/billing/how-to), assesses priority and sentiment",
+        tools: [
+          { label: "Zendesk", color: "#03363D" },
+          { label: "Freshdesk", color: "#2DB875" },
+          { label: "Intercom", color: "#286EFA" },
+        ],
+        detail: "Ticket analyzed: 'Our dashboard won't load since this morning — we have a demo in 2 hours' → Category: Bug · Priority: P1 (production issue + time-sensitive) · Sentiment: Frustrated · Customer tier: Enterprise",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Checks knowledge base and recent tickets for known issues — matches against existing solutions",
+        tools: [
+          { label: "Confluence", color: "#0052CC" },
+          { label: "Notion", color: "#8B8B8B" },
+          { label: "Zendesk", color: "#03363D" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Match found: 3 similar tickets in last 24 hours reporting dashboard loading issues · known issue KB article exists · engineering already aware (JIRA-4521) · ETA fix: 4 hours",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Drafts response acknowledging the issue, providing workaround, and setting expectations — personalized to customer context",
+        tools: [
+          { label: "Zendesk", color: "#03363D" },
+          { label: "Notion", color: "#8B8B8B" },
+          { label: "Gmail", color: "#EA4335" },
+        ],
+        detail: "Response drafted: acknowledges P1 urgency, references their demo timeline, provides dashboard cache-clear workaround, confirms engineering fix ETA of 4 hours, offers to join their demo as backup",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Routes to correct agent with full context, creates engineering ticket if needed, alerts team leads for P1",
+        tools: [
+          { label: "Zendesk", color: "#03363D" },
+          { label: "JIRA", color: "#0052CC" },
+          { label: "Linear", color: "#5E6AD2" },
+          { label: "Slack", color: "#4A154B" },
+        ],
+        detail: "Routed to Agent Mike (dashboard specialist) · draft response attached · #support-p1 Slack alert fired · JIRA-4521 updated with new affected customer · SLA timer started: 1-hour response target",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Monitors ticket patterns, detects trending issues, tracks SLA compliance and agent performance",
+        tools: [
+          { label: "Looker", color: "#4285F4" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Slack", color: "#4A154B" },
+        ],
+        detail: "Trending alert: 8 dashboard tickets in 2 hours → engineering escalation triggered · SLA compliance: 94% this week · auto-triage accuracy: 91% · 3 tickets auto-resolved with KB articles",
+      },
+    ],
+    result:
+      "500 tickets/week triaged automatically. First-response time dropped from 4 hours to 12 minutes. 3 tickets auto-resolved with KB articles ($312 saved per ticket). Trending bug caught in 2 hours, engineering notified. Support team handles 2× volume without hiring.",
+  },
+
+  // ─── RevOps (team) ─────────────────────────────────────────────────────────
+  {
+    slug: "revops-pipeline-hygiene",
+    title: "Pipeline hygiene + forecast that updates itself",
+    icon: "🔮",
+    category: "sales",
+    categoryLabel: "Sales",
+    buyer: "RevOps Manager / CRO / VP Sales, B2B SaaS with 5+ sales reps",
+    painPoint:
+      "RevOps spends 60–70% of their time on CRM hygiene: finding stale deals, chasing reps for missing fields, identifying stuck opportunities, and reconciling what reps say in stand-ups with what the CRM shows. Sales managers spend 5–8 hours/week building forecast decks. Nobody trusts the pipeline numbers because 40% of deals have outdated stages, missing close dates, or empty fields. The weekly forecast meeting is a fiction-reading exercise where everyone pretends the numbers are real. Meanwhile, $500k in pipeline rots silently because nobody noticed those deals went cold 6 weeks ago.",
+    trigger:
+      "Daily: audit CRM for data quality. Weekly: generate pipeline forecast and coaching insights for sales managers",
+    accentColor: "hsl(258, 90%, 66%)",
+    metric: "60–70% RevOps time saved · 3–8 seats · $1.5k MRR",
+    hoursSaved: "60–70% of RevOps time reclaimed · 5–8 hrs/week per sales manager on forecasts",
+    roi: [
+      "RevOps reclaims 60–70% of time — redirected from CRM cleanup to strategic projects",
+      "Forecast accuracy improves 20–30% — based on deal activity and conversation signals, not rep optimism",
+      "Stale deals caught weekly: $500k+ in dead pipeline identified and resolved or removed",
+      "Sales managers save 5–8 hrs/week on forecast prep — get auto-generated forecast narratives every Monday",
+      "Coaching opportunities auto-identified: reps with declining activity, deals without next steps, accounts going dark",
+    ],
+    uniqueAngle:
+      "Not a CRM reporting feature (Salesforce dashboards show pipeline but don't analyze deal health or write forecast narratives). Not a data cleaning tool (those run once and data goes stale). This is continuous, autonomous pipeline intelligence: daily CRM audits, weekly forecast generation, deal health scoring based on actual activity (not just deal stage), and proactive coaching alerts. RevOps, each sales manager, and the CRO all need different views — that's 3–8 seats.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Audits every deal in CRM — checks for stale deals, missing fields, inconsistent stages, and activity gaps",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Zoho CRM", color: "#DC2626" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "142 active deals audited · 12 stale (no activity 30+ days) · 18 missing required fields · 4 with inconsistent stages (marked 'Negotiation' but no proposal sent) · 8 at-risk (competitor mentioned in recent calls)",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Calculates weighted pipeline forecast using historical win rates, deal velocity, and conversation signals",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "Gong", color: "#9B59B6" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Looker", color: "#4285F4" },
+        ],
+        detail: "Weighted forecast: $2.1M (vs $3.4M rep-reported) · historical win rate at current stage: 38% · 6 deals likely to slip (below velocity benchmark) · 3 deals likely to close early (champion engaged, budget confirmed)",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Writes forecast narrative for board/leadership and individual coaching summaries for each sales manager",
+        tools: [
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Notion", color: "#8B8B8B" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Board forecast narrative: 'Likely close $2.1M this quarter vs $2.5M target. Gap: $400k. 3 deals in late stage could close with executive sponsor engagement. Recommended action: CRO joins calls with Acme Corp, Beta Inc, Gamma Ltd.'",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Delivers pipeline alerts to reps, forecast reports to managers, and coaching insights to VP Sales — all via Slack + email",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Google Drive", color: "#34A853" },
+        ],
+        detail: "12 reps pinged about stale deals · 3 sales managers got coaching summaries · CRO received board-ready forecast · RevOps dashboard auto-updated",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Tracks forecast accuracy over time, identifies bias patterns, and monitors CRM health trends",
+        tools: [
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Looker", color: "#4285F4" },
+          { label: "Salesforce", color: "#00A1E0" },
+        ],
+        detail: "Forecast accuracy last 3 quarters: 72% → 81% → 88% (improving). Bias detected: 2 reps consistently over-forecast by 30%. CRM health: 94% field completion (up from 56% when started).",
+      },
+    ],
+    result:
+      "142 deals audited. 12 stale deals flagged — 3 revived after outreach, 9 moved to Closed-Lost. Forecast accuracy: 88% (vs 52% before). CRM health improved from 56% to 94%. RevOps reclaimed 25 hrs/week for strategic work.",
+  },
+
+  // ─── Finance (team) ────────────────────────────────────────────────────────
+  {
+    slug: "finance-month-end-close",
+    title: "Month-end close in 3 days, not 12",
+    icon: "📅",
+    category: "finance",
+    categoryLabel: "Finance",
+    buyer: "Controller / VP Finance / CFO, Series A–C companies with 50+ employees",
+    painPoint:
+      "Month-end close is the most dreaded process in finance. Cash reconciliation alone takes 30+ hours/month. Invoice processing: 100–200 hours/month for 1,000 invoices at $8–30/invoice manually. Stripe deducts fees before depositing, requiring gross/net reconciliation for every transaction. Expense categorization across Ramp/Brex transactions takes 20–30 hours. The average close takes 8–12 business days. During those 12 days, the finance team is unavailable for anything strategic — no analysis, no forecasting, no board prep. They're just reconciling spreadsheets.",
+    trigger:
+      "Month-end: auto-reconcile all accounts, categorize transactions, generate financial statements and board package",
+    accentColor: "hsl(15, 80%, 50%)",
+    metric: "Close in 3 days vs 12 · 3–5 seats · $2k MRR",
+    hoursSaved: "30+ hrs/month on reconciliation · 100+ hrs/month on invoice processing",
+    roi: [
+      "Month-end close reduced from 8–12 days to 3–5 days — finance team unblocked for strategic work",
+      "Cash reconciliation: 30+ hours reduced to 2 hours of review — Stripe/Razorpay ↔ QuickBooks/Zoho Books auto-matched",
+      "Invoice processing cost drops from $15/invoice to $2/invoice with automated matching and categorization",
+      "Expense policy violations caught automatically — 90%+ compliance without manual review",
+      "Board package auto-generated: P&L, cash flow, key metrics, narrative — ready for CFO to review and send",
+    ],
+    uniqueAngle:
+      "Not an accounting tool upgrade (QuickBooks/Zoho Books store data but don't reconcile intelligently). Not a simple rule-based automation (those break on exceptions). This handles the full close: Stripe/Razorpay → accounting system reconciliation (including gross/net fee handling), vendor invoice matching, expense categorization with policy checks, journal entry preparation, financial statement generation, and board package writing. AP specialist, AR specialist, controller, and CFO each have different workflows — 3–5 seats.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Pulls all transactions from payment processors and reconciles against accounting system — matches deposits, fees, and refunds",
+        tools: [
+          { label: "Stripe", color: "#6772E5" },
+          { label: "Razorpay", color: "#072654" },
+          { label: "QuickBooks", color: "#2CA01C" },
+          { label: "Zoho Books", color: "#DC2626" },
+          { label: "Xero", color: "#13B5EA" },
+        ],
+        detail: "842 Stripe transactions reconciled · 23 Razorpay transactions matched · 4 discrepancies found (fee calculation differences, 2 missing deposits) · 99.5% auto-match rate",
+      },
+      {
+        agent: "Forge",
+        emoji: "⚒️",
+        color: "hsl(25, 95%, 53%)",
+        action: "Matches vendor invoices to purchase orders, categorizes expenses, flags policy violations",
+        tools: [
+          { label: "Ramp", color: "#0A0A0A" },
+          { label: "QuickBooks", color: "#2CA01C" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Google Drive", color: "#34A853" },
+        ],
+        detail: "380 vendor invoices processed · 340 auto-matched to POs · 28 categorized (no PO) · 12 flagged for review (amount mismatch, new vendor, missing receipt) · 3 policy violations detected",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Prepares journal entries, generates financial statements (P&L, balance sheet, cash flow), writes board narrative",
+        tools: [
+          { label: "QuickBooks", color: "#2CA01C" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Notion", color: "#8B8B8B" },
+        ],
+        detail: "12 journal entries prepared · P&L generated (revenue up 18% MoM, COGS down 3%) · cash flow statement · board narrative: 'Revenue grew 18% driven by enterprise deals. Burn rate decreased to $280k/month. 14 months runway.'",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Verifies all reconciliations, cross-checks totals, validates financial statements against source data",
+        tools: [
+          { label: "QuickBooks", color: "#2CA01C" },
+          { label: "Stripe", color: "#6772E5" },
+          { label: "Looker", color: "#4285F4" },
+        ],
+        detail: "All reconciliations verified · P&L balanced · 4 discrepancies resolved (fee timing differences) · audit trail documented · variance analysis: within 0.1% tolerance",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Routes exceptions to finance team, delivers financial package to CFO, creates tasks for remaining manual items",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Asana", color: "#F06A6A" },
+          { label: "Google Drive", color: "#34A853" },
+        ],
+        detail: "12 exception items routed to AP/AR team in Slack · board package delivered to CFO via email · 3 remaining manual tasks created in Asana · close checklist: 94% complete day 2",
+      },
+    ],
+    result:
+      "Month-end close completed in 3 days instead of 12. 842 transactions auto-reconciled. 380 invoices processed. Board package ready for CFO review. Finance team reclaimed 8 working days for strategic analysis and forecasting.",
+  },
+
+  // ─── Operations (team) ─────────────────────────────────────────────────────
+  {
+    slug: "ops-data-sync-reporting",
+    title: "Cross-tool data sync + weekly ops report",
+    icon: "🔄",
+    category: "operations",
+    categoryLabel: "Operations",
+    buyer: "Head of Ops / BizOps Manager / Chief of Staff, Series A–C companies with 50+ employees",
+    painPoint:
+      "Operations teams spend 50–60% of their time keeping data consistent between CRM, billing, project management, HRIS, and spreadsheets. When a deal closes in Salesforce, someone manually updates the project in Asana, the billing record in Stripe, and the customer list in Google Sheets. When an employee leaves in BambooHR, someone manually deprovisions their Slack, GitHub, and Notion accounts. Building the weekly leadership report means logging into 8–10 tools, pulling numbers, and pasting them into a deck. Data discrepancies cause wrong decisions — 'which revenue number is right, Salesforce or Stripe?'",
+    trigger:
+      "Continuous: sync data between core tools. Weekly: generate unified ops report from all sources",
+    accentColor: "hsl(50, 85%, 50%)",
+    metric: "50–60% ops time saved · 3–6 seats · $1.5k MRR",
+    hoursSaved: "50–60% of ops team time reclaimed · 8–10 hrs/week on reporting eliminated",
+    roi: [
+      "50–60% of ops team time reclaimed — from manual data sync to strategic operations work",
+      "Single source of truth: CRM ↔ billing ↔ PM ↔ HRIS always in sync — no more 'which number is right?'",
+      "Weekly leadership report auto-generated from 8–10 sources — delivered Monday 8am, not Wednesday afternoon",
+      "Data discrepancies caught automatically before they cause wrong decisions",
+      "Employee lifecycle events (join/leave) automatically trigger tool provisioning/deprovisioning",
+    ],
+    uniqueAngle:
+      "Not Zapier (linear triggers, no intelligence, brittle when data is messy). Not a BI tool (Looker shows data but doesn't sync it or write narratives). This is intelligent data orchestration: understand the relationships between your tools (deal closed = project starts = billing begins), sync data bidirectionally, catch discrepancies, and generate the human-readable report that tells leadership what happened this week and what to do. BizOps, RevOps, data analyst, and ops manager all need this — 3–6 seats.",
+    steps: [
+      {
+        agent: "Forge",
+        emoji: "⚒️",
+        color: "hsl(25, 95%, 53%)",
+        action: "Monitors core tools for change events and syncs data bidirectionally — CRM ↔ billing ↔ PM ↔ sheets",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Stripe", color: "#6772E5" },
+          { label: "Razorpay", color: "#072654" },
+          { label: "Asana", color: "#F06A6A" },
+          { label: "JIRA", color: "#0052CC" },
+        ],
+        detail: "24 sync events today: 3 new deals → projects auto-created · 2 invoices paid → CRM updated · 1 customer churned → all systems updated · 18 field-level syncs",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Detects data discrepancies between systems — revenue mismatches, missing records, stale data",
+        tools: [
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Looker", color: "#4285F4" },
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "Stripe", color: "#6772E5" },
+        ],
+        detail: "2 discrepancies found: Salesforce shows $42k MRR but Stripe shows $41.2k (1 customer on annual billing not reflected) · 1 stale project in Asana (customer churned but project still active)",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Pulls metrics from 8–10 sources for the weekly leadership report — revenue, pipeline, product usage, support, engineering velocity",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "Stripe", color: "#6772E5" },
+          { label: "Mixpanel", color: "#7856FF" },
+          { label: "Zendesk", color: "#03363D" },
+          { label: "JIRA", color: "#0052CC" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "28 metrics pulled: MRR $42k (+6% MoM) · pipeline $2.1M · DAU 3,400 (+12%) · support tickets 89 (-15%) · sprint velocity 42 points · NPS 61 · burn rate $280k",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Writes the weekly ops report — key metrics, trends, insights, action items, decisions needed from leadership",
+        tools: [
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Notion", color: "#8B8B8B" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Report: 'Revenue grew 6% MoM driven by 3 enterprise deals. Support volume down 15% thanks to KB improvements. Engineering shipped 2 major features. Key decision: approve $50k marketing budget increase for Q2 campaign.'",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Delivers report to leadership via Slack + email, resolves data discrepancies, and creates tasks for manual follow-ups",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Asana", color: "#F06A6A" },
+          { label: "Google Drive", color: "#34A853" },
+        ],
+        detail: "Monday 8am: #leadership Slack gets executive summary · CEO email with full report + 2 decisions needed · 2 discrepancies auto-resolved · 1 Asana task created for finance to investigate billing mismatch",
+      },
+    ],
+    result:
+      "28 metrics from 8 sources, unified and verified. 2 data discrepancies caught and resolved. Weekly ops report delivered Monday 8am — CEO made budget decision before lunch. Ops team saved 12 hrs/week on manual data pulling and reporting.",
   },
 ];
 
