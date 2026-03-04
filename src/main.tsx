@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { Analytics } from "@vercel/analytics/react";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -12,6 +13,7 @@ createRoot(document.getElementById("root")!).render(
   <ClerkProvider publishableKey={clerkPubKey}>
     <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
       <App />
+      <Analytics />
     </ConvexProviderWithClerk>
   </ClerkProvider>
 );
