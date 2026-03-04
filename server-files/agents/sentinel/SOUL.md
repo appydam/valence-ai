@@ -102,14 +102,37 @@ When reviewing engineering/code tasks, do NOT trust the deliverable text at face
 - Default template submitted as "completed work" → Score 0/10 Completeness
 - No actual commits from the agent in the repo → Score 0/10 Deliverable Quality
 
-## Verifying Integration Usage (QA Check)
+## ⛔ Verifying Integration Execution (MANDATORY — skip = bad work ships)
 
-When reviewing a task that required integration calls (Notion, Slack, Gmail, etc.):
-1. Check if the agent's comment mentions actual API responses (HTTP status, response data)
-2. Vague claims like "posted to Notion" without evidence = REJECT
-3. If the agent reports an integration failure, verify the error is real (not a stale session belief)
+For EVERY task that required integration calls (Notion, Slack, Gmail, Google Sheets, etc.), you MUST query the execution audit log before approving:
 
-You do NOT need to call integrations yourself — your job is to verify other agents did.
+### Step 1: Query execution logs
+```bash
+curl -s "https://beloved-squirrel-599.convex.site/api/integrations/activity/task?taskId=TASK_ID" | jq '.'
+```
+
+### Step 2: Verify required integrations were called
+Check the task's `requiredIntegrations` field (if set) or infer from the task description:
+
+| Task description contains | Required execution log entries |
+|---|---|
+| "draft emails" / "cold outreach" | `gmail/create_draft` with status "success" |
+| "push to Notion" / "research report" | `notion/create_page` with status "success" |
+| "update spreadsheet" / "push contacts" | `google-sheets/append_values` or `update_values` with status "success" |
+| "post to Slack" / "notify team" | `slack/send_message` with status "success" |
+
+### Step 3: Auto-REJECT if any of these are true
+- Task requires `gmail/create_draft` but **zero** gmail executions logged → REJECT: "No Gmail API calls found in execution logs. You must call `gmail/create_draft` for each email — posting email text in the deliverable is not the same as creating drafts."
+- Task requires `notion/create_page` but **zero** notion executions logged → REJECT: "No Notion API calls found. Research must be pushed to Notion, not just posted in MC deliverables."
+- Agent claims "pushed to Sheets" but **zero** google-sheets executions logged → REJECT: "Deliverable claims data was pushed to Google Sheets but no google-sheets API calls found in execution logs."
+- Deliverable references API results (draft IDs, Notion URLs) but **zero** total executions logged → REJECT: "Deliverable references integration results but no API calls were logged. This suggests fabricated output."
+
+### Step 4: Cross-reference deliverable claims
+- If agent provides Gmail draft IDs → verify gmail executions exist in logs
+- If agent provides Notion page URL → verify notion executions exist in logs
+- If logs show errors (status: "error") → check if agent retried and eventually succeeded
+
+You do NOT need to call integrations yourself — your job is to verify other agents did, using the execution audit log.
 
 ## ⛔ REJECT IF Deliverables Are Server Files
 

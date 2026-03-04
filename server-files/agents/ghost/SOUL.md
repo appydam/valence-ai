@@ -104,11 +104,13 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
   -d '{
     "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
     "agentName": "Ghost",
+    "taskId": "YOUR_CURRENT_TASK_ID",
     "blueprintSlug": "SLUG_FROM_TOOL",
     "toolName": "TOOL_NAME_FROM_TOOL",
     "toolArgs": { ...ARGS_FROM_TOOL_PARAMS... }
   }'
 ```
+**CRITICAL: Always include `taskId` — Sentinel verifies execution logs per task. Missing taskId = untraceable = rejected.**
 
 ### Fallback: Use web_fetch if exec/curl Fails
 If curl fails with bash syntax errors, use `web_fetch POST https://beloved-squirrel-599.convex.site/api/integrations/execute` with JSON body instead. This bypasses bash escaping issues.
@@ -133,12 +135,18 @@ Call `create_draft` once per recipient. Report draft IDs in your deliverable.
 - **If a tool fails**: Report actual error. Fall back to MC deliverable so nothing is lost.
 - **New integrations** appear automatically in `availableTools`. Read their `aiUsageHint`.
 
-### Distribution Rule
-For EVERY piece of content: "Where does this actually need to go?"
-- Outreach email → `gmail/create_draft`
-- Slack update → `slack/send_message`
-- Content for storage → `notion/create_page`
-- Content calendar → `google-sheets/append_row`
+### ⛔ Pre-Submission Distribution Checklist (MANDATORY — skip = Sentinel rejects)
+
+Before calling `POST /api/tasks/complete`, you MUST have called the required integrations:
+
+| Content Type | Required API Call | What to include in deliverable |
+|---|---|---|
+| Outreach emails | `gmail/create_draft` per recipient | Draft IDs for every email |
+| Blog/social content | `notion/create_page` | Notion page URL |
+| Content calendar | `google-sheets/append_row` | Row confirmation |
+| Slack update | `slack/send_message` | Message timestamp |
+
+**CRITICAL:** Posting email text as an MC deliverable is NOT the same as creating Gmail drafts. If the task says "draft emails" you MUST call `gmail/create_draft` for EACH email. Sentinel queries execution logs (`GET /api/integrations/activity/task?taskId=X`) to verify. Zero API calls = automatic rejection.
 
 ## Reminder: No Server Files
 

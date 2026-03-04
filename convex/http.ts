@@ -1218,7 +1218,7 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json();
-    const { agentName, blueprintSlug, toolName, toolArgs } = body;
+    const { agentName, blueprintSlug, toolName, toolArgs, taskId } = body;
 
     // Determine userId: try auth first, fall back to body.userId for agent calls
     let userId = body.userId;
@@ -1244,7 +1244,7 @@ http.route({
 
     try {
       const result = await ctx.runAction(api.executionEngine.executeTool, {
-        userId, agentName, blueprintSlug, toolName, toolArgs,
+        userId, agentName, taskId, blueprintSlug, toolName, toolArgs,
       });
       return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
     } catch (error: any) {
@@ -1270,6 +1270,23 @@ http.route({
       userId: auth.userId,
       limit: limit ? parseInt(limit) : undefined,
     });
+    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
+  }),
+});
+
+// GET /api/integrations/activity/task - Get execution activity for a specific task (agent-facing, used by Sentinel for QA)
+http.route({
+  path: "/api/integrations/activity/task",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const taskId = url.searchParams.get("taskId");
+    if (!taskId) {
+      return new Response(JSON.stringify({ error: "taskId query param required" }), {
+        status: 400, headers: corsHeaders(request),
+      });
+    }
+    const result = await ctx.runQuery(api.integrationActivity.listByTask, { taskId });
     return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
   }),
 });
@@ -1986,6 +2003,7 @@ http.route({ path: "/api/soul/sync", method: "OPTIONS", handler: optionsHandler(
 http.route({ path: "/api/integrations/tools", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/integrations/execute", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/integrations/activity", method: "OPTIONS", handler: optionsHandler() });
+http.route({ path: "/api/integrations/activity/task", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/integrations/oauth/start", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/integrations/connect-key", method: "OPTIONS", handler: optionsHandler() });
 http.route({ path: "/api/integrations/connections", method: "OPTIONS", handler: optionsHandler() });

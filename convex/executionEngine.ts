@@ -90,6 +90,7 @@ export const executeTool = action({
   args: {
     userId: v.string(),
     agentName: v.optional(v.string()),
+    taskId: v.optional(v.string()),
     blueprintSlug: v.string(),
     toolName: v.string(),
     toolArgs: v.any(),
@@ -171,10 +172,13 @@ export const executeTool = action({
       if (args.blueprintSlug === "gmail" && args.toolName === "create_draft") {
         const { to, subject, body: emailBody, ...rest } = processedToolArgs;
         if (to !== undefined || subject !== undefined || emailBody !== undefined) {
+          // Encode subject as RFC 2047 UTF-8 to handle special chars (em dashes, etc.)
+          const subjectUtf8 = `=?UTF-8?B?${Buffer.from(subject || "").toString("base64")}?=`;
           const rfc2822 = [
             `To: ${to || ""}`,
-            `Subject: ${subject || ""}`,
-            `Content-Type: text/plain; charset="UTF-8"`,
+            `Subject: ${subjectUtf8}`,
+            `MIME-Version: 1.0`,
+            `Content-Type: text/plain; charset=UTF-8`,
             ``,
             emailBody || "",
           ].join("\r\n");
@@ -341,6 +345,7 @@ export const executeTool = action({
         await ctx.runMutation(api.integrationActivity.log, {
           userId: args.userId,
           agentName: args.agentName,
+          taskId: args.taskId,
           integrationType: args.blueprintSlug,
           toolName: args.toolName,
           status: "error",
@@ -379,6 +384,7 @@ export const executeTool = action({
       await ctx.runMutation(api.integrationActivity.log, {
         userId: args.userId,
         agentName: args.agentName,
+        taskId: args.taskId,
         integrationType: args.blueprintSlug,
         toolName: args.toolName,
         status: "success",
@@ -397,6 +403,7 @@ export const executeTool = action({
       await ctx.runMutation(api.integrationActivity.log, {
         userId: args.userId,
         agentName: args.agentName,
+        taskId: args.taskId,
         integrationType: args.blueprintSlug,
         toolName: args.toolName,
         status: "error",
@@ -428,6 +435,7 @@ export const executeToolPaginated = action({
   args: {
     userId: v.string(),
     agentName: v.optional(v.string()),
+    taskId: v.optional(v.string()),
     blueprintSlug: v.string(),
     toolName: v.string(),
     toolArgs: v.any(),
@@ -455,6 +463,7 @@ export const executeToolPaginated = action({
       return ctx.runAction(api.executionEngine.executeTool, {
         userId: args.userId,
         agentName: args.agentName,
+        taskId: args.taskId,
         blueprintSlug: args.blueprintSlug,
         toolName: args.toolName,
         toolArgs: args.toolArgs,
@@ -483,6 +492,7 @@ export const executeToolPaginated = action({
       const result = await ctx.runAction(api.executionEngine.executeTool, {
         userId: args.userId,
         agentName: args.agentName,
+        taskId: args.taskId,
         blueprintSlug: args.blueprintSlug,
         toolName: args.toolName,
         toolArgs: paginatedArgs,

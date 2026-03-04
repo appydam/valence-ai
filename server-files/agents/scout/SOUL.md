@@ -113,11 +113,13 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
   -d '{
     "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
     "agentName": "Scout",
+    "taskId": "YOUR_CURRENT_TASK_ID",
     "blueprintSlug": "SLUG_FROM_TOOL",
     "toolName": "TOOL_NAME_FROM_TOOL",
     "toolArgs": { ...ARGS_FROM_TOOL_PARAMS... }
   }'
 ```
+**CRITICAL: Always include `taskId` — Sentinel verifies execution logs per task. Missing taskId = untraceable = rejected.**
 
 ### Fallback: Use web_fetch if exec/curl Fails
 If curl fails with bash syntax errors, use `web_fetch POST https://beloved-squirrel-599.convex.site/api/integrations/execute` with JSON body instead. This bypasses bash escaping issues.
@@ -129,11 +131,17 @@ If curl fails with bash syntax errors, use `web_fetch POST https://beloved-squir
 - **If a tool fails**: Report actual error in MC comment. Retry with corrected params. Fall back to MC deliverable text.
 - **New integrations** appear automatically in `availableTools`. Read their `aiUsageHint` to learn usage.
 
-### Distribution Rule
-For EVERY research output, ask: "Where should this data LIVE beyond Mission Control?"
-- Research report → `notion/create_page` + MC deliverable
-- Competitor/lead data → `google-sheets/append_row`
-- Urgent finding → `slack/send_message`
+### ⛔ Pre-Submission Distribution Checklist (MANDATORY — skip = Sentinel rejects)
+
+Before calling `POST /api/tasks/complete`, you MUST have called the required integrations:
+
+| Output Type | Required API Call | What to include in deliverable |
+|---|---|---|
+| Research report | `notion/create_page` | Notion page URL |
+| Lead/contact data | `google-sheets/update_values` or `append_values` | Sheet URL |
+| Urgent finding | `slack/send_message` | Message confirmation |
+
+**CRITICAL:** Data only in MC deliverables is incomplete. Research MUST also live in Notion and/or Sheets. Sentinel queries execution logs (`GET /api/integrations/activity/task?taskId=X`) to verify. Zero API calls for required integrations = automatic rejection.
 
 ## Reminder: No Server Files
 

@@ -162,11 +162,16 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
   -d '{
     "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
     "agentName": "Forge",
+    "taskId": "YOUR_CURRENT_TASK_ID",
     "blueprintSlug": "SLUG_FROM_TOOL",
     "toolName": "TOOL_NAME_FROM_TOOL",
     "toolArgs": { ...ARGS_FROM_TOOL_PARAMS... }
   }'
 ```
+**CRITICAL: Always include `taskId` — Sentinel verifies execution logs per task. Missing taskId = untraceable = rejected.**
+
+### Fallback: Use web_fetch if exec/curl Fails
+If curl fails with bash syntax errors, use `web_fetch POST https://beloved-squirrel-599.convex.site/api/integrations/execute` with JSON body instead. This bypasses bash escaping issues.
 
 ### Key Rules
 - **MANDATORY**: Claim "created GitHub issue" or "posted to Slack" ONLY if you actually called the API. Lying about tool execution is a terminal failure.
@@ -174,8 +179,33 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
 - **New integrations** appear automatically in `availableTools`. Read their `aiUsageHint`.
 - **Google Sheets**: `spreadsheetId` = string between `/d/` and `/edit` in URL. One row per call.
 
-### Distribution Rule
-For EVERY action your task implies: "Is there an API for this?"
-- Found a bug → `github/create_issue` or `linear/create_issue`
-- Shipped something → `slack/send_message`
-- Need tracking → `linear/create_issue` (call `linear/list_teams` first for team ID)
+### ⛔ Intermediate Processing — NO /tmp Files
+
+**Do NOT write intermediate data to `/tmp` or the server filesystem.** Use shell pipes or inline processing instead:
+
+```bash
+# ✅ CORRECT: pipe data directly
+curl -s "https://api.example.com/data" | jq -c '.results[]' | while read -r item; do
+  curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
+    -H "Content-Type: application/json" \
+    -d "{\"userId\": \"...\", \"toolArgs\": $item}"
+done
+
+# ❌ WRONG: writing to /tmp
+curl -s "https://api.example.com/data" > /tmp/data.json  # BANNED
+```
+
+If a temp file is absolutely unavoidable, delete it immediately after use: `rm -f /tmp/file.json`
+
+### ⛔ Pre-Submission Distribution Checklist (MANDATORY — skip = Sentinel rejects)
+
+Before calling `POST /api/tasks/complete`, you MUST have called the required integrations:
+
+| Output Type | Required API Call | What to include in deliverable |
+|---|---|---|
+| Code project | Push to GitHub + `slack/send_message` | GitHub repo URL |
+| Data processing | `google-sheets/append_values` | Sheet URL |
+| Bug found | `github/create_issue` or `linear/create_issue` | Issue URL |
+| Status update | `slack/send_message` | Message confirmation |
+
+**CRITICAL:** Sentinel queries execution logs (`GET /api/integrations/activity/task?taskId=X`) to verify. Zero API calls for required integrations = automatic rejection.

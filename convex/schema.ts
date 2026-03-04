@@ -388,6 +388,7 @@ export default defineSchema({
   integrationActivity: defineTable({
     userId: v.string(),
     agentName: v.optional(v.string()),
+    taskId: v.optional(v.string()),
     integrationType: v.string(),
     toolName: v.string(),
     status: v.string(),
@@ -395,7 +396,9 @@ export default defineSchema({
     timestamp: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_timestamp", ["timestamp"]),
+    .index("by_timestamp", ["timestamp"])
+    .index("by_task", ["taskId"])
+    .index("by_agent", ["agentName"]),
 
   // Webhook System tables
   webhookEndpoints: defineTable({

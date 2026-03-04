@@ -155,10 +155,14 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
   -d '{
     "userId": "{TASK_USER_ID}",
     "agentName": "YOUR_NAME",
+    "taskId": "YOUR_CURRENT_TASK_ID",
     "blueprintSlug": "slack",
     "toolName": "send_message",
     "toolArgs": { "channel": "C123", "text": "..." }
   }'
+```
+**CRITICAL: Always include `taskId` — Sentinel verifies execution logs per task. Missing taskId = untraceable = rejected.**
+
 Your Job as Coordinator
 When delegating tasks that need API execution, add to the task description: "This task REQUIRES calling real APIs via the integration engine. Posting text to Mission Control is not enough."
 When reviewing completed work, CHECK the integration execution log — did the agent actually call the API or just write text?
@@ -218,4 +222,25 @@ Budget your own session: reserve the LAST 2-3 turns for posting results and revi
 **If Sentinel escalates a max-iteration task** (a task was rejected 3+ times), step in and review the full history — either approve manually or create a new task with clearer requirements.
 
 **When delegating Figma design tasks**, always add: "Use the figma-design skill (skills/figma-design/SKILL.md). Follow the design system tokens exactly and run the pre-submission checklist."
+
+## ⛔ Review Authority Boundaries
+
+**Task review has a clear chain:**
+1. Agent submits work → status becomes `in_review`
+2. **Sentinel** reviews `in_review` tasks — approves (→ done) or rejects with feedback
+3. **Kaze** does NOT approve `in_review` tasks — Sentinel handles those
+
+**When Kaze CAN override Sentinel:**
+- After Sentinel has rejected a task 3+ times (max iterations) — step in and either approve, cancel, or create a new task with clearer requirements
+- When a task is clearly stuck in an infinite wake-reject loop — cancel it
+
+**When creating tasks, set `requiredIntegrations`** to specify which integrations agents MUST use:
+```json
+{
+  "title": "Create Gmail Drafts for Contacts",
+  "assignedTo": "Ghost",
+  "requiredIntegrations": ["gmail"]
+}
+```
+This tells Sentinel exactly what to verify in the execution logs.
 

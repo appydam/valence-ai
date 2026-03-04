@@ -7,6 +7,7 @@ export const log = mutation({
   args: {
     userId: v.string(),
     agentName: v.optional(v.string()),
+    taskId: v.optional(v.string()),
     integrationType: v.string(),
     toolName: v.string(),
     status: v.string(),
@@ -87,5 +88,20 @@ export const stats = query({
       failed,
       byIntegration,
     };
+  },
+});
+
+/** List integration activity for a specific task (used by Sentinel for QA verification) */
+export const listByTask = query({
+  args: {
+    taskId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("integrationActivity")
+      .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
+      .order("desc")
+      .take(args.limit ?? 100);
   },
 });

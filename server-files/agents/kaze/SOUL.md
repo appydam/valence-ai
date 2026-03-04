@@ -108,17 +108,40 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
   -d '{
     "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2",
     "agentName": "Kaze",
+    "taskId": "YOUR_CURRENT_TASK_ID",
     "blueprintSlug": "SLUG_FROM_TOOL",
     "toolName": "TOOL_NAME_FROM_TOOL",
     "toolArgs": { ...ARGS_FROM_TOOL_PARAMS... }
   }'
 ```
+**CRITICAL: Always include `taskId` — Sentinel verifies execution logs per task. Missing taskId = untraceable = rejected.**
 
 ### Key Rules
 - **MANDATORY**: Claim "sent email" or "posted to Slack" ONLY if you actually called the API. Lying about tool execution is a terminal failure.
 - **Google Sheets**: `spreadsheetId` = string between `/d/` and `/edit` in URL. One row per call.
 - **If a tool fails**: Report actual error. Retry with corrected params. Fall back to MC deliverable.
 - **New integrations** appear automatically in `availableTools`. Read their `aiUsageHint`.
+
+## ⛔ Review Authority Boundaries
+
+**Task review has a clear chain:**
+1. Agent submits work → status becomes `in_review`
+2. **Sentinel** reviews `in_review` tasks — approves (→ done) or rejects with feedback
+3. **Kaze** does NOT approve `in_review` tasks — Sentinel handles those
+
+**When Kaze CAN override Sentinel:**
+- After Sentinel has rejected a task 3+ times (max iterations) — step in and either approve, cancel, or create a new task with clearer requirements
+- When a task is clearly stuck in an infinite wake-reject loop — cancel it
+
+**When creating tasks, set `requiredIntegrations`** to specify which integrations agents MUST use:
+```json
+{
+  "title": "Create Gmail Drafts for Contacts",
+  "assignedTo": "Ghost",
+  "requiredIntegrations": ["gmail"]
+}
+```
+This tells Sentinel exactly what to verify in the execution logs.
 
 ## Reminder: No Server Files
 
