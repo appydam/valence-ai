@@ -1,6 +1,10 @@
-# Mission Control: Project Bible
+# Valence AI: Project Bible
 
 > The definitive reference for what we've built, where we're going, and why it matters.
+>
+> **Valence AI** is an autonomous Agentic AI platform that can automate any complex enterprise workflow, connected to ~100 popular tools like HubSpot, Notion, Google Workspace, Atlassian (Jira/Confluence), Figma, Shopify, Google/Meta Ads, Slack, Salesforce, GitHub, and many more.
+>
+> Internal codename: Mission Control.
 
 ---
 
@@ -14,17 +18,32 @@
 6. [Agent Memory & Learning System](#6-agent-memory--learning-system)
 7. [Task Dependencies & Quality Loops](#7-task-dependencies--quality-loops)
 8. [Webhook & Automation System](#8-webhook--automation-system)
-9. [Security & Encryption](#9-security--encryption)
-10. [The Most Complex Problems We Solve](#10-the-most-complex-problems-we-solve)
-11. [How We're Building Autonomous AI](#11-how-were-building-autonomous-ai)
-12. [Tech Stack & Infrastructure](#12-tech-stack--infrastructure)
-13. [Database Schema](#13-database-schema)
-14. [API Surface](#14-api-surface)
-15. [Frontend Pages & Components](#15-frontend-pages--components)
-16. [Current Integrations](#16-current-integrations)
-17. [What Makes Us Different](#17-what-makes-us-different)
-18. [Future Vision & Roadmap](#18-future-vision--roadmap)
-19. [Key File Reference](#19-key-file-reference)
+9. [Mission Autopilot & Voice Interface](#9-mission-autopilot--voice-interface)
+10. [Morning Brief — CEO Daily Digest](#10-morning-brief--ceo-daily-digest)
+11. [War Room — Real-Time Agent Coordination](#11-war-room--real-time-agent-coordination)
+12. [Agent Reasoning & Observability](#12-agent-reasoning--observability)
+13. [Billing & Subscription Management](#13-billing--subscription-management)
+14. [Security & Encryption](#14-security--encryption)
+15. [The Most Complex Problems We Solve](#15-the-most-complex-problems-we-solve)
+16. [How We're Building Autonomous AI](#16-how-were-building-autonomous-ai)
+17. [Tech Stack & Infrastructure](#17-tech-stack--infrastructure)
+18. [Database Schema (43 Tables)](#18-database-schema-43-tables)
+19. [API Surface](#19-api-surface)
+20. [Frontend Pages & Components (30+ Routes)](#20-frontend-pages--components-30-routes)
+21. [Current Integrations](#21-current-integrations)
+22. [What Makes Us Different](#22-what-makes-us-different)
+23. [Cron Jobs & Scheduled Tasks (13 Jobs)](#23-cron-jobs--scheduled-tasks-13-jobs)
+24. [Future Vision & Roadmap](#24-future-vision--roadmap)
+25. [Key File Reference](#25-key-file-reference)
+26. [Pilot Deployment Guide](#26-pilot-deployment-guide)
+27. [Webhook Retry & Dead Letter Queue](#27-webhook-retry--dead-letter-queue)
+28. [Graceful Degradation Without SSH](#28-graceful-degradation-without-ssh)
+29. [Operator Documentation](#29-operator-documentation)
+30. [Admin Dashboard & Data Export](#30-admin-dashboard--data-export)
+31. [Server Health Monitoring](#31-server-health-monitoring)
+32. [Lightsail Auto-Snapshots](#32-lightsail-auto-snapshots)
+33. [Docker Image for Agents](#33-docker-image-for-agents)
+34. [Onboarding & Landing](#34-onboarding--landing)
 
 ---
 
@@ -52,7 +71,7 @@ Every enterprise runs on workflows — sales pipelines, customer onboarding, cod
 
 ### The Outcome
 
-Mission Control is the **command center for autonomous AI workforces**. It's where humans set objectives and AI agents execute them — across any tool, any workflow, any enterprise. And unlike any other system, our agents **remember, learn, and get better** over time.
+Valence AI is the **command center for autonomous AI workforces**. It's where humans set objectives and AI agents execute them — across any tool, any workflow, any enterprise. And unlike any other system, our agents **remember, learn, and get better** over time.
 
 ---
 
@@ -64,14 +83,25 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 |---------|--------|-------------|
 | **Agent Orchestration** | Live | 5-agent squad (Kaze, Scout, Forge, Ghost, Sentinel) with real-time status, heartbeats, and task assignment |
 | **Task Management** | Live | Full lifecycle: Inbox → Assigned → In Progress → In Review → Done, with dependencies, priorities, deliverables |
-| **Mission Board** | Live | Kanban board with drag-drop, mission filtering, bulk operations |
-| **Missions** | Live | Group tasks into missions with completion tracking |
+| **Mission Board** | Live | Kanban board with drag-drop, Plan View (dependency DAG), Squad Ops view, mission filtering |
+| **Missions** | Live | Group tasks into missions with completion tracking, War Room access, Mission Reports |
+| **Mission Autopilot** | Live | Describe a goal in natural language → AI decomposes into multi-agent task plan with dependencies |
+| **Voice Interface** | Live | Voice input for mission creation, Kaze as voice assistant, session recording & transcripts |
+| **Morning Brief** | Live | AI-generated daily CEO digest — tasks completed, blockers, agent performance, highlights |
+| **War Room** | Live | Real-time mission coordination hub — agent lanes, handoffs, blockers, milestones |
 | **Command Center** | Live | Direct chat with individual agents by name |
-| **Documents** | Live | Agent-generated reports, code, analysis with type/author filtering |
 | **Analytics Dashboard** | Live | Task trends, agent performance, completion times, integration usage (7/30/90 day) |
+| **Agent Health** | Live | Deep monitoring — CPU, memory, disk, uptime, integration status per agent |
 | **Webhook System** | Live | Receive webhooks from any source, verify signatures, auto-create tasks |
 | **Automation Rules** | Live | Event → Action mapping (create task, send notification, trigger agent, execute tool) |
 | **Agent Configuration** | Live | Per-agent model selection, skills, session limits, SOUL file editing |
+| **Agent Reasoning Stream** | Live | Real-time observability into agent thinking, tool calls, decisions, errors |
+| **Billing & Subscriptions** | Live | Stripe integration, 3 plan tiers, usage metering, customer portal |
+| **Onboarding Wizard** | Live | 5-step guided setup for new workspaces |
+| **Operations Hub** | Live | Admin provisioning guide, environment variable reference, customer management |
+| **Docs / Help Center** | Live | In-app FAQ covering agents, integrations, webhooks, task lifecycle |
+| **Landing Page** | Live | Public marketing page with animated demos, comparison table, pilot signup |
+| **Use Case Pages** | Live | Deep-dive pages for specific workflow scenarios |
 
 ### Universal Integration Engine
 
@@ -112,6 +142,7 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 | **Quality Feedback Loops** | Live | Rejection/rework cycles: iterationCount, maxIterations, rejectionReason fed back to agent |
 | **Notification System** | Live | @mention notifications for agents, unread count at heartbeat, UI bell |
 | **Agent-to-Human Messaging** | Live | Direct message threads between agents and humans |
+| **War Room Coordination** | Live | Cross-agent handoffs, blocker escalation, milestone tracking within missions |
 
 ### Infrastructure
 
@@ -125,8 +156,14 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 | **SOUL File Sync** | Live | Edit agent personalities in UI, sync to server |
 | **Clerk Authentication** | Live | User auth with sign-in/sign-up, integrated with Convex |
 | **Real-time Subscriptions** | Live | Convex-powered live updates across all UI components |
-| **Cron Jobs** | Live | Hourly OAuth token refresh, 2-hour review sweep, metric aggregation, memory distillation triggers |
+| **Cron Jobs (13)** | Live | Token refresh, review sweeps, metric aggregation, memory distillation, morning brief, health checks, reasoning cleanup |
 | **Figma Plugin Bridge** | Live | Agents push design specs to a command queue; Figma plugin polls and executes |
+| **Server Health Monitoring** | Live | CPU/memory/disk alerts, stale agent detection, activity-logged health warnings |
+| **Stripe Billing** | Live | Checkout sessions, customer portal, webhook-driven subscription lifecycle |
+| **API Key Auth** | Live | Generate/revoke API keys with role-based permissions (agent/admin) |
+| **Audit Logging** | Live | User actions logged with resource, details, timestamps |
+| **Brand Configuration** | Live | Custom company name, logo, primary/accent colors |
+| **Pilot Interest Capture** | Live | Landing page signup with email notification via Resend |
 
 ---
 
@@ -139,13 +176,22 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 │                                                                   │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────────┐  │
 │  │  Board   │ │  Agents  │ │Analytics │ │  Integrations      │  │
-│  │  Tasks   │ │  Command │ │Documents │ │  City View / List  │  │
+│  │  Tasks   │ │  Health  │ │Documents │ │  City View / List  │  │
 │  │ Missions │ │  Squad   │ │ Settings │ │  Blueprint Wizard  │  │
 │  └──────────┘ └──────────┘ └──────────┘ └────────────────────┘  │
 │  ┌──────────────────┐ ┌───────────────────────────────────────┐  │
 │  │  Memory Bank     │ │  SOUL Review / SOUL Distillation      │  │
 │  │  (Agent Memories)│ │  (Version Control for Agent Identity) │  │
 │  └──────────────────┘ └───────────────────────────────────────┘  │
+│  ┌──────────────────┐ ┌──────────────┐ ┌──────────────────────┐ │
+│  │  Autopilot       │ │  Morning     │ │  War Room            │ │
+│  │  (Voice + AI     │ │  Brief       │ │  (Real-Time Agent    │ │
+│  │   Mission Plan)  │ │  (CEO Digest)│ │   Coordination)      │ │
+│  └──────────────────┘ └──────────────┘ └──────────────────────┘ │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────────┐ │
+│  │ Billing  │ │ Onboard  │ │ Ops Hub  │ │ Webhooks           │ │
+│  │ (Stripe) │ │ (Wizard) │ │ (Admin)  │ │ (Automation Rules) │ │
+│  └──────────┘ └──────────┘ └──────────┘ └────────────────────┘ │
 └────────────────────────┬────────────────────────────────────────┘
                          │ Real-time Subscriptions + HTTP
                          ▼
@@ -162,10 +208,22 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 │  │  - Quality Loops   │  - Response Mapping  │  - Rules       │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Memory Engine     │  Analytics  │  Cron Jobs              │  │
+│  │  Memory Engine     │  Analytics  │  Cron Jobs (13)         │  │
 │  │  - Episodic Memory │  - Metrics  │  - Token Refresh        │  │
 │  │  - Distillation    │  - Usage    │  - Distillation Trigger │  │
-│  │  - SOUL Versioning │  - Period   │  - Metric Aggregation   │  │
+│  │  - SOUL Versioning │  - Period   │  - Health Checks        │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  Autopilot Engine  │  Voice System   │  Morning Brief      │  │
+│  │  - Mission Decomp  │  - Sessions     │  - Daily Aggregation│  │
+│  │  - DAG Validation  │  - Transcripts  │  - Narrative Gen    │  │
+│  │  - Plan Refinement │  - Briefing     │  - History (14 days)│  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  Billing (Stripe)  │  Reasoning Stream │  Brand Config     │  │
+│  │  - Subscriptions   │  - Agent Thinking │  - White-label    │  │
+│  │  - Usage Metering  │  - Tool Calls     │  - Custom Colors  │  │
+│  │  - Plan Limits     │  - Decisions      │  - Logo Upload    │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │  Crypto Layer (AES-256-GCM) │  OpenAPI Parser  │  Doc Scraper    │
 └────────────────────────┬────────────────────────────────────────┘
@@ -199,15 +257,19 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 
 ### Data Flow
 
-1. **Human sets objective** → Creates mission + tasks in UI
-2. **Task assigned to agent** → Convex triggers agent wakeup webhook
-3. **Agent wakes up** → Sends heartbeat, receives rich context (tasks + tools + memories + handoff + notifications)
-4. **Agent works** → Reads task, calls integration tools, creates deliverables, writes memories
-5. **Agent completes** → Posts deliverables, marks task done, saves session handoff
-6. **Chain reaction** → Dependent tasks unblock, downstream agents receive deliverables as context
-7. **Memory persists** → Episodic memories scored and stored; distillation runs on schedule
-8. **SOUL evolves** → Distilled lessons proposed as SOUL file changes; human reviews/approves
-9. **Human reviews** → Analytics show progress, Memory Bank shows what agents learned
+1. **Human sets objective** → Creates mission + tasks in UI (or speaks goal via Autopilot)
+2. **Autopilot decomposes** → AI breaks goal into multi-agent task plan with dependencies
+3. **Task assigned to agent** → Convex triggers agent wakeup webhook
+4. **Agent wakes up** → Sends heartbeat, receives rich context (tasks + tools + memories + handoff + notifications)
+5. **Agent works** → Reads task, calls integration tools, creates deliverables, writes memories
+6. **Reasoning streamed** → Each thinking step, tool call, and decision logged in real-time
+7. **Agent completes** → Posts deliverables, marks task done, saves session handoff
+8. **Chain reaction** → Dependent tasks unblock, downstream agents receive deliverables as context
+9. **War Room updates** → Cross-agent handoffs, blockers, milestones visible in real-time
+10. **Memory persists** → Episodic memories scored and stored; distillation runs on schedule
+11. **SOUL evolves** → Distilled lessons proposed as SOUL file changes; human reviews/approves
+12. **Morning Brief** → Daily digest aggregates all activity into CEO-readable summary
+13. **Human reviews** → Analytics show progress, Memory Bank shows what agents learned
 
 ---
 
@@ -235,9 +297,9 @@ Mission Control is the **command center for autonomous AI workforces**. It's whe
 - **Superpower**: Creates polished, publication-ready content across formats
 
 ### Sentinel 🛡️ — Monitor & Auditor
-- **Role**: System health and compliance monitoring
-- **Responsibilities**: Track integration failures, audit agent decisions, flag anomalies
-- **Superpower**: Watches everything, never misses a failure, keeps the system healthy
+- **Role**: Quality assurance and compliance
+- **Responsibilities**: Review agent outputs, reject subpar work, flag anomalies, audit decisions
+- **Superpower**: Watches everything, never misses a failure, keeps quality high with automated review sweeps
 
 ### How They Coordinate
 
@@ -261,6 +323,8 @@ What makes this powerful now:
 - Agents **remember** what they learned about this product from previous sessions
 - If Ghost's work is rejected, the rejection reason + iteration count guide the next attempt
 - Session handoffs tell the next agent instance exactly where to pick up
+- **War Room** shows all handoffs, blockers, and milestones in real-time
+- **Reasoning stream** lets you watch each agent's thinking process live
 
 ### Agent Configuration
 Each agent is independently configurable:
@@ -383,7 +447,7 @@ Ready to connect from day one:
 - **Communication**: Slack, Microsoft Teams, Discord, Twilio, SendGrid
 - **CRM**: Salesforce, HubSpot, Pipedrive, Intercom, Zendesk
 - **Commerce**: Shopify, Stripe
-- **Data**: Airtable, Google Sheets, Snowflake
+- **Data**: Airtable, Google Sheets
 - **Enterprise**: ServiceNow, SAP
 - **AI/ML**: OpenAI, Anthropic, Replicate
 
@@ -516,6 +580,14 @@ On the next heartbeat, the agent receives:
 
 If `iterationCount >= maxIterations`, the system escalates to human rather than sending back to the agent.
 
+### Sentinel Automated QA
+
+Sentinel doesn't just wait for manual triggers — the system actively assigns work:
+- **Sentinel review sweep** runs every 2 minutes
+- Any task stuck in `in_review` for >1 minute auto-triggers Sentinel
+- Sentinel reviews, approves or rejects with feedback
+- Kaze only overrides if Sentinel rejects 3+ times
+
 ---
 
 ## 8. Webhook & Automation System
@@ -558,7 +630,186 @@ Conditions use **JSONPath expressions** for flexible event filtering.
 
 ---
 
-## 9. Security & Encryption
+## 9. Mission Autopilot & Voice Interface
+
+### Mission Autopilot
+
+The Autopilot page lets users describe a mission goal in natural language, and AI decomposes it into a multi-agent execution plan.
+
+**How it works:**
+1. User types or speaks a goal (e.g., "Send 50 personalized cold outreach emails to YC founders")
+2. AI (Claude Opus 4.6 via AWS Bedrock) analyzes the goal
+3. Generates 3-8 tasks with:
+   - Task titles and descriptions
+   - Agent assignments (Kaze, Scout, Forge, Ghost)
+   - Dependencies between tasks (validated DAG — no circular deps)
+   - Priority levels
+   - Required integrations
+4. User reviews and edits the plan
+5. One-click launch creates mission + all tasks + triggers agent wakeups
+
+**Pre-built templates (6 scenarios):**
+- Cold Outreach (50 personalized emails)
+- Competitive Intelligence report
+- YC Batch Analysis
+- Brand Monitoring setup
+- Research Report generation
+- Cost Optimization audit
+
+**Backend:** `missionAutopilot.ts` — `decomposeMission` action calls Claude to generate plan, `refinePlan` action applies user feedback. Validates task DAG for circular dependencies.
+
+### Voice Interface
+
+Integrated voice input system powered by Kaze as a voice assistant:
+
+- **Voice Sessions**: Create, track, and transcribe voice interactions
+- **Session Types**: `command` (direct commands) and `briefing` (information delivery)
+- **Transcripts**: Per-turn recording with speaker attribution (user vs agent)
+- **Voice Briefing**: Gathers real-time data (tasks, agent status, activity) for spoken delivery
+
+**Backend:**
+- `voiceSessions.ts` — CRUD for voice sessions + transcript storage
+- `voiceBriefing.ts` — Aggregates system state for voice delivery
+
+**Schema:**
+- `voiceSessions` — userId, target, status, duration, turnCount, sessionType
+- `voiceTranscripts` — sessionId, speaker, content, timestamp, isFinal
+
+---
+
+## 10. Morning Brief — CEO Daily Digest
+
+An AI-generated daily summary delivered at 8:00 AM IST (2:30 UTC). Gives the CEO/user a complete picture of the last 24 hours without opening the dashboard.
+
+### What's Included
+
+| Section | Content |
+|---------|---------|
+| **Narrative Summary** | AI-written prose overview of the day's progress |
+| **Key Metrics** | Tasks completed, created, stuck, in progress, in review |
+| **Highlights** | Key wins — completed tasks with agent attribution |
+| **Blockers** | Stuck tasks with suggested actions to unblock |
+| **Agent Performance** | Per-agent breakdown: tasks handled, tasks completed, current status |
+| **Upcoming Tasks** | Count of tasks queued for today |
+
+### How It Works
+
+1. Cron job triggers daily at 2:30 UTC
+2. `morningBrief.generate` action aggregates 24-hour data:
+   - All task status changes
+   - Agent heartbeats and activity
+   - Integration usage
+   - Blockers and escalations
+3. Stores structured brief in `morningBriefs` table
+4. User views at `/brief` with:
+   - Today's brief as the main view
+   - 14-day history sidebar with clickable date buttons
+   - Per-date drill-down for historical review
+
+**Backend:** `morningBrief.ts` — queries (`getToday`, `getHistory`, `getByDate`), internal action (`generate`), internal mutation (`aggregateAndStore`)
+
+---
+
+## 11. War Room — Real-Time Agent Coordination
+
+A real-time mission control hub that shows how agents are coordinating on a specific mission. Think of it as a "situation room" where you can watch agents work together.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Agent Lanes** | Horizontal swimlanes for each agent — shows their current task and task chips |
+| **Unassigned Bin** | Tasks not yet claimed, visible for quick assignment |
+| **Progress Bar** | Mission completion percentage based on task statuses |
+| **Coordination Feed** | Live stream of agent-to-agent messages with type indicators |
+| **Message Types** | Update, Handoff, Request, Blocker, Resolved, Milestone |
+| **Task Detail** | Click any task chip to see full details + dependencies + reasoning stream |
+| **Reasoning Stream** | Latest agent reasoning steps displayed in real-time |
+
+### Message Types
+
+```typescript
+WarRoomMessage {
+  missionId: Id<"missions">
+  agentName: "kaze" | "scout" | "forge" | "ghost" | "sentinel"
+  messageType: "update" | "handoff" | "request" | "blocker" | "resolved" | "milestone"
+  content: string
+  targetAgent?: agentName     // For handoffs and requests
+  taskId?: Id<"tasks">
+  timestamp: number
+}
+```
+
+**Access:** `/missions/:missionId/warroom` — linked from Mission list page
+
+---
+
+## 12. Agent Reasoning & Observability
+
+Real-time visibility into what agents are thinking, doing, and deciding. Every step of an agent's work is logged and viewable.
+
+### Reasoning Step Types
+
+| Step Type | Description | Example |
+|-----------|-------------|---------|
+| `thinking` | Agent's internal reasoning | "I need to check if the GitHub integration is connected before creating a repo" |
+| `tool_call` | API or tool invocation | "Calling github.create_repository with name='my-app'" |
+| `tool_result` | Response from tool | "Repository created successfully, URL: github.com/..." |
+| `decision` | Explicit decision made | "Choosing to use Scout's market data from Task A instead of re-researching" |
+| `handoff` | Passing work to another agent | "Handing off to Ghost for content creation with research summary attached" |
+| `error` | Error encountered | "Rate limited by Jira API — will retry in 30s" |
+| `checkpoint` | Progress marker | "Completed 3 of 5 outreach emails" |
+
+### Backend
+
+- `reasoning.ts` — mutations (`record`), queries (`getByTask`, `getLatest`, `getByAgent`)
+- Automatic cleanup: cron deletes reasoning steps older than 30 days (runs daily at 4:00 UTC)
+- Observational only — reasoning never affects task state
+
+### Where It Appears
+
+- **War Room**: Latest reasoning stream in coordination feed
+- **Task Detail Panel**: Full reasoning timeline for the active task
+- **Agent Health**: Recent reasoning steps per agent
+
+---
+
+## 13. Billing & Subscription Management
+
+### Plan Tiers
+
+| Feature | Starter | Pro (Growth) | Enterprise |
+|---------|---------|-------------|------------|
+| Users | 1 | 5 | Unlimited |
+| Agents | 2 | 5 | 5+ |
+| Integrations | 3 | 15 | Unlimited |
+| Tasks/month | 100 | 1,000 | Unlimited |
+| API calls/month | 500 | 10,000 | Unlimited |
+| Features | Basic | Full + Priority Support | Full + Custom + SLA |
+
+### Stripe Integration
+
+- **Checkout Sessions**: `billingActions.createCheckoutSession` generates Stripe checkout URL
+- **Customer Portal**: `billingActions.createPortalSession` for self-service subscription management
+- **Webhook Handler**: `billingActions.handleWebhook` processes Stripe events (subscription created/updated/deleted)
+- **Plan Mapping**: Plan names mapped to Stripe price IDs
+
+### Usage Metering
+
+- `billing.incrementUsage` tracks: tasks created, API calls, integration executions, agent sessions
+- Monthly rotation via `usage-counter-rotation` cron (1st of each month at 00:05 UTC)
+- Usage displayed on Billing page with progress bars vs. plan limits
+- Admin-only upgrade capability
+
+### Backend
+
+- `billing.ts` — queries (`getSubscription`, `getPlanLimits`, `getCurrentUsage`), mutations (`incrementUsage`, `upsertSubscription`)
+- `billingActions.ts` — actions (`createCheckoutSession`, `createPortalSession`, `handleWebhook`)
+- Tables: `subscriptions`, `planLimits`, `usageCounters`
+
+---
+
+## 14. Security & Encryption
 
 ### Credential Storage
 - **Algorithm**: AES-256-GCM (NIST-approved authenticated encryption)
@@ -566,7 +817,7 @@ Conditions use **JSONPath expressions** for flexible event filtering.
 - **Auth Tag**: 16 bytes (128 bits) — prevents tampering
 - **Format**: Base64(IV + Ciphertext + AuthTag)
 - **Master Key**: 32-byte hex string stored as Convex environment variable (`INTEGRATION_ENCRYPTION_KEY`)
-- **Scope**: All OAuth tokens, API keys, refresh tokens encrypted at rest
+- **Scope**: All OAuth tokens, API keys, refresh tokens, SSH private keys encrypted at rest
 
 ### OAuth Security
 - **State Parameter**: HMAC-SHA256 signed with encrypted JSON payload (blueprintSlug, userId, timestamp)
@@ -575,6 +826,13 @@ Conditions use **JSONPath expressions** for flexible event filtering.
 - **Client Secrets**: Stored as environment variables (`OAUTH_SECRET_<SLUG>`), never in database
 - **Token Refresh**: Hourly cron job refreshes tokens expiring within 5 minutes
 - **Popup Channel**: Dual-channel completion (postMessage + localStorage) handles providers with intermediate redirects
+
+### API Key Security
+- **Format**: `vk_live_` + 32 hex characters
+- **Storage**: SHA-256 hashed — plaintext returned once at creation, never stored
+- **Permissions**: Role-based (agent/admin) with granular permission matrix
+- **Expiry**: Optional TTL per key
+- **Revocation**: Immediate, tracked with timestamp
 
 ### Webhook Security
 - **Signature Verification**: HMAC-SHA256, HMAC-SHA1, or JWT per endpoint
@@ -586,10 +844,11 @@ Conditions use **JSONPath expressions** for flexible event filtering.
 - **Clerk Auth**: All routes behind authentication, user-scoped data access
 - **CORS**: Configured for known origins only
 - **Agent Wakeup**: HMAC-signed requests from Convex to wakeup server
+- **Audit Logging**: User actions logged with resource, details, timestamps
 
 ---
 
-## 10. The Most Complex Problems We Solve
+## 15. The Most Complex Problems We Solve
 
 ### 1. Multi-Agent Dependency Orchestration
 
@@ -600,7 +859,7 @@ Conditions use **JSONPath expressions** for flexible event filtering.
 - When Task A completes, Tasks B and C (which depend on A) automatically unblock
 - Deliverables from upstream tasks are injected as context into downstream tasks
 - Kaze (Chief of Staff) monitors the entire chain and intervenes if something stalls
-- 2-hour cron sweep catches anything that falls through the cracks
+- Cron sweeps catch anything that falls through the cracks (assigned tasks every 2 min, reviews every 2 min, inbox every 30 min)
 - Quality loops ensure outputs meet standards before unblocking dependents
 
 **Example**: "Prepare Q1 board presentation"
@@ -661,6 +920,7 @@ Kaze: Review everything, compile final deck, flag gaps
 - Template-based task creation with variable interpolation from event payloads
 - Agents wake up automatically when tasks are assigned
 - Full event history for audit trail
+- Dead letter queue with automatic retry (3x exponential backoff)
 
 ### 6. Secure Multi-Tenant Credential Management
 
@@ -679,15 +939,28 @@ Kaze: Review everything, compile final deck, flag gaps
 **Problem**: When agents produce outputs autonomously, how do you ensure quality without reviewing every single piece of work?
 
 **Our Solution**:
+- Sentinel agent automatically reviews all work (sweep every 2 minutes)
 - Rejection/rework cycles with feedback injection (iterationCount, rejectionReason)
 - Agents receive their rejection reason + previous output on the next wake — they know exactly what to fix
 - maxIterations cap prevents infinite loops; escalates to human when limit is hit
 - SOUL distillation means agents that produce bad work repeatedly will have that pattern distilled into a lesson
 - Human endorsement of memories creates a quality signal loop
 
+### 8. Natural Language Mission Planning
+
+**Problem**: Breaking down a high-level business objective into agent-executable tasks with proper dependencies is cognitively expensive for humans.
+
+**Our Solution**:
+- Autopilot accepts natural language goals (typed or spoken)
+- Claude decomposes into 3-8 tasks with agent assignments
+- Validates dependency DAG (detects circular dependencies)
+- User reviews/edits the plan before launch
+- One-click creates mission + tasks + triggers agent wakeups
+- Pre-built templates for common scenarios accelerate planning
+
 ---
 
-## 11. How We're Building Autonomous AI
+## 16. How We're Building Autonomous AI
 
 ### The Autonomy Spectrum
 
@@ -711,6 +984,7 @@ Level 5: Enterprise AI   → Runs entire business functions without human oversi
 
 **2. Self-Direction**
 - Kaze (Chief of Staff) can decompose high-level objectives into subtasks
+- Autopilot lets humans speak a goal and agents plan the execution
 - Agents understand their roles and pick the right approach
 - SOUL files define personality, decision frameworks, and judgment criteria
 
@@ -723,6 +997,7 @@ Level 5: Enterprise AI   → Runs entire business functions without human oversi
 **4. Coordination Without Human Intermediaries**
 - Task dependencies create implicit coordination
 - Deliverables from one agent flow as context to the next
+- War Room shows real-time coordination activity
 - Comments and activity logs maintain shared context
 - No human needs to manually transfer outputs between agents
 
@@ -732,11 +1007,16 @@ Level 5: Enterprise AI   → Runs entire business functions without human oversi
 - SOUL files evolve — agents literally get better at their jobs over time
 
 **6. Quality Control Loops**
-- In-review status allows human oversight of agent output
-- Kaze reviews other agents' work before marking missions complete
+- Sentinel automatically reviews all in_review tasks (2-minute sweep)
 - Rejection/rework cycles ensure outputs improve with feedback
 - Review sweep cron catches stale tasks
 - Metrics track quality over time
+
+**7. Observable Reasoning**
+- Every thinking step, tool call, and decision is logged
+- Humans can watch agents' reasoning in real-time
+- Error steps immediately visible for debugging
+- 30-day retention with automatic cleanup
 
 ### The Agent Execution Loop
 
@@ -753,18 +1033,19 @@ Level 5: Enterprise AI   → Runs entire business functions without human oversi
 3. PLAN: Agent reads task + context + memories + handoff
 4. CHECK: Verify required integrations are connected
 5. EXECUTE: Call APIs, write code, create content
-6. DELIVER: Post deliverables + comments to task
-7. MEMORIZE: Write episodic memories about discoveries/failures
-8. COMPLETE: Mark task done → triggers chain reactions
-9. HANDOFF: Write session summary with open questions + next hints
-10. IDLE: Wait for next task or shut down after session budget exhausted
+6. REASON: Each step logged as reasoning (thinking, tool_call, decision)
+7. DELIVER: Post deliverables + comments to task
+8. MEMORIZE: Write episodic memories about discoveries/failures
+9. COMPLETE: Mark task done → triggers chain reactions
+10. HANDOFF: Write session summary with open questions + next hints
+11. IDLE: Wait for next task or shut down after session budget exhausted
 ```
 
-### Why OpenClaw + Mission Control
+### Why OpenClaw + Valence AI
 
 **OpenClaw** provides the agent runtime — the ability to run Claude with tools, memory, and sessions on a server. Think of it as the "body" of the agent.
 
-**Mission Control** provides the brain — task understanding, coordination, integration access, quality control, and persistent memory. Think of it as the "nervous system" connecting multiple bodies into a team that learns.
+**Valence AI** provides the brain — task understanding, coordination, integration access, quality control, and persistent memory. Think of it as the "nervous system" connecting multiple bodies into a team that learns.
 
 Together, they create agents that:
 - Have persistent identity (SOUL files that evolve)
@@ -772,12 +1053,12 @@ Together, they create agents that:
 - Have configurable capabilities (skills, model, session limits)
 - Have access to the real world (integration engine, 30+ blueprints)
 - Work as a team (task dependencies, delegation, dependency injection)
-- Are observable (analytics, activity logs, metrics, memory bank)
+- Are observable (reasoning stream, analytics, activity logs, memory bank)
 - Get better over time (memory distillation, SOUL file versioning)
 
 ---
 
-## 12. Tech Stack & Infrastructure
+## 17. Tech Stack & Infrastructure
 
 ### Frontend
 | Technology | Purpose |
@@ -787,7 +1068,7 @@ Together, they create agents that:
 | TypeScript | Type safety |
 | Tailwind CSS 3 | Utility-first styling |
 | shadcn/ui (50+ components) | Component library |
-| React Router 6 | Client-side routing (18+ routes) |
+| React Router 6 | Client-side routing (30+ routes) |
 | Framer Motion | Animations |
 | Recharts | Analytics charts |
 | Clerk React | Authentication |
@@ -798,9 +1079,12 @@ Together, they create agents that:
 |-----------|---------|
 | Convex | Serverless backend + real-time database |
 | Convex HTTP Actions | REST API endpoints (100+) |
-| Convex Crons | Scheduled jobs (token refresh, review sweep, metric agg, distillation) |
+| Convex Crons | Scheduled jobs (13 active) |
 | AES-256-GCM | Credential encryption |
 | HMAC-SHA256 | OAuth state signing, webhook verification, agent wakeup signing |
+| Stripe API | Billing & subscription management |
+| Resend API | Transactional emails (pilot interest notifications) |
+| AWS Bedrock | Mission Autopilot (Claude Opus 4.6 for plan generation) |
 
 ### Infrastructure
 | Component | Platform |
@@ -809,6 +1093,7 @@ Together, they create agents that:
 | SSH Proxy | Railway (Node.js, ssh-proxy-service-production.up.railway.app) |
 | Agent Runtime | AWS Lightsail (self-hosted OpenClaw) |
 | Authentication | Clerk |
+| Billing | Stripe |
 | Source Code | GitHub (appydam/agent-orchestrator) |
 
 ### Agent Runtime
@@ -828,36 +1113,40 @@ Together, they create agents that:
 | `ANTHROPIC_API_KEY` | For doc scraper Claude calls |
 | `AGENT_WAKEUP_SERVER_URL` | Railway agent wakeup server URL |
 | `CONVEX_SITE_URL` | OAuth callback base URL |
+| `STRIPE_SECRET_KEY` | Stripe API key for billing |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature verification |
+| `RESEND_API_KEY` | Transactional email sending |
 
 ---
 
-## 13. Database Schema
+## 18. Database Schema (43 Tables)
 
 ### Core Tables
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `agents` | Agent status tracking | name, status, currentTask, tasksCompleted, lastHeartbeat |
-| `tasks` | Work items | title, status, priority, assignee, missionId, dependsOn, deliverables, iterationCount, maxIterations, rejectionReason |
-| `missions` | Task groups | title, description, status, taskCount, completedTaskCount |
+| `agents` | Agent status tracking | name, status, currentTask, tasksCompleted, lastHeartbeat, serverMetrics (CPU/mem/disk) |
+| `tasks` | Work items | title, status, priority, assignee, missionId, dependsOn, deliverables, iterationCount, maxIterations, rejectionReason, requiredIntegrations |
+| `missions` | Task groups | title, description, status, taskCount, completedTaskCount, createdBy |
 | `comments` | Task discussions | taskId, author, content, mentions |
-| `activity` | System event log | action, agentName, details, timestamp |
-| `messages` | Agent-to-human messaging | from, to, content |
-| `notifications` | Agent @mentions | agentName, type, taskId, fromAuthor, contentPreview, read |
-| `documents` | Agent-created artifacts | title, type, content, author, tags |
+| `activity` | System event log | action, agentName, details, taskId, timestamp |
+| `messages` | Agent-to-human messaging | from, to, content, isSquadMessage |
+| `notifications` | Agent @mentions | recipientAgent, type, taskId, fromAuthor, contentPreview, read |
+| `users` | Clerk user profiles | clerkId, email, name, avatarUrl, role (admin/member/viewer) |
 
 ### Integration Engine Tables
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `blueprints` | Integration definitions | slug, name, baseUrl, authType, authConfig (JSON), apiProtocol, status |
+| `blueprints` | Integration definitions | slug, name, baseUrl, authType, authConfig (JSON), apiProtocol, status, sourceType, category |
 | `blueprintTools` | API actions per blueprint | blueprintId, name, method, path, pathParams, queryParams, bodySchema, responseMapping, paginationConfig, aiUsageHint |
 | `connections` | User auth credentials | userId, blueprintId, credentialsEncrypted, status, expiresAt, consecutiveFailures |
-| `scraperJobs` | Doc scraping tracking | userId, docsUrl, status, blueprintId, toolCount, error |
-| `integrationActivity` | Execution logs | userId, agentName, blueprintId, toolName, httpStatus, durationMs, retryCount |
+| `oauthStates` | Short-lived CSRF tokens | token, blueprintSlug, userId, codeVerifier, expiresAt |
+| `scraperJobs` | Doc scraping tracking | url, status, blueprintId, toolCount, error |
+| `integrationActivity` | Execution logs | userId, agentName, taskId, integrationType, toolName, status, errorMessage |
 
 ### Memory & Learning Tables
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `agentMemory` | Episodic memories | agentName, memoryType, title, body, evidence, tags, importanceScore, confirmations, contradictions, humanEndorsed, status, expiresAt |
+| `agentMemory` | Episodic memories | agentName, memoryType, title, body, evidence, tags, importanceScore, confirmations, contradictions, humanEndorsed, status |
 | `sessionHandoffs` | End-of-session summaries | agentName, sessionSummary, tasksCompleted, newMemoriesCreated, openQuestions, nextSessionHint |
 | `soulFileVersions` | SOUL file version control | agentName, content, version, changeLog, memoriesDistilled, status (pending_review/approved/rejected) |
 | `memoryDistillationJobs` | Distillation tracking | agentName, status, memoriesAnalyzed, sourceMemoryIds, soulVersionId, triggeredBy |
@@ -867,24 +1156,52 @@ Together, they create agents that:
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
 | `webhookEndpoints` | Webhook receivers | userId, urlPath, signatureMethod, eventTypes, status, stats (received/processed/failed) |
-| `webhookEvents` | Received events | endpointId, payload, verified, processed, taskId |
-| `automationRules` | Event-to-action mapping | eventType, conditions (JSONPath), actionType, actionConfig, taskTemplate |
+| `webhookEvents` | Received events | endpointId, payload, verified, status, taskId, retryCount, nextRetryAt, deadLetter |
+| `automationRules` | Event-to-action mapping | eventType, conditions (JSONPath), actionType, actionConfig, taskTemplate, executionCount |
 
-### Analytics & Config Tables
+### Analytics & Metrics Tables
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
 | `taskMetrics` | Task timing | taskId, timeToAssign, timeToStart, timeToComplete, source (manual/webhook/agent/integration) |
-| `agentMetrics` | Agent performance | agentName, period, tasksCompleted, completionRate, avgTimeToComplete, integrationCallCount |
-| `systemMetrics` | System health | periodType, totalTasksCreated, totalTasksCompleted, totalIntegrationCalls, totalWebhooksReceived, totalCost |
-| `usage` | Cost tracking | agentName, model, inputTokens, outputTokens, cost |
-| `agentConfigs` | Agent settings | agentName, model, skills, maxTurns, timeout |
+| `agentMetrics` | Agent performance | agentName, period, tasksCompleted, completionRate, avgTimeToComplete, integrationCallCount, totalCost |
+| `systemMetrics` | System health | periodType, totalTasksCreated, totalTasksCompleted, totalIntegrationCalls, totalWebhooksReceived |
+| `usage` | Cost tracking | agentName, totalCost, totalInputTokens, totalOutputTokens, modelBreakdowns |
+
+### Agent Config & Observability Tables
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `agentConfigs` | Agent settings | agentName, model, skills, sessionMaxTurns, sessionTimeout, displayName |
+| `agentReasoningSteps` | Live reasoning stream | taskId, agentName, stepType (thinking/tool_call/decision/error), content, metadata |
 | `sshConfig` | SSH credentials | host, port, username, encryptedPrivateKey |
-| `users` | Clerk user profiles | clerkId, email, name |
+| `auditLog` | User action audit trail | userId, action, resource, resourceId, details |
+
+### Voice & Autopilot Tables
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `voiceSessions` | Voice session tracking | userId, target, status, durationMs, turnCount, sessionType (command/briefing) |
+| `voiceTranscripts` | Voice transcript history | sessionId, speaker, content, timestamp, isFinal |
+| `autopilotSessions` | Mission autopilot plans | userId, goal, context, plan (JSON), status, missionId |
+| `morningBriefs` | CEO daily digest | date, tasksCompleted, tasksCreated, highlights, blockers, agentPerformance, narrative |
+| `warRoomMessages` | Cross-agent coordination | missionId, agentName, messageType, content, targetAgent, taskId |
+
+### Billing & Subscription Tables
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `subscriptions` | Stripe subscription state | stripeCustomerId, stripeSubscriptionId, plan, status, currentPeriodStart/End, cancelAtPeriodEnd |
+| `planLimits` | Plan feature limits | plan, maxUsers, maxAgents, maxIntegrations, maxTasksPerMonth, maxApiCallsPerMonth, features |
+| `usageCounters` | Monthly usage tracking | periodStart, periodEnd, tasksCreated, apiCallsMade, integrationExecutions, agentSessions |
+
+### Brand, Onboarding & Pilot Tables
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `brandConfig` | White-label branding | companyName, logoUrl, primaryColor, accentColor |
+| `onboardingState` | User onboarding progress | userId, currentStep, completed, companyName, integrationsConnected, agentsConfigured |
+| `pilotInterest` | Pilot program signups | name, email, company, role, useCase, emailSent |
 | `figmaPluginCommands` | Figma plugin queue | createdBy, fileKey, label, spec (JSON), status, resultNodeIds |
 
 ---
 
-## 14. API Surface
+## 19. API Surface
 
 ### Task Management
 | Method | Endpoint | Description |
@@ -936,36 +1253,53 @@ Together, they create agents that:
 
 ---
 
-## 15. Frontend Pages & Components
+## 20. Frontend Pages & Components (30+ Routes)
 
-### Pages (18+ routes)
+### Authenticated Pages (22 routes)
 
 | Route | Page | Description |
 |-------|------|-------------|
-| `/` | Activity Feed | Dashboard with agent status cards, task stats, recent activity |
-| `/board` | Mission Board | 5-column Kanban with mission filtering, task detail panel |
-| `/missions` | Missions | Active/Completed/Archived missions with progress tracking |
-| `/squad` | Squad View | Agent squad visualization with status, current tasks, roles |
-| `/agents` | Agents | Agent config panels, metrics, cost, SOUL file editing |
+| `/` | Activity Feed | Dashboard with agent status cards, task stats, recent activity, getting started checklist |
+| `/board` | Mission Board | 5-column Kanban + Plan View (dependency DAG) + Squad Ops view, with mission filtering |
+| `/missions` | Missions | Active/Completed/Archived missions with War Room access and Mission Reports |
+| `/missions/:id` | Mission Report | Post-mortem view — deliverables, agent contributions, integration usage, timeline |
+| `/missions/:id/warroom` | War Room | Real-time agent coordination — lanes, handoffs, blockers, milestones |
+| `/agents` | Agents | Agent config panels, metrics, cost, SOUL file editing, server sync |
+| `/health` | Agent Health | Deep monitoring — CPU, memory, disk, uptime, integration status, recent API calls per agent |
+| `/squad` | Squad View | Agent squad visualization with roles, status, current tasks |
 | `/command` | Command Center | Direct chat with agents, color-coded messages |
-| `/documents` | Documents | Grid of agent reports/code/analysis with filters |
-| `/tools` | OpenClaw Skills | Available skills catalog with install capability |
+| `/autopilot` | Mission Autopilot | Natural language → AI plan decomposition, voice input, 6 pre-built templates |
+| `/brief` | Morning Brief | Daily CEO digest — narrative, metrics, highlights, blockers, 14-day history |
 | `/integrations` | Integrations | City View (spatial) + List View, 30+ blueprints + 100+ templates |
 | `/integrations/blueprint/new` | Blueprint Wizard | 3-step: paste URL → AI scrape / manual form → review → save |
 | `/integrations/blueprint/:id` | Blueprint Detail | Tools list, execution history, connection settings |
-| `/webhooks` | Webhooks | Endpoint management + event history + automation rules |
-| `/analytics` | Analytics | Charts: trends, performance, completion times, source tracking |
+| `/webhooks` | Webhooks | Endpoint management + event history + automation rules + dead letter queue |
+| `/analytics` | Analytics | Charts: trends, performance, completion times, radar, source tracking (7/30/90 day) |
 | `/memory` | Memory Bank | Browse, search, filter agent memories; endorse/flag |
 | `/memory/:id` | Memory Detail | Single memory with evidence, related agents, vote UI |
 | `/soul-review` | SOUL Review | Pending SOUL file versions — diff view, approve/reject |
-| `/settings` | Settings | SSH server configuration |
+| `/settings` | Settings | Tabs: Account, SSH Server, API Keys, Brand, Advanced |
+| `/billing` | Billing | Current plan, usage meters, plan comparison, Stripe checkout/portal |
+| `/ops` | Operations Hub | Admin provisioning guide, env var reference, customer management, Docker setup |
+| `/docs` | Docs / Help | FAQ: agents, integrations, webhooks, task lifecycle, keyboard shortcuts |
+| `/admin` | Admin Dashboard | System overview, task breakdown, server health, data export (admin-only) |
+| `/onboarding` | Onboarding | 5-step wizard: company name → integrations → agents → team → launch |
+
+### Public Pages (5 routes)
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/landing` | Landing Page | Marketing page with animated demos, integration grid, comparison table, pilot signup |
+| `/use-cases/:slug` | Use Case Detail | Deep-dive into specific workflow scenarios with agent breakdown |
 | `/login` | Login | Clerk auth with gradient UI |
+| `/privacy` | Privacy Policy | Legal page |
+| `/terms` | Terms of Service | Legal page |
 
 ### Key Components
 
 **Core UI:**
-- **AppSidebar** — Collapsible navigation (13+ items)
-- **TaskCard / TaskDetailPanel** — Task CRUD with comments, deliverables, dependencies, rejection feedback UI
+- **AppSidebar** — Collapsible navigation (15+ items)
+- **TaskCard / TaskDetailPanel** — Task CRUD with comments, deliverables, dependencies, rejection feedback, reasoning stream
 - **AgentStatusCard / AgentConfigPanel** — Agent monitoring and configuration
 - **NotificationBell** — @mention notifications with unread count
 
@@ -982,8 +1316,13 @@ Together, they create agents that:
 - **SOULReviewPanel** — Diff-based SOUL file review with approve/reject
 
 **Squad & Agent Views:**
+- **SquadView** — Animated terrarium with agents as interactive SVG characters
 - **SquadMemberCard** — Agent card with role, status, current task, memory snapshot
 - **SquadActivityFeed** — Real-time team activity across all agents
+
+**Voice & Autopilot:**
+- **VoiceOverlay** — Voice input interface for Autopilot
+- **AutopilotPlanView** — Review/edit AI-generated task plans before launch
 
 **shadcn/ui Primitives (50+):** Button, Card, Dialog, Select, Tabs, Table, Tooltip, Sidebar, Collapsible, Accordion, Badge, Progress, Checkbox, Radio, Switch, Separator, Skeleton, Alert, etc.
 
@@ -992,11 +1331,11 @@ Together, they create agents that:
 - **Agent Colors**: Kaze (blue), Scout (green), Forge (orange), Ghost (purple), Sentinel (red)
 - **Fonts**: Inter (UI) + JetBrains Mono (code)
 - **Patterns**: Card-based layouts, right-side detail panels, modal dialogs, activity feeds
-- **Animations**: Slide-in panels, pulse effects on live indicators, smooth transitions, City View walker animations
+- **Animations**: Slide-in panels, pulse effects on live indicators, smooth transitions, City View walker animations, Framer Motion scroll reveals
 
 ---
 
-## 16. Current Integrations
+## 21. Current Integrations
 
 ### Pre-Seeded Blueprints (30+)
 Ready to connect — OAuth or API key, no setup needed:
@@ -1029,7 +1368,7 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 
 ---
 
-## 17. What Makes Us Different
+## 22. What Makes Us Different
 
 ### vs. ChatGPT / Claude (Single Agent Chat)
 | Them | Us |
@@ -1040,6 +1379,7 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 | No coordination | Task dependencies, delegation, dependency injection |
 | Stateless conversations | Persistent missions, deliverables, history, memory |
 | Never improves | Agents learn via episodic memory + SOUL file distillation |
+| No observability | Real-time reasoning stream, analytics, memory bank |
 
 ### vs. Zapier / Make / Workato (Workflow Automation)
 | Them | Us |
@@ -1050,6 +1390,7 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 | $50-500/month for basic plans | Self-hosted, $0 platform cost |
 | Human builds every workflow | AI generates integrations from docs |
 | Workflows don't learn | Agents improve from experience |
+| No voice interface | Speak a goal → agents execute |
 
 ### vs. Paragon / Merge (Integration Platforms)
 | Them | Us |
@@ -1070,10 +1411,32 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 | Demo-grade reliability | Production-grade: encrypted creds, retry logic, error handling |
 | Stateless agents | Agents with episodic memory, session handoffs, SOUL evolution |
 | No quality loops | Rejection/rework cycles, iteration tracking, feedback injection |
+| No voice/autopilot | Natural language mission planning with voice input |
+| No daily digest | Morning Brief — CEO gets daily AI-generated summary |
 
 ---
 
-## 18. Future Vision & Roadmap
+## 23. Cron Jobs & Scheduled Tasks (13 Jobs)
+
+| Job | Schedule | Handler | Purpose |
+|-----|----------|---------|---------|
+| `refresh-expiring-tokens` | Every hour at :00 | tokenRefresh.refreshExpiringTokens | Proactive OAuth token refresh for tokens expiring within 5 min |
+| `assigned-task-sweep` | Every 2 minutes | agentWakeupSweep.sweep | Re-wake agents for stuck tasks (>5m assigned, >15m in_progress) |
+| `sentinel-review-sweep` | Every 2 minutes | tasks.sentinelReviewSweep | Wake Sentinel for tasks stuck in_review >1 minute |
+| `stale-agent-reset` | Every 5 minutes | agents.resetStaleAgents | Mark agents offline after 10+ min heartbeat gap |
+| `webhook-retry-failed` | Every 5 minutes | webhookReceiver.retryFailed | Retry failed webhooks (3x max, exponential backoff) |
+| `server-health-check` | Every 10 minutes | serverHealth.checkAndLogAlerts | Monitor CPU/RAM/disk, log alerts to activity table |
+| `inbox-triage-sweep` | Every 30 minutes | tasks.inboxTriageSweep | Prevent inbox overflow — auto-delegate stale inbox tasks |
+| `kaze-review-sweep` | Every 2 hours | tasks.reviewSweep | Catch tasks stuck in "in_review" for too long |
+| `morning-brief` | Daily at 2:30 UTC (~8 AM IST) | morningBrief.generate | Generate CEO daily digest from 24h data |
+| `memory-archive-stale` | Daily at 3:00 UTC | agentMemory.archiveStale | Archive old, unused agent memories |
+| `reasoning-cleanup` | Daily at 4:00 UTC | reasoning.cleanupOld | Prune reasoning steps older than 30 days |
+| `soul-distillation-weekly` | Sunday at 2:00 UTC | soulDistillation.distillAllAgents | AI-powered SOUL file evolution from accumulated memories |
+| `usage-counter-rotation` | Monthly, 1st at 00:05 UTC | billing.rotateUsageCounters | Billing period usage counter reset |
+
+---
+
+## 24. Future Vision & Roadmap
 
 ### Near-Term (Building Now)
 
@@ -1089,6 +1452,7 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 - Automatic dependency graph generation
 - Resource estimation (which agents, how long, which integrations needed)
 - Critical path identification
+- *(Foundation complete: Autopilot mission decomposition is live)*
 
 **Integration Marketplace**
 - Community-contributed blueprints
@@ -1157,7 +1521,7 @@ Beyond templates, users can connect **any API** by pasting its documentation URL
 
 ### The Ultimate Vision
 
-**Mission Control becomes the operating system for enterprise AI workforces.**
+**Valence AI becomes the operating system for enterprise AI workforces.**
 
 Every company has a "mission control" where:
 - Business objectives are defined by humans
@@ -1169,17 +1533,20 @@ Every company has a "mission control" where:
 
 We're not building a chatbot. We're not building a workflow tool. We're building the **command center for the future of work** — where human intent is translated into autonomous execution across every tool in the enterprise stack, and the agents get smarter with every task they complete.
 
+Valence AI — connected to ~100 popular tools, powered by autonomous agents that learn.
+
 ---
 
-## 19. Key File Reference
+## 25. Key File Reference
 
 ### Backend (convex/)
 | File | Purpose |
 |------|---------|
-| `schema.ts` | Database schema (30+ tables) |
+| `schema.ts` | Database schema (43 tables) |
 | `http.ts` | HTTP API endpoints (100+) |
-| `tasks.ts` | Task management + dependency logic |
+| `tasks.ts` | Task management + dependency logic + review sweeps |
 | `taskDeps.ts` | Dependency graph: areDependenciesMet, getReadyTasks |
+| `missions.ts` | Mission CRUD + getReport (comprehensive post-mortem data) |
 | `executionEngine.ts` | Integration tool execution (retry, auth, response mapping) |
 | `blueprints.ts` | Blueprint CRUD |
 | `blueprintTools.ts` | Tool CRUD per blueprint |
@@ -1191,13 +1558,29 @@ We're not building a chatbot. We're not building a workflow tool. We're building
 | `soulDistillation.ts` | Memory → SOUL file distillation |
 | `soulFileVersions.ts` | SOUL file version control (pending_review, approve/reject) |
 | `heartbeat.ts` | Rich heartbeat: tasks + tools + memories + handoff + notifications + budget |
-| `webhookReceiver.ts` | Generic webhook receiver |
+| `webhookReceiver.ts` | Generic webhook receiver + retry logic |
 | `webhookReceiverActions.ts` | Signature verification + automation rule execution |
 | `automationRules.ts` | Automation engine (JSONPath conditions, action templates) |
 | `analytics.ts` | Dashboard metrics computation |
+| `reasoning.ts` | Agent reasoning step recording + queries + cleanup |
+| `missionAutopilot.ts` | AI mission decomposition (Claude via AWS Bedrock) |
+| `voiceSessions.ts` | Voice session CRUD + transcripts |
+| `voiceBriefing.ts` | Aggregates system state for voice delivery |
+| `morningBrief.ts` | Daily CEO digest generation + queries |
+| `billing.ts` | Subscription queries, plan limits, usage tracking |
+| `billingActions.ts` | Stripe checkout, portal, webhook handling |
+| `apiKeys.ts` | API key generation, validation (SHA-256 hashed), revocation |
+| `brandConfig.ts` | White-label branding (company name, logo, colors) |
+| `onboarding.ts` | Onboarding flow state management |
+| `pilotInterest.ts` | Landing page signup capture + email notification |
+| `serverHealth.ts` | Server health check + alerting |
 | `agentWakeup.ts` | Agent startup trigger (HMAC-signed) |
-| `crons.ts` | Scheduled jobs (token refresh, metric aggregation, distillation) |
+| `agentWakeupSweep.ts` | Stuck task detection + auto-wakeup |
+| `crons.ts` | Scheduled jobs (13 active) |
 | `figmaPlugin.ts` | Figma plugin command queue |
+| `users.ts` | Clerk user sync + role management |
+| `adminDashboard.ts` | Admin system overview + activity + task overview |
+| `dataExport.ts` | Full system JSON export (sensitive fields redacted) |
 | `lib/crypto.ts` | AES-256-GCM encryption/decryption |
 | `lib/requestBuilder.ts` | HTTP request construction (auth, path params, bodies) |
 | `lib/openApiParser.ts` | OpenAPI spec parsing |
@@ -1207,10 +1590,16 @@ We're not building a chatbot. We're not building a workflow tool. We're building
 ### Frontend (src/)
 | File | Purpose |
 |------|---------|
-| `App.tsx` | Root router (18+ routes) |
-| `pages/Board.tsx` | Kanban task board |
+| `App.tsx` | Root router (30+ routes) |
+| `pages/Board.tsx` | Kanban task board + Plan View + Squad Ops |
+| `pages/Missions.tsx` | Mission list + War Room + Reports access |
+| `pages/MissionReport.tsx` | Mission post-mortem — deliverables, agent contributions, timeline |
+| `pages/WarRoom.tsx` | Real-time mission coordination hub |
 | `pages/Agents.tsx` | Agent monitoring + config |
+| `pages/AgentHealth.tsx` | Deep agent monitoring — CPU, memory, disk, integrations, API calls |
 | `pages/Squad.tsx` | Squad overview |
+| `pages/Autopilot.tsx` | Natural language mission decomposition + voice input |
+| `pages/MorningBrief.tsx` | Daily CEO digest with 14-day history |
 | `pages/Integrations.tsx` | Integration hub (City View + List View) |
 | `pages/BlueprintWizard.tsx` | AI-powered integration builder (3-step wizard) |
 | `pages/BlueprintDetail.tsx` | Blueprint editor + testing + execution history |
@@ -1220,6 +1609,14 @@ We're not building a chatbot. We're not building a workflow tool. We're building
 | `pages/Webhooks.tsx` | Webhook management + automation rules |
 | `pages/Analytics.tsx` | Performance dashboard |
 | `pages/Command.tsx` | Agent chat |
+| `pages/Billing.tsx` | Subscription management + usage meters + Stripe |
+| `pages/OperationsHub.tsx` | Admin provisioning guide |
+| `pages/Onboarding.tsx` | 5-step setup wizard |
+| `pages/Docs.tsx` | In-app help center / FAQ |
+| `pages/Admin.tsx` | Admin dashboard + data export |
+| `pages/Settings.tsx` | Account, SSH, API Keys, Brand, Advanced |
+| `pages/Landing.tsx` | Public marketing page |
+| `pages/UseCase.tsx` | Use case detail pages |
 | `hooks/useIntegrationEngine.ts` | Integration CRUD + OAuth + API key connection |
 | `hooks/useDocScraper.ts` | Doc scraping state + polling |
 | `hooks/useOAuthPopup.ts` | OAuth popup flow (postMessage + localStorage dual-channel) |
@@ -1236,13 +1633,307 @@ We're not building a chatbot. We're not building a workflow tool. We're building
 | `server-files/ssh-proxy-server.js` | SSH proxy on Railway |
 | `server-files/agent-wakeup-server.js` | Agent startup webhook |
 | `server-files/openclaw-config.json` | Agent configuration |
+| `server-files/SOUL.md` | Kaze agent identity (workspace root copy) |
 | `server-files/agents/kaze/SOUL.md` | Kaze agent identity |
 | `server-files/agents/scout/SOUL.md` | Scout agent identity |
 | `server-files/agents/forge/SOUL.md` | Forge agent identity |
 | `server-files/agents/ghost/SOUL.md` | Ghost agent identity |
 | `server-files/agents/sentinel/SOUL.md` | Sentinel agent identity |
+| `server-files/AGENTS.md` | Agent operating manual for all squad members |
+| `server-files/TOOLS.md` | Local setup notes (email, contacts, messaging rules) |
+| `server-files/MEMORY.md` | Long-term memory for Kaze |
 
 ---
 
-*Last updated: 2026-02-24*
-*This document is the single source of truth for the Mission Control project.*
+## 26. Pilot Deployment Guide
+
+### Deployment Models
+
+Valence AI supports two deployment models for pilot customers:
+
+**Model A: Cloud (Fully Managed)**
+We host the entire stack — Convex project, Vercel app, Lightsail agent server — per customer. Customer just logs in and uses the dashboard.
+
+| Component | Service | Cost/mo |
+|-----------|---------|---------|
+| Database + Backend | Convex (separate project per customer) | $0-25 |
+| Frontend | Vercel (separate app per customer) | $0-20 |
+| Agent Server | AWS Lightsail (Ubuntu 22.04, small_2_0) | $12 |
+| Auth | Clerk (shared) | $0 |
+| LLM | Anthropic API (per-customer key) | $10-100+ |
+| SSH Proxy | Railway (shared across all customers) | $5 total |
+
+**Model B: On-Prem Hybrid (Customer Hosts Agents)**
+We host dashboard + backend, customer hosts the agent server on their own infrastructure. Agents run inside customer's network, accessing internal tools/APIs/code. Best for security-sensitive enterprises.
+
+- Customer provides: server (2 vCPU, 2GB RAM, Ubuntu 22.04+), Anthropic API key, SSH access
+- We provide: install script, Convex project, Vercel app
+- Network requirement: outbound HTTPS to `*.convex.cloud` + `api.anthropic.com`
+
+### Provisioning Scripts
+
+Located in `deployment-scripts/`:
+
+| Script | Purpose |
+|--------|---------|
+| `provision-customer.sh <slug> <domain> <email>` | Creates Convex project + Vercel app + seeds database |
+| `provision-server.sh <slug>` | Launches Lightsail instance with OpenClaw |
+| `install-agent-server.sh` | Standalone agent server setup for on-prem customers |
+| `verify-customer.sh <slug>` | Post-provision health checks |
+| `update-all.sh --functions-only / --soul-sync / --env` | Batch update all customers |
+| `teardown-customer.sh <slug>` | Clean removal of customer stack |
+| `customers.json` | Registry of all provisioned customers |
+
+### Required Environment Variables Per Customer
+
+**Convex deployment (set via `npx convex env set`):**
+- `INTEGRATION_ENCRYPTION_KEY` — unique 32-byte hex per customer (generate: `openssl rand -hex 32`)
+- `CLERK_JWT_ISSUER_DOMAIN` — Clerk domain for this customer's auth
+- `ALLOWED_ORIGIN` — customer's Vercel URL (e.g., `https://acme.valence.ai`)
+- `SSH_PROXY_URL` — Railway service URL for SSH proxy
+- `SSH_PROXY_SECRET` — shared secret between Convex and SSH proxy
+- `AGENT_WAKEUP_WEBHOOK_URL` — agent wakeup endpoint
+- `ANTHROPIC_API_KEY` — for doc scraper Claude calls
+- `STRIPE_SECRET_KEY` — Stripe API key for billing
+- `STRIPE_WEBHOOK_SECRET` — Stripe webhook signature verification
+
+**Railway SSH proxy (shared):**
+- `SSH_PROXY_SECRET` — must match Convex env var
+
+### Per-Customer Onboarding Checklist
+
+1. Customer signs up via Clerk → lands on onboarding wizard
+2. Complete 5 onboarding steps (company name, integrations, meet squad, invite team, launch)
+3. Configure SSH in Settings (cloud: auto-provisioned, on-prem: customer enters their server IP)
+4. Create first mission + task → verify agent wakes up and claims it
+5. Connect at least one integration (GitHub OAuth recommended for demo)
+6. Show analytics page — real-time task metrics and agent performance
+
+### Security Architecture for Pilots
+
+- **SSH proxy requires Bearer token auth** — `SSH_PROXY_SECRET` env var on both Railway and Convex
+- **SSH private keys encrypted at rest** — AES-256-GCM using `INTEGRATION_ENCRYPTION_KEY`
+- **All frontend SSH calls route through Convex** — private key never reaches the browser
+- **API keys enforce permissions** — `hasPermission()` check in HTTP middleware
+- **OAuth tokens encrypted** — same AES-256-GCM as SSH keys
+- **Rate limiting** — per-user, per-endpoint sliding window (SSH ops: 5/min, general: 300/min)
+
+### Known Limitations for Pilots
+
+- **Agent sessions crash after ~84 tool calls** — mitigated by SOUL.md "hard stop at turn 15" rule
+- **Anthropic rate limits can corrupt sessions** — agents affected: Forge (large builds), Scout (research loops)
+- **Session recovery** — if agent crashes, delete corrupt session file and re-wake (see crash playbook below)
+- **No multi-tenant** — each customer is a separate deployment. Cannot share data between customers.
+- **Billing not enforced** — plan limits exist but are not enforced during pilot phase
+
+### Agent Crash Recovery Playbook
+
+1. **Symptom:** "Session recovery" spam on a task
+   - **Cause:** Agent session file corrupted (context overflow + rate limit crash)
+   - **Fix:** SSH into server → `ls -lt /home/ubuntu/.openclaw/agents/{agent}/sessions/` → delete largest/newest `.jsonl` + its `.lock` → re-wake agent
+
+2. **Symptom:** Agent starts but log stays 0 bytes for >2 min
+   - **Cause:** Agent initializing or queued behind another
+   - **Fix:** Wait 2 more minutes, check `ps aux | grep openclaw-agent`
+
+3. **Symptom:** Agent completes task but deliverable not showing
+   - **Cause:** Task update API call may have timed out
+   - **Fix:** Check activity log, manually update task status if needed
+
+---
+
+## 27. Webhook Retry & Dead Letter Queue
+
+Failed webhook events are automatically retried up to 3 times with exponential backoff (30s, 2min, 8min).
+
+**How it works:**
+- When a webhook event processing fails, `retryCount` and `nextRetryAt` are set
+- A cron job (`webhook-retry-failed`) runs every 5 minutes, picks up events where `nextRetryAt <= now`
+- Events are reset to "received" status and re-dispatched to the receive action
+- After 3 failed retries, the event is marked `deadLetter: true` and stops retrying
+
+**Viewing dead letters:**
+- Webhooks page → "Dead Letters" tab shows all exhausted events
+- `webhookReceiver.listDeadLetters` query returns dead letter events
+
+**Schema fields added to `webhookEvents`:**
+- `retryCount` — number of retries attempted
+- `nextRetryAt` — epoch ms when next retry is due
+- `deadLetter` — true when all retries exhausted
+
+---
+
+## 28. Graceful Degradation Without SSH
+
+The dashboard works fully even without SSH configured:
+
+| Feature | Without SSH | With SSH |
+|---------|-------------|----------|
+| Agent list & status | Works (via heartbeat) | Works |
+| Task management | Works | Works |
+| Agent config editing | Works (saved to Convex) | Works |
+| SOUL file editing | Works (in-browser) | Works + pull/sync to server |
+| Server sync | Disabled (button grayed) | Works |
+| Skills tab | Shows "SSH not configured" | Works |
+| Agent restart | Disabled (button grayed) | Works |
+
+**Implementation:**
+- `Agents.tsx` — Sync button disabled + yellow banner when SSH not configured
+- `AgentConfigPanel.tsx` — Restart/Pull/Sync buttons disabled with tooltip
+- `Settings.tsx` Skills tab — Shows empty state directing user to Server tab
+- All error messages updated to reference "Settings → Server" instead of "port 3001"
+
+---
+
+## 29. Operator Documentation
+
+| Document | Path | Purpose |
+|----------|------|---------|
+| RUNBOOK.md | `deployment-scripts/RUNBOOK.md` | Full provisioning + operations guide for operators |
+| ON-PREM-GUIDE.md | `deployment-scripts/ON-PREM-GUIDE.md` | Customer-facing self-hosted agent server setup |
+| smoke-test.sh | `deployment-scripts/smoke-test.sh` | Post-provision health check (frontend, Convex, SSH proxy, agent server) |
+| verify-customer.sh | `deployment-scripts/verify-customer.sh` | Quick customer health check |
+
+---
+
+## 30. Admin Dashboard & Data Export
+
+**Admin Dashboard** (`src/pages/Admin.tsx`) — internal-only page for operators (admin role required).
+
+**Features:**
+- System overview: agents online, active tasks, team members, integrations, dead letters
+- Usage stats: API calls, agent sessions per billing period
+- Agent status list with heartbeat timestamps
+- Task breakdown by status with progress bars
+- Recent activity feed (last 50)
+- Recent tasks list (last 100)
+- Server health panel with CPU/RAM/disk gauges per agent
+- "Export All Data" button — downloads full system state as JSON
+
+**Data Export** (`convex/dataExport.ts`) — action that gathers all tables and returns structured JSON. Sensitive fields (OAuth secrets, webhook secrets, Clerk IDs) are automatically redacted.
+
+**Backend:** `convex/adminDashboard.ts` (queries: `getSystemOverview`, `getRecentActivity`, `getTasksOverview`)
+
+**Access:** Admin-only sidebar link (Shield icon, below Settings). Non-admin users see "Admin Access Required" message.
+
+---
+
+## 31. Server Health Monitoring
+
+**Problem:** No visibility into agent server resource usage — servers can silently run out of memory or disk.
+
+**Solution:** Enhanced heartbeat with server metrics + alerting cron.
+
+**How it works:**
+1. Agent heartbeat (`POST /api/heartbeat`) now accepts optional `serverMetrics` field:
+   - `cpuPercent`, `memoryUsedMb`, `memoryTotalMb`, `diskUsedGb`, `diskTotalGb`, `uptimeSeconds`, `loadAvg1m`
+2. Metrics stored on the `agents` table (optional `serverMetrics` object)
+3. `server-health-check` cron runs every 10 minutes:
+   - CPU > 85% → alert
+   - Memory > 90% → alert
+   - Disk > 90% → alert
+   - No heartbeat for 5+ minutes → alert
+   - Alerts logged to `activity` table as `health_alert` actions
+4. Admin dashboard shows real-time health gauges (green/yellow/red) per agent
+5. Agent Health page (`/health`) shows deep per-agent monitoring with integration status
+
+**Files:**
+- `convex/serverHealth.ts` — `getServerHealth` query + `checkAndLogAlerts` cron handler
+- `convex/heartbeat.ts` — accepts `serverMetrics` in `beat` mutation
+- `convex/schema.ts` — `serverMetrics` optional field on `agents` table
+
+---
+
+## 32. Lightsail Auto-Snapshots
+
+**Script:** `deployment-scripts/lightsail-snapshots.sh`
+
+Creates nightly snapshots of all active customer Lightsail instances and cleans up snapshots older than 7 days.
+
+**Usage:**
+```bash
+./lightsail-snapshots.sh             # Run manually
+./lightsail-snapshots.sh --dry-run   # Preview only
+```
+
+**Cron (recommended):**
+```
+0 3 * * * /path/to/lightsail-snapshots.sh >> /var/log/lightsail-snapshots.log 2>&1
+```
+
+**Naming convention:** `valence-{slug}-YYYYMMDD`
+
+**Dependencies:** `aws` CLI, `jq`, `customers.json` in same directory.
+
+---
+
+## 33. Docker Image for Agents
+
+**File:** `deployment-scripts/Dockerfile.agents`
+
+Self-contained Docker image for on-prem agent server deployment. Customers who want containerized agents can build and run this image instead of running the install script.
+
+**Build:**
+```bash
+docker build -f Dockerfile.agents -t mission-control-agents .
+```
+
+**Run:**
+```bash
+docker run -d \
+  -e MISSION_CONTROL_API_KEY=vk_live_xxx \
+  -e MISSION_CONTROL_URL=https://your-project.convex.cloud \
+  -e ANTHROPIC_API_KEY=sk-ant-xxx \
+  --name mc-agents \
+  mission-control-agents
+```
+
+**Image contents:**
+- Node.js 20 slim base
+- Non-root `agent` user
+- Full OpenClaw directory structure (kaze, scout, forge, ghost, sentinel)
+- Default SOUL files
+- Health check via `pgrep -f "openclaw"`
+- Entrypoint writes env vars to `.env` and starts `npx openclaw gateway start`
+
+---
+
+## 34. Onboarding & Landing
+
+### Onboarding Wizard
+
+5-step guided setup for new workspaces at `/onboarding`:
+
+| Step | Title | What Happens |
+|------|-------|-------------|
+| 1 | Company Name | User enters their company/workspace name |
+| 2 | Integrations | Select from top 6 integrations to connect (GitHub, Slack, Jira, etc.) |
+| 3 | Meet the Squad | View all 5 agents with roles and descriptions |
+| 4 | Invite Team | Enter email addresses for team member invitations |
+| 5 | Launch | Review setup and redirect to dashboard |
+
+**Backend:** `onboarding.ts` — queries (`getForUser`, `getCurrent`), mutations (`initialize`, `updateStep`, `complete`)
+
+### Landing Page
+
+Public marketing homepage at `/landing` with:
+
+- **Hero Section**: Animated mission execution timeline showing agents decomposing, researching, building, QA-ing, and launching across 13+ integrations
+- **Capabilities**: Feature cards for agent orchestration, integrations, memory, quality loops
+- **Integration Grid**: Visual display of 50+ connected services
+- **Use Case Scenarios**: Pre-built workflow examples (cold outreach, competitive intel, etc.)
+- **Comparison Table**: Side-by-side vs ChatGPT, Zapier, Paragon, AutoGPT
+- **Pilot Signup**: Modal to capture interest (name, email, company, role, use case)
+- **Framer Motion**: Scroll-reveal animations, typing effects, animated transitions
+
+### Pilot Interest Capture
+
+When users sign up from the landing page:
+1. Form data saved to `pilotInterest` table
+2. Notification email sent to Arpit via Resend API
+3. `emailSent` flag tracked per signup
+
+---
+
+*Last updated: 2026-03-06*
+*This document is the single source of truth for the Valence AI project (internal codename: Mission Control).*
