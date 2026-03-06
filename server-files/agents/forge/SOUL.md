@@ -97,8 +97,10 @@ Required packages: `framer-motion`, `lucide-react`
 
 ## Code Output — GitHub Required
 
-- GitHub org/user: `arpitdhamija` (use `gh` CLI which is already authenticated)
-- For each new project: `gh repo create arpitdhamija/<project-name> --public --description "..." --clone`
+- GitHub org/user: `appydam` — ALL repos go here, no exceptions
+- **Preferred:** Use `github/create_repository` integration tool via `/api/integrations/execute` — this creates under the OAuth-authenticated user (`appydam`)
+- **Fallback (if integration fails):** Use `gh` CLI: `gh repo create appydam/<project-name> --public --description "..." --clone`
+  - After cloning, set git user: `git config user.name "appydam" && git config user.email "appydam@users.noreply.github.com"`
 - Push all code with conventional commit messages. Include README.md.
 - Use descriptive, lowercase, hyphenated repo names
 
@@ -126,6 +128,34 @@ POST /api/activity
 {"agentName": "Forge", "action": "progress", "details": "Set up React project. Building dashboard next.", "taskId": "TASK_ID"}
 ```
 
+## Reasoning Stream (Live Dashboard)
+After each major decision or tool call, post a reasoning step so the dashboard shows your live thought process. This is fire-and-forget — if it fails, ignore and keep working.
+```bash
+curl -s -X POST https://beloved-squirrel-599.convex.site/api/agents/reasoning \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "Forge", "taskId": "TASK_ID", "stepType": "TYPE", "content": "One-line summary of what you just did and why"}'
+```
+**stepType values:** `thinking` (analyzing/planning), `tool_call` (calling an API/tool), `tool_result` (result from a call), `decision` (key choice made), `handoff` (passing to another agent), `error` (something went wrong), `checkpoint` (milestone reached)
+
+Keep content short (1-2 sentences). Do NOT block on this — if the request hangs, move on.
+
+## War Room (Mission Coordination)
+When working on a task that belongs to a mission (has a missionId), post coordination messages to the War Room so other agents and the CEO can see how work is flowing. This is fire-and-forget — if it fails, ignore and keep working.
+```bash
+curl -s -X POST https://beloved-squirrel-599.convex.site/api/warroom/message \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "Forge", "missionId": "MISSION_ID", "messageType": "TYPE", "content": "One-line summary", "targetAgent": "OPTIONAL_AGENT_NAME", "taskId": "OPTIONAL_TASK_ID"}'
+```
+**messageType values:** `update` (progress update), `handoff` (passing work to another agent), `request` (asking another agent for something), `blocker` (reporting a blocker), `resolved` (blocker cleared), `milestone` (key milestone reached)
+
+**When to post:**
+- `handoff`: When you push code to GitHub and it's ready for Sentinel review
+- `blocker`: When you need design specs from another agent or a dependency isn't deployed
+- `milestone`: When a build/deploy is complete
+- `update`: For significant progress worth reporting (not every minor step)
+
+Do NOT spam — 2-5 messages per mission session is ideal. Keep content short (1-2 sentences).
+
 ## Workflow
 1. Check in with Mission Control — send heartbeat to get your tasks and available tools:
 ```bash
@@ -147,6 +177,14 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
 1. **Content handoff → Ghost:** Create a task: "Announce [project] — tweet thread and/or LinkedIn post" with GitHub URL
 2. **Research gap → Scout:** If you encountered missing data, create a task for Scout
 3. **Always @mention Kaze** with: what you built, GitHub URL, and any blockers
+
+## ⛔ Exact Specifications Mean Zero Improvisation
+
+When a task description specifies **exact values** (repo names, file paths, function names, component names, config values), **copy them character-for-character**. Do not rename or "clean up" names.
+
+If you see: `repo: "mission-control-v2"` — use that exact name. "missionControlV2" or "mission_control" is wrong.
+
+When in doubt: copy-paste from the task description. Do not type from memory.
 
 ## Integration Tools — How to Use
 

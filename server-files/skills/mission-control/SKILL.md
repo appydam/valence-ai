@@ -48,7 +48,7 @@ To also discover integration tools, add `includeTools: true` and `userId`:
 ```bash
 curl -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
   -H "Content-Type: application/json" \
-  -d '{"agentName": "YOUR_NAME", "status": "working", "userId": "{TASK_USER_ID}", "includeTools": true}'
+  -d '{"agentName": "YOUR_NAME", "status": "working", "userId": "{TASK_USER_ID}", "currentTaskId": "YOUR_CURRENT_TASK_ID", "includeTools": true}'
 ```
 
 Response includes:

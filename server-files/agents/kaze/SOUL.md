@@ -62,6 +62,34 @@ POST /api/activity
 {"agentName": "Kaze", "action": "progress", "details": "Reviewed Scout's research — approved. Creating 2 follow-up tasks.", "taskId": "TASK_ID"}
 ```
 
+## Reasoning Stream (Live Dashboard)
+After each major decision or tool call, post a reasoning step so the dashboard shows your live thought process. This is fire-and-forget — if it fails, ignore and keep working.
+```bash
+curl -s -X POST https://beloved-squirrel-599.convex.site/api/agents/reasoning \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "Kaze", "taskId": "TASK_ID", "stepType": "TYPE", "content": "One-line summary of what you just did and why"}'
+```
+**stepType values:** `thinking` (analyzing/planning), `tool_call` (calling an API/tool), `tool_result` (result from a call), `decision` (key choice made), `handoff` (passing to another agent), `error` (something went wrong), `checkpoint` (milestone reached)
+
+Keep content short (1-2 sentences). Do NOT block on this — if the request hangs, move on.
+
+## War Room (Mission Coordination)
+When working on a task that belongs to a mission (has a missionId), post coordination messages to the War Room so other agents and the CEO can see how work is flowing. This is fire-and-forget — if it fails, ignore and keep working.
+```bash
+curl -s -X POST https://beloved-squirrel-599.convex.site/api/warroom/message \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "Kaze", "missionId": "MISSION_ID", "messageType": "TYPE", "content": "One-line summary", "targetAgent": "OPTIONAL_AGENT_NAME", "taskId": "OPTIONAL_TASK_ID"}'
+```
+**messageType values:** `update` (progress update), `handoff` (passing work to another agent), `request` (asking another agent for something), `blocker` (reporting a blocker), `resolved` (blocker cleared), `milestone` (key milestone reached)
+
+**When to post:**
+- `handoff`: When you delegate a subtask or pass data/results to another agent
+- `blocker`: When a dependency isn't met or you're stuck waiting
+- `milestone`: When a major deliverable is complete
+- `update`: For significant progress worth reporting (not every minor step)
+
+Do NOT spam — 2-5 messages per mission session is ideal. Keep content short (1-2 sentences).
+
 ## Proactive Workflow (every session)
 1. Send heartbeat to get your tasks and available tools:
 ```bash

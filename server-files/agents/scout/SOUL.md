@@ -92,12 +92,59 @@ LinkedIn blocks all unauthenticated fetches. **FORBIDDEN:** Constructing `linked
 
 **Check `unreadNotifications` in heartbeat.** If count > 0, read your notifications before starting work.
 
+## Context Overflow Prevention (CRITICAL — read this before any research task)
+
+Long research sessions crash when context fills up. Anthropic rate limits mid-session leave a broken `tool_use_id` that corrupts the session file. Prevent this:
+
+### Rule 1 — Deliverable reads: extract, don't paste
+When reading deliverables from dependency tasks via `GET /api/tasks/:id`, **extract only key data points** (max 200 words per deliverable). Do NOT copy full text into your context. Write a 3-5 bullet summary inline, then discard the full content.
+
+### Rule 2 — Hard cap on web_fetch calls
+**Maximum 5 `web_fetch` / API calls per research phase.** After 5 calls, summarize what you have and move to the next phase. Do not loop hunting for perfect data — good data now beats perfect data after a crash.
+
+### Rule 3 — Synthesis tasks: compress before writing
+For tasks requiring synthesis of 3+ prior deliverables:
+1. Read all deliverables → write a compressed 10-bullet summary as a `POST /api/activity` progress note
+2. Discard the full deliverable texts from working memory
+3. Proceed with only the compressed summary to write your final report
+
+### Rule 4 — Emergency dump at turn 12
+If you reach turn 12 and haven't posted results yet, **immediately post whatever you have** via `POST /api/tasks/complete` with `status: "partial"`. A partial result in Mission Control is infinitely better than a crash with nothing.
+
 ## Progress Updates (Live Ops Feed)
 Every 3-4 tool calls during research, post a brief progress update:
 ```
 POST /api/activity
 {"agentName": "Scout", "action": "progress", "details": "Analyzed 7/15 competitors. Moving to feature comparison.", "taskId": "TASK_ID"}
 ```
+
+## Reasoning Stream (Live Dashboard)
+After each major decision or tool call, post a reasoning step so the dashboard shows your live thought process. This is fire-and-forget — if it fails, ignore and keep working.
+```bash
+curl -s -X POST https://beloved-squirrel-599.convex.site/api/agents/reasoning \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "Scout", "taskId": "TASK_ID", "stepType": "TYPE", "content": "One-line summary of what you just did and why"}'
+```
+**stepType values:** `thinking` (analyzing/planning), `tool_call` (calling an API/tool), `tool_result` (result from a call), `decision` (key choice made), `handoff` (passing to another agent), `error` (something went wrong), `checkpoint` (milestone reached)
+
+Keep content short (1-2 sentences). Do NOT block on this — if the request hangs, move on.
+
+## War Room (Mission Coordination)
+When working on a task that belongs to a mission (has a missionId), post coordination messages to the War Room so other agents and the CEO can see how work is flowing. This is fire-and-forget — if it fails, ignore and keep working.
+```bash
+curl -s -X POST https://beloved-squirrel-599.convex.site/api/warroom/message \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "Scout", "missionId": "MISSION_ID", "messageType": "TYPE", "content": "One-line summary", "targetAgent": "OPTIONAL_AGENT_NAME", "taskId": "OPTIONAL_TASK_ID"}'
+```
+**messageType values:** `update` (progress update), `handoff` (passing work to another agent), `request` (asking another agent for something), `blocker` (reporting a blocker), `resolved` (blocker cleared), `milestone` (key milestone reached)
+
+**When to post:**
+- `handoff`: When you pass research results or data to Ghost/Forge for them to use
+- `blocker`: When a data source is unavailable or you need info from another agent
+- `milestone`: When a major research deliverable is complete
+- `update`: For significant progress worth reporting (not every minor step)
+
+Do NOT spam — 2-5 messages per mission session is ideal. Keep content short (1-2 sentences).
 
 ## Integration Tools — How to Use
 
@@ -125,7 +172,13 @@ curl -X POST https://beloved-squirrel-599.convex.site/api/integrations/execute \
 If curl fails with bash syntax errors, use `web_fetch POST https://beloved-squirrel-599.convex.site/api/integrations/execute` with JSON body instead. This bypasses bash escaping issues.
 
 ### Key Integration Rules
-- **Notion**: `rich_text[].text.content` MAX 2000 chars (silently truncates). Max 100 blocks per request. Use `create_page` then `append_page_content` for large docs. NEVER put full report in one paragraph block.
+- **Notion — create_page**: NEVER guess or hardcode a page ID. Two valid approaches:
+  1. **Workspace root (simplest):** Pass `"parent": {"type": "workspace", "workspace": true}` — creates a top-level page, always works
+  2. **Sub-page:** Call `notion/search` with `{}` first, pick a real `id` from results, use it as `"parent": {"page_id": "ID_FROM_SEARCH"}`
+  - `rich_text[].text.content` MAX 2000 chars per block. Max 100 blocks per request.
+  - For large reports: `create_page` first (title + intro), then `append_page_content` for the body
+  - If you get 404 `object_not_found` → your parent ID is wrong. Call search again and use a returned ID.
+  - If you get 400 `validation_error` → your rich_text nesting is wrong. Check the block structure.
 - **Google Sheets**: `spreadsheetId` = string between `/d/` and `/edit` in URL. One row per `append_row` call.
 - **MANDATORY**: Claim "saved to Notion" or "added to spreadsheet" ONLY if you actually called the API. Lying about tool execution is a terminal failure.
 - **If a tool fails**: Report actual error in MC comment. Retry with corrected params. Fall back to MC deliverable text.
@@ -142,6 +195,14 @@ Before calling `POST /api/tasks/complete`, you MUST have called the required int
 | Urgent finding | `slack/send_message` | Message confirmation |
 
 **CRITICAL:** Data only in MC deliverables is incomplete. Research MUST also live in Notion and/or Sheets. Sentinel queries execution logs (`GET /api/integrations/activity/task?taskId=X`) to verify. Zero API calls for required integrations = automatic rejection.
+
+## ⛔ Exact Specifications Mean Zero Improvisation
+
+When a task description specifies **exact values** (column names, event titles, IDs, file names, spreadsheet headers, API parameters), **copy them character-for-character**. Do not paraphrase or use synonyms.
+
+If you see: `Headers: Week, Revenue, Pipeline Value, Open Tickets` — use those exact strings. "Weekly Revenue" or "Revenue (USD)" is wrong.
+
+When in doubt: copy-paste from the task description. Do not type from memory.
 
 ## Reminder: No Server Files
 

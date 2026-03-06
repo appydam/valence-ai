@@ -1,23 +1,25 @@
 #!/usr/bin/env node
 
 /**
- * Agent Wakeup Webhook Server (v3 — with mutex, cooldown, and reliable process detection)
+ * Agent Wakeup Webhook Server (v4 — concurrency-limited, CPU-safe)
  *
  * Receives POST requests from Convex when a task is assigned to an agent,
  * then starts an OpenClaw session for that agent.
  *
- * v3 improvements over v2:
- *   - Per-agent mutex: prevents race condition where two /wake calls both spawn
- *   - Spawn cooldown: stale tracker won't touch an agent within 30s of last spawn
- *   - Better pgrep: matches openclaw, openclaw-agent, and the agent flag
- *   - Stale tracker interval increased to 30s (was 15s)
+ * v4 improvements over v3:
+ *   - MAX_CONCURRENT_AGENTS cap: never spawns more than N agents at once
+ *   - Global spawn queue: excess wakeups are queued and released as slots free up
+ *   - INTER_SPAWN_DELAY_MS: staggered starts (e.g. 5s apart) to avoid CPU spike
+ *   - This prevents CPU burst zone on 2 vCPU instances when many tasks fire at once
  *
  * Environment Variables:
- *   PORT            - Server port (default: 3333)
- *   WEBHOOK_SECRET  - HMAC secret for signature verification (optional)
- *   OPENCLAW_BIN    - Path to openclaw binary (default: /home/ubuntu/.npm-global/bin/openclaw)
- *   LOG_DIR         - Directory for agent logs (default: /tmp)
- *   QUEUE_DIR       - Directory for task queue files (default: /tmp)
+ *   PORT                  - Server port (default: 3333)
+ *   WEBHOOK_SECRET        - HMAC secret for signature verification (optional)
+ *   OPENCLAW_BIN          - Path to openclaw binary (default: /home/ubuntu/.npm-global/bin/openclaw)
+ *   LOG_DIR               - Directory for agent logs (default: /tmp)
+ *   QUEUE_DIR             - Directory for task queue files (default: /tmp)
+ *   MAX_CONCURRENT_AGENTS - Max agents running simultaneously (default: 4)
+ *   INTER_SPAWN_DELAY_MS  - Milliseconds between consecutive spawns (default: 5000)
  */
 
 const http = require("http");
@@ -45,6 +47,84 @@ const lastSpawnTime = new Map(); // agent -> timestamp
 
 const SPAWN_COOLDOWN_MS = 30_000; // 30 seconds
 const STALE_CHECK_INTERVAL_MS = 30_000; // 30 seconds
+
+// ── Concurrency control ─────────────────────────────────────────────────────
+// Prevent CPU burst by capping simultaneous agent processes and staggering starts.
+const MAX_CONCURRENT_AGENTS = parseInt(process.env.MAX_CONCURRENT_AGENTS || "4", 10);
+const INTER_SPAWN_DELAY_MS = parseInt(process.env.INTER_SPAWN_DELAY_MS || "5000", 10);
+
+// Global spawn queue: { agent, taskId, reason }[]
+// Entries are processed one-at-a-time with INTER_SPAWN_DELAY_MS between each.
+const globalSpawnQueue = [];
+let spawnQueueRunning = false;
+let lastGlobalSpawnTime = 0;
+
+function countRunningAgents() {
+  let count = 0;
+  for (const agent of VALID_AGENTS) {
+    if (runningAgents.has(agent) || isAgentRunning(agent)) count++;
+  }
+  return count;
+}
+
+/**
+ * Add an agent spawn request to the global queue and start draining if idle.
+ */
+function enqueueGlobalSpawn(agent, taskId, reason) {
+  // Deduplicate: don't queue same agent twice
+  if (globalSpawnQueue.some((e) => e.agent === agent)) {
+    log(`global queue: ${agent} already pending, skipping duplicate`);
+    return "ALREADY_PENDING_GLOBAL_QUEUE";
+  }
+  globalSpawnQueue.push({ agent, taskId, reason });
+  log(`global queue: added ${agent} (${reason}) — queue depth ${globalSpawnQueue.length}`);
+  drainGlobalSpawnQueue();
+  return `GLOBAL_QUEUED (position: ${globalSpawnQueue.length})`;
+}
+
+async function drainGlobalSpawnQueue() {
+  if (spawnQueueRunning) return;
+  spawnQueueRunning = true;
+
+  while (globalSpawnQueue.length > 0) {
+    // Wait until a concurrency slot is free
+    while (countRunningAgents() >= MAX_CONCURRENT_AGENTS) {
+      log(`global queue: at capacity (${MAX_CONCURRENT_AGENTS} agents running), waiting 10s...`);
+      await sleep(10_000);
+    }
+
+    // Enforce minimum gap between consecutive spawns
+    const elapsed = Date.now() - lastGlobalSpawnTime;
+    if (elapsed < INTER_SPAWN_DELAY_MS) {
+      const wait = INTER_SPAWN_DELAY_MS - elapsed;
+      log(`global queue: inter-spawn delay, waiting ${Math.round(wait / 1000)}s...`);
+      await sleep(wait);
+    }
+
+    const next = globalSpawnQueue.shift();
+    if (!next) break;
+
+    const { agent, taskId, reason } = next;
+
+    // Skip if agent already running (could have been picked up by another path)
+    if (runningAgents.has(agent) || isAgentRunning(agent)) {
+      log(`global queue: ${agent} already running when dequeued, skipping — re-queuing task into agent queue`);
+      enqueueTask(agent, taskId, reason);
+      continue;
+    }
+
+    log(`global queue: spawning ${agent} (${globalSpawnQueue.length} remaining in queue)`);
+    spawnAgent(agent, taskId, reason);
+    lastGlobalSpawnTime = Date.now();
+  }
+
+  spawnQueueRunning = false;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 function log(msg) {
   console.log(`[${new Date().toISOString()}] ${msg}`);
@@ -200,8 +280,23 @@ function startAgentInner(agent, taskId, reason) {
     return enqueueTask(agent, taskId, reason);
   }
 
-  // Agent is idle — start immediately
+  // Agent is idle — check if we're at concurrency cap
+  const running = countRunningAgents();
+  if (running >= MAX_CONCURRENT_AGENTS) {
+    log(`${agent}: at concurrency cap (${running}/${MAX_CONCURRENT_AGENTS}), adding to global spawn queue`);
+    return enqueueGlobalSpawn(agent, taskId, reason);
+  }
+
+  // Slot available — but still enforce inter-spawn delay to avoid simultaneous CPU spikes
+  const elapsed = Date.now() - lastGlobalSpawnTime;
+  if (lastGlobalSpawnTime > 0 && elapsed < INTER_SPAWN_DELAY_MS) {
+    log(`${agent}: inter-spawn delay active (${Math.round((INTER_SPAWN_DELAY_MS - elapsed) / 1000)}s left), queueing`);
+    return enqueueGlobalSpawn(agent, taskId, reason);
+  }
+
+  // Spawn immediately and update global timer
   const result = spawnAgent(agent, taskId, reason);
+  lastGlobalSpawnTime = Date.now();
   return `STARTED (pid: ${result.pid}, log: ${result.logFile})`;
 }
 
@@ -242,7 +337,15 @@ const server = http.createServer((req, res) => {
 
   // Agent status
   if (req.method === "GET" && req.url === "/status") {
-    const status = {};
+    const status = {
+      _concurrency: {
+        maxConcurrent: MAX_CONCURRENT_AGENTS,
+        currentlyRunning: countRunningAgents(),
+        interSpawnDelayMs: INTER_SPAWN_DELAY_MS,
+        globalSpawnQueueDepth: globalSpawnQueue.length,
+        globalSpawnQueue: globalSpawnQueue.map(e => e.agent),
+      },
+    };
     for (const agent of VALID_AGENTS) {
       const queue = readQueue(agent);
       const spawnTs = lastSpawnTime.get(agent);
@@ -360,13 +463,15 @@ setInterval(() => {
 }, STALE_CHECK_INTERVAL_MS);
 
 server.listen(PORT, () => {
-  log(`Agent Wakeup Server v3 (mutex + cooldown) listening on port ${PORT}`);
+  log(`Agent Wakeup Server v4 (concurrency-limited, CPU-safe) listening on port ${PORT}`);
   log(`Webhook endpoint:  POST http://localhost:${PORT}/wake`);
   log(`Health check:      GET  http://localhost:${PORT}/health`);
   log(`Agent status:      GET  http://localhost:${PORT}/status`);
   log(`Flush queue:       POST http://localhost:${PORT}/flush`);
   log(`Spawn cooldown:    ${SPAWN_COOLDOWN_MS / 1000}s`);
   log(`Stale check:       every ${STALE_CHECK_INTERVAL_MS / 1000}s`);
+  log(`Max concurrent:    ${MAX_CONCURRENT_AGENTS} agents`);
+  log(`Inter-spawn delay: ${INTER_SPAWN_DELAY_MS / 1000}s`);
   if (WEBHOOK_SECRET) {
     log(`Signature verification: ENABLED`);
   } else {
