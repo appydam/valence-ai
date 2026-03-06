@@ -12,6 +12,7 @@ export type AuthResult = {
   userId: string;       // Clerk ID
   role: string;         // "admin" | "member" | "viewer" | "agent"
   authMethod: "jwt" | "api_key";
+  permissions?: string[]; // API key permissions (e.g., ["tasks:read", "tasks:write"])
 };
 
 /**
@@ -53,11 +54,29 @@ export async function authenticateRequest(
         userId: keyResult.userId,
         role: keyResult.role,
         authMethod: "api_key",
+        permissions: keyResult.permissions,
       };
     }
   }
 
   return null;
+}
+
+/**
+ * Check if an authenticated user has a specific permission.
+ * - JWT users (frontend) always have full permissions.
+ * - API key users with an empty permissions array have full permissions (backward-compatible).
+ * - API key users with a non-empty permissions array must have the specific permission.
+ */
+export function hasPermission(auth: AuthResult, permission: string): boolean {
+  // JWT-authenticated users (frontend) always have full access based on role
+  if (auth.authMethod === "jwt") return true;
+
+  // API key with no permissions array or empty array = full access (backward-compatible)
+  if (!auth.permissions || auth.permissions.length === 0) return true;
+
+  // Check for specific permission or wildcard
+  return auth.permissions.includes(permission) || auth.permissions.includes("*");
 }
 
 /**

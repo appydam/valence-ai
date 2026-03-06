@@ -50,11 +50,19 @@ export const triggerWakeup = internalAction({
     console.log(`[AgentWakeup] Waking up ${args.agentName} for task ${args.taskId} (${reason})`);
 
     try {
+      // Fetch task to include requiredUserId in payload so agents can substitute {TASK_USER_ID}
+      let requiredUserId: string | undefined;
+      try {
+        const task = await ctx.runQuery(api.tasks.getById, { id: args.taskId as any });
+        requiredUserId = (task as any)?.requiredUserId;
+      } catch (_) { /* non-fatal — proceed without userId */ }
+
       const payload = {
         agent: slug,
         agentName: args.agentName,
         taskId: args.taskId,
         reason,
+        userId: requiredUserId,
         timestamp: Date.now(),
       };
 

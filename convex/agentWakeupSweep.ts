@@ -4,12 +4,12 @@ import { internal } from "./_generated/api";
 /**
  * Fallback sweep for stuck tasks.
  *
- * Runs every 10 minutes via cron. Catches tasks stuck in "assigned" status
- * for >5 minutes — meaning the immediate wakeup webhook failed.
+ * Runs every 2 minutes via cron. Catches tasks stuck in "assigned" status
+ * for >3 minutes — meaning the immediate wakeup webhook or auto-pickup failed.
  *
  * Smart behavior:
  *   - Skips agents that heartbeated recently (already active)
- *   - Only wakes ONE agent per sweep (most urgent task) to avoid thundering herd
+ *   - Wakes ALL stuck agents (one wakeup per agent, oldest task first)
  *   - Skips tasks stuck in "assigned" for >1 hour (likely needs manual intervention)
  *   - For "in_progress" tasks, only wakes if agent hasn't heartbeated in 15+ min
  */
@@ -17,7 +17,7 @@ export const sweep = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
-    const fiveMinutesAgo = now - 5 * 60 * 1000;
+    const threeMinutesAgo = now - 3 * 60 * 1000;
     const fifteenMinutesAgo = now - 15 * 60 * 1000;
     const oneHourAgo = now - 60 * 60 * 1000;
     const twoMinutesAgo = now - 2 * 60 * 1000;
@@ -31,35 +31,47 @@ export const sweep = internalMutation({
       .withIndex("by_status", (q) => q.eq("status", "assigned"))
       .collect();
 
-    // Only tasks stuck 5min - 1hr. Beyond 1hr = likely needs manual action, don't waste sessions.
+    // Only tasks stuck 3min - 1hr. Beyond 1hr = likely needs manual action.
     const stuckAssigned = assignedTasks.filter((t) => {
       if (!t.assignee) return false;
       const taskTime = t.updatedAt || t._creationTime;
-      return taskTime < fiveMinutesAgo && taskTime > oneHourAgo;
+      return taskTime < threeMinutesAgo && taskTime > oneHourAgo;
     });
 
-    // Wake at most 1 agent for assigned tasks (oldest first = most urgent)
+    // Wake ALL stuck agents (group by assignee — one wakeup per agent, oldest task)
     if (stuckAssigned.length > 0) {
-      const oldest = stuckAssigned.sort(
-        (a, b) => (a.updatedAt || a._creationTime) - (b.updatedAt || b._creationTime)
-      )[0];
+      const agentTasks = new Map<string, (typeof stuckAssigned)[0]>();
+      for (const task of stuckAssigned) {
+        const existing = agentTasks.get(task.assignee!);
+        if (!existing || (task.updatedAt || task._creationTime) < (existing.updatedAt || existing._creationTime)) {
+          agentTasks.set(task.assignee!, task);
+        }
+      }
 
-      const agent = await ctx.db
-        .query("agents")
-        .withIndex("by_name", (q) => q.eq("name", oldest.assignee!))
-        .unique();
+      for (const [assignee, task] of agentTasks) {
+        const agent = await ctx.db
+          .query("agents")
+          .withIndex("by_name", (q) => q.eq("name", assignee))
+          .unique();
 
-      if (agent && agent.status === "working" && agent.lastHeartbeat > twoMinutesAgo) {
-        console.log(`[WakeupSweep] ${oldest.assignee} already active, skipping task ${oldest._id}`);
-        skippedCount++;
-      } else {
-        console.log(`[WakeupSweep] Task ${oldest._id} stuck in assigned for ${oldest.assignee}, triggering wakeup`);
-        await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
-          agentName: oldest.assignee!,
-          taskId: oldest._id as string,
-          reason: "sweep_fallback",
-        });
-        wakeupCount++;
+        const agentActiveOnThisTask =
+          agent &&
+          agent.status === "working" &&
+          agent.lastHeartbeat > twoMinutesAgo &&
+          agent.currentTaskId === task._id;
+
+        if (agentActiveOnThisTask) {
+          console.log(`[WakeupSweep] ${assignee} already active on task ${task._id}, skipping`);
+          skippedCount++;
+        } else {
+          console.log(`[WakeupSweep] Task ${task._id} stuck in assigned for ${assignee}, triggering wakeup`);
+          await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+            agentName: assignee,
+            taskId: task._id as string,
+            reason: "sweep_fallback",
+          });
+          wakeupCount++;
+        }
       }
     }
 
@@ -75,36 +87,48 @@ export const sweep = internalMutation({
       return lastUpdate < fifteenMinutesAgo && lastUpdate > oneHourAgo;
     });
 
-    // Wake at most 1 agent for stale in_progress tasks
+    // Wake ALL stuck in_progress agents (group by assignee)
     if (stuckInProgress.length > 0) {
-      const oldest = stuckInProgress.sort(
-        (a, b) => (a.updatedAt || a._creationTime) - (b.updatedAt || b._creationTime)
-      )[0];
+      const agentTasks = new Map<string, (typeof stuckInProgress)[0]>();
+      for (const task of stuckInProgress) {
+        const existing = agentTasks.get(task.assignee!);
+        if (!existing || (task.updatedAt || task._creationTime) < (existing.updatedAt || existing._creationTime)) {
+          agentTasks.set(task.assignee!, task);
+        }
+      }
 
-      const agent = await ctx.db
-        .query("agents")
-        .withIndex("by_name", (q) => q.eq("name", oldest.assignee!))
-        .unique();
+      for (const [assignee, task] of agentTasks) {
+        const agent = await ctx.db
+          .query("agents")
+          .withIndex("by_name", (q) => q.eq("name", assignee))
+          .unique();
 
-      if (agent && agent.status === "working" && agent.lastHeartbeat > twoMinutesAgo) {
-        console.log(`[WakeupSweep] ${oldest.assignee} already active, skipping stale task ${oldest._id}`);
-        skippedCount++;
-      } else {
-        console.log(`[WakeupSweep] Task ${oldest._id} stuck in in_progress for ${oldest.assignee} (>15min), re-waking`);
-        // Post a crash recovery comment so the agent knows it's resuming
-        await ctx.db.insert("comments", {
-          taskId: oldest._id,
-          author: "System",
-          content: `⚠️ **Session recovery**: Previous agent session timed out or crashed. Resuming task from last known state. Check your session handoff notes (\`workingContext.recentHandoff\`) to see what was completed. Continue where you left off.`,
-          mentions: oldest.assignee ? [oldest.assignee] : [],
-          createdAt: now,
-        });
-        await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
-          agentName: oldest.assignee!,
-          taskId: oldest._id as string,
-          reason: "sweep_stale_progress",
-        });
-        wakeupCount++;
+        const taskLastTouched = task.updatedAt || task._creationTime;
+        const agentGenuinelyActive =
+          agent &&
+          agent.status === "working" &&
+          agent.lastHeartbeat > twoMinutesAgo &&
+          agent.lastHeartbeat > taskLastTouched;
+
+        if (agentGenuinelyActive) {
+          console.log(`[WakeupSweep] ${assignee} actively heartbeating after task update, skipping ${task._id}`);
+          skippedCount++;
+        } else {
+          console.log(`[WakeupSweep] Task ${task._id} stuck in in_progress for ${assignee} (>15min, agent silent), re-waking`);
+          await ctx.db.insert("comments", {
+            taskId: task._id,
+            author: "System",
+            content: `⚠️ **Session recovery**: Previous agent session timed out or crashed. Resuming task from last known state. Check your session handoff notes (\`workingContext.recentHandoff\`) to see what was completed. Continue where you left off.`,
+            mentions: [assignee],
+            createdAt: now,
+          });
+          await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+            agentName: assignee,
+            taskId: task._id as string,
+            reason: "sweep_stale_progress",
+          });
+          wakeupCount++;
+        }
       }
     }
 

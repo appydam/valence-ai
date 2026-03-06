@@ -3,8 +3,9 @@ import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { filterToolsByAgentRole } from "./lib/agentToolRecommendations";
-import { authenticateRequest, buildCorsHeaders, type AuthResult } from "./lib/auth";
+import { authenticateRequest, buildCorsHeaders, hasPermission, type AuthResult } from "./lib/auth";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "./lib/rateLimit";
+import { checkEnvVarHealth } from "./lib/envValidation";
 
 const http = httpRouter();
 
@@ -29,7 +30,12 @@ function optionsHandler() {
  */
 function authenticatedHandler(
   handler: (ctx: any, request: Request, auth: AuthResult) => Promise<Response>,
-  options?: { requireRole?: string; allowUnauthenticated?: boolean; rateLimit?: { limit: number; windowMs: number } },
+  options?: {
+    requireRole?: string;
+    requirePermission?: string; // e.g., "tasks:write", "integrations:execute", "ssh:admin"
+    allowUnauthenticated?: boolean;
+    rateLimit?: { limit: number; windowMs: number };
+  },
 ) {
   return httpAction(async (ctx, request) => {
     // Skip auth for OPTIONS preflight
@@ -58,6 +64,14 @@ function authenticatedHandler(
       );
     }
 
+    // Permission enforcement for API keys
+    if (options?.requirePermission && !hasPermission(auth, options.requirePermission)) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden", message: `Permission '${options.requirePermission}' required.` }),
+        { status: 403, headers: corsHeaders(request) },
+      );
+    }
+
     // Rate limiting (per-user + per-endpoint)
     const rl = options?.rateLimit ?? RATE_LIMITS.general;
     const path = new URL(request.url).pathname;
@@ -80,6 +94,7 @@ http.route({
       agentName: body.agentName,
       status: body.status,
       currentTaskId: body.currentTaskId,
+      serverMetrics: body.serverMetrics,
     });
 
     // Return only active tasks (assigned/in_progress/in_review) — not done/cancelled
@@ -190,11 +205,22 @@ http.route({
     // Only discover integration tools if explicitly requested (lazy loading)
     // Auto-resolve userId from the agent's assigned task if not provided
     let availableTools = undefined;
-    let resolvedUserId = body.userId;
-    if (!resolvedUserId && body.includeTools && tasks.length > 0) {
-      // Use the first active task's requiredUserId or creatorId
-      const firstTask = tasks[0] as any;
-      resolvedUserId = firstTask.requiredUserId || firstTask.creatorId;
+    // Treat unresolved template placeholders as missing
+    let resolvedUserId = (body.userId && !body.userId.includes("{")) ? body.userId : undefined;
+    if (!resolvedUserId && body.includeTools) {
+      if (tasks.length > 0) {
+        // Use the first active task's requiredUserId or creatorId
+        const firstTask = tasks[0] as any;
+        resolvedUserId = firstTask.requiredUserId || firstTask.creatorId;
+      } else if (body.currentTaskId) {
+        // Fallback: resolve from the wakeup task directly (tasks may still be in inbox)
+        try {
+          const wakeTask = await ctx.runQuery(api.tasks.getById, { id: body.currentTaskId as any });
+          if (wakeTask) {
+            resolvedUserId = (wakeTask as any).requiredUserId || (wakeTask as any).creatorId;
+          }
+        } catch (_) { /* non-fatal */ }
+      }
     }
     if (resolvedUserId && body.includeTools) {
       try {
@@ -1014,12 +1040,13 @@ http.route({
 });
 
 // GET /api/ssh/config-full (returns config WITH private key for SSH operations)
-// SECURED: Admin-only — exposes SSH private key
+// SECURED: Admin-only — exposes SSH private key (decrypted)
+// NOTE: This endpoint is deprecated — use /api/ssh-proxy/* endpoints instead
 http.route({
   path: "/api/ssh/config-full",
   method: "GET",
   handler: authenticatedHandler(async (ctx, request, auth) => {
-    const config = await ctx.runQuery(api.sshConfig.getForSSH, {});
+    const config = await ctx.runAction(api.sshConfigActions.getDecrypted, {});
     return new Response(JSON.stringify(config), {
       status: 200,
       headers: corsHeaders(request),
@@ -1096,6 +1123,170 @@ http.route({
     }
   }, { requireRole: "admin" }),
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// SSH Proxy Forwarding Endpoints
+// These route SSH proxy calls through Convex so:
+//   1. SSH private key stays server-side (never sent to browser)
+//   2. SSH proxy receives authenticated requests (Bearer token)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Forward a request to the SSH proxy service.
+ * Fetches SSH config from DB, adds it to the body, and forwards with Bearer auth.
+ */
+async function forwardToSshProxy(
+  ctx: any,
+  request: Request,
+  proxyPath: string,
+  extraBody: Record<string, unknown> = {},
+): Promise<Response> {
+  const sshProxyUrl = process.env.SSH_PROXY_URL;
+  if (!sshProxyUrl) {
+    return new Response(
+      JSON.stringify({ ok: false, error: "SSH_PROXY_URL not configured. Set it in Convex env vars." }),
+      { status: 500, headers: corsHeaders(request) },
+    );
+  }
+
+  let config;
+  try {
+    config = await ctx.runAction(api.sshConfigActions.getDecrypted, {});
+  } catch (error: any) {
+    return new Response(
+      JSON.stringify({ ok: false, error: `SSH config error: ${error.message}` }),
+      { status: 500, headers: corsHeaders(request) },
+    );
+  }
+  if (!config || !config.host) {
+    return new Response(
+      JSON.stringify({ ok: false, error: "No SSH configuration found. Please configure SSH in Settings first." }),
+      { status: 400, headers: corsHeaders(request) },
+    );
+  }
+
+  const proxyHeaders: Record<string, string> = { "Content-Type": "application/json" };
+  const sshProxySecret = process.env.SSH_PROXY_SECRET;
+  if (sshProxySecret) {
+    proxyHeaders["Authorization"] = `Bearer ${sshProxySecret}`;
+  }
+
+  try {
+    const proxyResponse = await fetch(`${sshProxyUrl}${proxyPath}`, {
+      method: "POST",
+      headers: proxyHeaders,
+      body: JSON.stringify({ ...config, ...extraBody }),
+    });
+    const data = await proxyResponse.json();
+    return new Response(JSON.stringify(data), {
+      status: proxyResponse.status,
+      headers: corsHeaders(request),
+    });
+  } catch (error: any) {
+    return new Response(
+      JSON.stringify({ ok: false, error: `SSH proxy unreachable: ${error.message}` }),
+      { status: 502, headers: corsHeaders(request) },
+    );
+  }
+}
+
+// POST /api/ssh-proxy/pull-soul — Pull SOUL file from server
+http.route({ path: "/api/ssh-proxy/pull-soul", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/pull-soul",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    const body = await request.json();
+    return forwardToSshProxy(ctx, request, "/ssh/pull-soul", { agentName: body.agentName });
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/sync-soul — Sync SOUL file to server
+http.route({ path: "/api/ssh-proxy/sync-soul", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/sync-soul",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    const body = await request.json();
+    return forwardToSshProxy(ctx, request, "/ssh/sync-soul", {
+      agentName: body.agentName,
+      content: body.content,
+    });
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/restart-openclaw — Restart OpenClaw on server
+http.route({ path: "/api/ssh-proxy/restart-openclaw", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/restart-openclaw",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    const body = await request.json();
+    return forwardToSshProxy(ctx, request, "/ssh/restart-openclaw", {
+      agentName: body.agentName,
+      model: body.model,
+    });
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/sync-all — Pull all SOUL files + openclaw.json
+http.route({ path: "/api/ssh-proxy/sync-all", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/sync-all",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    return forwardToSshProxy(ctx, request, "/ssh/sync-all");
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/generate-skill — Generate skill template on server
+http.route({ path: "/api/ssh-proxy/generate-skill", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/generate-skill",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    const body = await request.json();
+    return forwardToSshProxy(ctx, request, "/ssh/generate-skill", {
+      skillId: body.skillId,
+      skillName: body.skillName,
+    });
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/tools-list — List OpenClaw tools
+http.route({ path: "/api/ssh-proxy/tools-list", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/tools-list",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    return forwardToSshProxy(ctx, request, "/openclaw/tools-list");
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/tools-install — Install OpenClaw tool
+http.route({ path: "/api/ssh-proxy/tools-install", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/tools-install",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    const body = await request.json();
+    return forwardToSshProxy(ctx, request, "/openclaw/tools-install", {
+      toolName: body.toolName,
+    });
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/test — Test SSH connection via proxy
+http.route({ path: "/api/ssh-proxy/test", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/test",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    return forwardToSshProxy(ctx, request, "/ssh/test");
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// ═══════════════════════════════════════════════════════════════════
 
 // POST /api/soul/save
 http.route({
@@ -2452,6 +2643,120 @@ http.route({
     });
     return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
   }, { requireRole: "admin" }),
+});
+
+// POST /api/agents/reasoning — Agents post reasoning steps (fire-and-forget)
+http.route({ path: "/api/agents/reasoning", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/agents/reasoning",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+
+    // Validate required fields
+    if (!body.agentName || !body.taskId || !body.stepType || !body.content) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: agentName, taskId, stepType, content" }),
+        { status: 400, headers: corsHeaders(request) },
+      );
+    }
+
+    // Per-agent rate limiting
+    const rateLimitKey = `${body.agentName}:reasoning`;
+    if (!checkRateLimit(rateLimitKey, RATE_LIMITS.reasoning.limit, RATE_LIMITS.reasoning.windowMs)) {
+      return rateLimitResponse(corsHeaders(request));
+    }
+
+    try {
+      const id = await ctx.runMutation(api.reasoning.record, {
+        taskId: body.taskId,
+        agentName: body.agentName,
+        stepType: body.stepType,
+        content: body.content,
+        metadata: body.metadata ? (typeof body.metadata === "string" ? body.metadata : JSON.stringify(body.metadata)) : undefined,
+      });
+
+      return new Response(
+        JSON.stringify({ ok: true, id }),
+        { status: 200, headers: corsHeaders(request) },
+      );
+    } catch (err: any) {
+      console.error("[Reasoning] Failed to record step:", err.message);
+      return new Response(
+        JSON.stringify({ ok: false, error: err.message }),
+        { status: 500, headers: corsHeaders(request) },
+      );
+    }
+  }),
+});
+
+// POST /api/warroom/message — Agents post coordination messages to mission war room
+http.route({ path: "/api/warroom/message", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/warroom/message",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+
+    if (!body.agentName || !body.missionId || !body.messageType || !body.content) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields: agentName, missionId, messageType, content" }),
+        { status: 400, headers: corsHeaders(request) },
+      );
+    }
+
+    // Per-agent rate limiting (reuse reasoning preset)
+    const rateLimitKey = `${body.agentName}:warroom`;
+    if (!checkRateLimit(rateLimitKey, RATE_LIMITS.reasoning.limit, RATE_LIMITS.reasoning.windowMs)) {
+      return rateLimitResponse(corsHeaders(request));
+    }
+
+    try {
+      const id = await ctx.runMutation(api.warRoom.postMessage, {
+        missionId: body.missionId,
+        agentName: body.agentName,
+        messageType: body.messageType,
+        content: body.content,
+        targetAgent: body.targetAgent,
+        taskId: body.taskId,
+      });
+
+      return new Response(
+        JSON.stringify({ ok: true, id }),
+        { status: 200, headers: corsHeaders(request) },
+      );
+    } catch (err: any) {
+      console.error("[WarRoom] Failed to post message:", err.message);
+      return new Response(
+        JSON.stringify({ ok: false, error: err.message }),
+        { status: 500, headers: corsHeaders(request) },
+      );
+    }
+  }),
+});
+
+// GET /api/health — System health check (unauthenticated, for monitoring)
+http.route({ path: "/api/health", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/health",
+  method: "GET",
+  handler: httpAction(async (_ctx, request) => {
+    const envHealth = checkEnvVarHealth();
+    const response = {
+      status: envHealth.status,
+      timestamp: new Date().toISOString(),
+      env: envHealth.vars.map((v) => ({
+        name: v.name,
+        set: v.set,
+        required: v.required,
+      })),
+    };
+    const statusCode = envHealth.status === "critical" ? 503 : 200;
+    return new Response(JSON.stringify(response), {
+      status: statusCode,
+      headers: corsHeaders(request),
+    });
+  }),
 });
 
 export default http;

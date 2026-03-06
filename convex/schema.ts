@@ -42,6 +42,16 @@ export default defineSchema({
     currentTaskId: v.optional(v.string()),
     tasksCompleted: v.number(),
     color: v.string(),
+    // Server health metrics (reported via heartbeat)
+    serverMetrics: v.optional(v.object({
+      cpuPercent: v.number(),
+      memoryUsedMb: v.number(),
+      memoryTotalMb: v.number(),
+      diskUsedGb: v.number(),
+      diskTotalGb: v.number(),
+      uptimeSeconds: v.number(),
+      loadAvg1m: v.number(),
+    })),
   }).index("by_name", ["name"]),
 
   missions: defineTable({
@@ -175,7 +185,8 @@ export default defineSchema({
     host: v.string(),
     port: v.number(),
     username: v.string(),
-    privateKey: v.string(), // Encrypted in production
+    privateKey: v.string(), // AES-256-GCM encrypted when `encrypted` is true
+    encrypted: v.optional(v.boolean()), // true = privateKey is encrypted, absent/false = plaintext (legacy)
     updatedAt: v.number(),
   }),
 
@@ -471,6 +482,11 @@ export default defineSchema({
     processingStartedAt: v.optional(v.number()),
     processedAt: v.optional(v.number()),
     receivedAt: v.number(),
+
+    // Retry tracking
+    retryCount: v.optional(v.number()),        // Number of retries attempted
+    nextRetryAt: v.optional(v.number()),        // When to retry next (epoch ms)
+    deadLetter: v.optional(v.boolean()),        // true = exhausted retries, moved to DLQ
   })
     .index("by_endpoint", ["endpointId"])
     .index("by_status", ["status"])
@@ -899,4 +915,101 @@ export default defineSchema({
     accentColor: v.optional(v.string()),
     updatedAt: v.number(),
   }),
+
+  // ============================================================
+  // MORNING BRIEF (CEO DAILY DIGEST)
+  // ============================================================
+
+  morningBriefs: defineTable({
+    date: v.string(),           // "2026-03-05"
+    status: v.union(
+      v.literal("generating"),
+      v.literal("ready"),
+      v.literal("failed")
+    ),
+
+    // Structured metrics
+    tasksCompleted: v.number(),
+    tasksCreated: v.number(),
+    tasksStuck: v.number(),
+    tasksInProgress: v.number(),
+    tasksInReview: v.number(),
+
+    // Highlights and blockers
+    highlights: v.array(v.object({
+      title: v.string(),
+      description: v.string(),
+      agent: v.string(),
+      taskId: v.optional(v.string()),
+    })),
+    blockers: v.array(v.object({
+      title: v.string(),
+      description: v.string(),
+      suggestedAction: v.string(),
+      taskId: v.optional(v.string()),
+    })),
+
+    // Per-agent performance
+    agentPerformance: v.array(v.object({
+      agent: v.string(),
+      tasksHandled: v.number(),
+      tasksCompleted: v.number(),
+      status: v.string(),
+    })),
+
+    // Queue for next day
+    upcomingTasks: v.number(),
+
+    // AI-generated narrative summary
+    narrative: v.optional(v.string()),
+
+    generatedAt: v.number(),
+  })
+    .index("by_date", ["date"]),
+
+  // ============================================================
+  // CROSS-AGENT WAR ROOM
+  // ============================================================
+
+  warRoomMessages: defineTable({
+    missionId: v.id("missions"),
+    agentName: agentNameValidator,
+    messageType: v.union(
+      v.literal("update"),       // General progress update
+      v.literal("handoff"),      // Passing work/data to another agent
+      v.literal("request"),      // Asking another agent for something
+      v.literal("blocker"),      // Reporting a blocker
+      v.literal("resolved"),     // Blocker resolved / dependency met
+      v.literal("milestone")     // Key milestone reached
+    ),
+    content: v.string(),
+    targetAgent: v.optional(agentNameValidator), // Who this is directed at (handoff/request)
+    taskId: v.optional(v.id("tasks")),           // Related task
+    timestamp: v.number(),
+  })
+    .index("by_mission", ["missionId", "timestamp"])
+    .index("by_agent", ["agentName", "timestamp"]),
+
+  // ============================================================
+  // LIVE AGENT REASONING STREAM
+  // ============================================================
+
+  agentReasoningSteps: defineTable({
+    taskId: v.id("tasks"),
+    agentName: agentNameValidator,
+    stepType: v.union(
+      v.literal("thinking"),
+      v.literal("tool_call"),
+      v.literal("tool_result"),
+      v.literal("decision"),
+      v.literal("handoff"),
+      v.literal("error"),
+      v.literal("checkpoint")
+    ),
+    content: v.string(),
+    metadata: v.optional(v.string()), // JSON: tool name, params, duration, etc.
+    timestamp: v.number(),
+  })
+    .index("by_task", ["taskId", "timestamp"])
+    .index("by_agent", ["agentName", "timestamp"]),
 });

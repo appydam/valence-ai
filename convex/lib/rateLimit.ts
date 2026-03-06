@@ -42,6 +42,7 @@ export const RATE_LIMITS = {
   integrationExecute: { limit: 100, windowMs: 60_000 }, // 100/min
   ssh: { limit: 5, windowMs: 60_000 },               // 5/min
   scraper: { limit: 3, windowMs: 3_600_000 },        // 3/hour
+  reasoning: { limit: 100, windowMs: 60_000 },       // 100/min per agent
 } as const;
 
 /**

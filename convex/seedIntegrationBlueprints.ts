@@ -190,6 +190,46 @@ export const seedGoogleSheets = internalMutation({
         aiUsageHint: "Clear all values from a range",
         exampleArgs: JSON.stringify({ spreadsheetId: "abc123", range: "Sheet1!A1:Z100" }),
       },
+      {
+        name: "add_sheet",
+        displayName: "Add Sheet Tab",
+        description: "Add a new sheet tab (worksheet) to an existing spreadsheet. After creating, use update_values with range 'TabName!A1:Z100' to write data to it.",
+        method: "POST" as const,
+        path: "/v4/spreadsheets/{spreadsheetId}:batchUpdate",
+        pathParams: JSON.stringify([
+          { name: "spreadsheetId", type: "string", required: true },
+        ]),
+        bodySchema: JSON.stringify({
+          type: "object",
+          properties: {
+            requests: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  addSheet: {
+                    type: "object",
+                    properties: {
+                      properties: {
+                        type: "object",
+                        properties: {
+                          title: { type: "string", description: "Tab name (must be unique in spreadsheet)" },
+                          index: { type: "number", description: "Tab position (0-based, optional)" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }),
+        aiUsageHint: "Add a new sheet tab. Pass requests: [{addSheet: {properties: {title: 'Tab Name'}}}]. After creating, use update_values with range 'Tab Name!A1:Z100' to write data. Tab name must be unique — duplicate names return 400.",
+        exampleArgs: JSON.stringify({
+          spreadsheetId: "abc123",
+          requests: [{ addSheet: { properties: { title: "Sheet2" } } }],
+        }),
+      },
     ];
 
     for (const tool of tools) {
@@ -907,6 +947,78 @@ export const seedHubSpot = internalMutation({
         aiUsageHint: "Search deals by filters",
         exampleArgs: JSON.stringify({ filterGroups: [], limit: 10 }),
       },
+      // Notes
+      {
+        name: "create_note",
+        displayName: "Create Note",
+        description: "Create a note and optionally associate it with a contact, company, or deal. Requires hs_timestamp (ISO 8601) and hs_note_body.",
+        method: "POST" as const,
+        path: "/crm/v3/objects/notes",
+        bodySchema: JSON.stringify({
+          type: "object",
+          properties: {
+            properties: {
+              type: "object",
+              properties: {
+                hs_timestamp: { type: "string", description: "ISO 8601 timestamp (required)" },
+                hs_note_body: { type: "string", description: "Note content, supports HTML, max 65536 chars" },
+              },
+            },
+            associations: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  to: { type: "object", properties: { id: { type: "number" } } },
+                  types: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        associationCategory: { type: "string", const: "HUBSPOT_DEFINED" },
+                        associationTypeId: { type: "number", description: "202=note→contact, 190=note→company, 214=note→deal" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }),
+        aiUsageHint: "Create a note on a contact/company/deal. Use associationTypeId 202 for contacts, 190 for companies, 214 for deals. hs_timestamp is required (ISO 8601).",
+        exampleArgs: JSON.stringify({
+          properties: { hs_timestamp: "2026-03-05T10:00:00.000Z", hs_note_body: "Meeting notes from onboarding call." },
+          associations: [{ to: { id: 123 }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 202 }] }],
+        }),
+      },
+      {
+        name: "list_notes",
+        displayName: "List Notes",
+        description: "List all notes in HubSpot",
+        method: "GET" as const,
+        path: "/crm/v3/objects/notes",
+        queryParams: JSON.stringify([
+          { name: "limit", type: "number", default: 10 },
+          { name: "properties", type: "string", description: "Comma-separated properties to include (e.g. hs_note_body,hs_timestamp)" },
+        ]),
+        aiUsageHint: "List notes. Use properties=hs_note_body,hs_timestamp to include content.",
+        exampleArgs: JSON.stringify({ limit: 20, properties: "hs_note_body,hs_timestamp" }),
+      },
+      {
+        name: "get_note",
+        displayName: "Get Note",
+        description: "Get a specific note by ID",
+        method: "GET" as const,
+        path: "/crm/v3/objects/notes/{noteId}",
+        pathParams: JSON.stringify([
+          { name: "noteId", type: "string", required: true },
+        ]),
+        queryParams: JSON.stringify([
+          { name: "properties", type: "string", description: "Comma-separated properties to include" },
+        ]),
+        aiUsageHint: "Get a note by its ID",
+        exampleArgs: JSON.stringify({ noteId: "18469542029", properties: "hs_note_body,hs_timestamp" }),
+      },
     ];
 
     for (const tool of tools) {
@@ -948,5 +1060,195 @@ export const seedAll = internalAction({
       results,
       totalCreated: results.filter((r) => r.created).length,
     };
+  },
+});
+
+/**
+ * One-time patch: Add HubSpot Notes tools to existing blueprint
+ */
+export const patchHubSpotNoteTools = internalMutation({
+  handler: async (ctx) => {
+    const blueprint = await ctx.db
+      .query("blueprints")
+      .withIndex("by_slug", (q) => q.eq("slug", "hubspot"))
+      .first();
+
+    if (!blueprint) {
+      console.log("HubSpot blueprint not found, skipping patch");
+      return { patched: false, reason: "blueprint_not_found" };
+    }
+
+    // Check if already patched
+    const existingTool = await ctx.db
+      .query("blueprintTools")
+      .withIndex("by_blueprint", (q) => q.eq("blueprintId", blueprint._id))
+      .collect();
+    if (existingTool.some((t) => t.name === "create_note")) {
+      console.log("HubSpot note tools already exist, skipping");
+      return { patched: false, reason: "already_exists" };
+    }
+
+    const now = Date.now();
+    const noteTools = [
+      {
+        name: "create_note",
+        displayName: "Create Note",
+        description: "Create a note and optionally associate it with a contact, company, or deal. Requires hs_timestamp (ISO 8601) and hs_note_body.",
+        method: "POST" as const,
+        path: "/crm/v3/objects/notes",
+        bodySchema: JSON.stringify({
+          type: "object",
+          properties: {
+            properties: {
+              type: "object",
+              properties: {
+                hs_timestamp: { type: "string", description: "ISO 8601 timestamp (required)" },
+                hs_note_body: { type: "string", description: "Note content, supports HTML, max 65536 chars" },
+              },
+            },
+            associations: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  to: { type: "object", properties: { id: { type: "number" } } },
+                  types: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        associationCategory: { type: "string", const: "HUBSPOT_DEFINED" },
+                        associationTypeId: { type: "number", description: "202=note→contact, 190=note→company, 214=note→deal" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }),
+        aiUsageHint: "Create a note on a contact/company/deal. Use associationTypeId 202 for contacts, 190 for companies, 214 for deals. hs_timestamp is required (ISO 8601).",
+        exampleArgs: JSON.stringify({
+          properties: { hs_timestamp: "2026-03-05T10:00:00.000Z", hs_note_body: "Meeting notes from onboarding call." },
+          associations: [{ to: { id: 123 }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 202 }] }],
+        }),
+      },
+      {
+        name: "list_notes",
+        displayName: "List Notes",
+        description: "List all notes in HubSpot",
+        method: "GET" as const,
+        path: "/crm/v3/objects/notes",
+        queryParams: JSON.stringify([
+          { name: "limit", type: "number", default: 10 },
+          { name: "properties", type: "string", description: "Comma-separated properties to include (e.g. hs_note_body,hs_timestamp)" },
+        ]),
+        aiUsageHint: "List notes. Use properties=hs_note_body,hs_timestamp to include content.",
+        exampleArgs: JSON.stringify({ limit: 20, properties: "hs_note_body,hs_timestamp" }),
+      },
+      {
+        name: "get_note",
+        displayName: "Get Note",
+        description: "Get a specific note by ID",
+        method: "GET" as const,
+        path: "/crm/v3/objects/notes/{noteId}",
+        pathParams: JSON.stringify([
+          { name: "noteId", type: "string", required: true },
+        ]),
+        queryParams: JSON.stringify([
+          { name: "properties", type: "string", description: "Comma-separated properties to include" },
+        ]),
+        aiUsageHint: "Get a note by its ID",
+        exampleArgs: JSON.stringify({ noteId: "18469542029", properties: "hs_note_body,hs_timestamp" }),
+      },
+    ];
+
+    for (const tool of noteTools) {
+      await ctx.db.insert("blueprintTools", {
+        ...tool,
+        blueprintId: blueprint._id,
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    console.log(`✅ Patched HubSpot: added ${noteTools.length} note tools`);
+    return { patched: true, toolsAdded: noteTools.length };
+  },
+});
+
+/**
+ * One-time patch: Add Google Sheets add_sheet tool to existing blueprint
+ */
+export const patchGoogleSheetsAddSheet = internalMutation({
+  handler: async (ctx) => {
+    const blueprint = await ctx.db
+      .query("blueprints")
+      .withIndex("by_slug", (q) => q.eq("slug", "google-sheets"))
+      .first();
+
+    if (!blueprint) {
+      console.log("Google Sheets blueprint not found, skipping patch");
+      return { patched: false, reason: "blueprint_not_found" };
+    }
+
+    const existingTools = await ctx.db
+      .query("blueprintTools")
+      .withIndex("by_blueprint", (q) => q.eq("blueprintId", blueprint._id))
+      .collect();
+    if (existingTools.some((t) => t.name === "add_sheet")) {
+      console.log("Google Sheets add_sheet tool already exists, skipping");
+      return { patched: false, reason: "already_exists" };
+    }
+
+    const now = Date.now();
+    await ctx.db.insert("blueprintTools", {
+      name: "add_sheet",
+      displayName: "Add Sheet Tab",
+      description: "Add a new sheet tab (worksheet) to an existing spreadsheet. After creating, use update_values with range 'TabName!A1:Z100' to write data to it.",
+      method: "POST" as const,
+      path: "/v4/spreadsheets/{spreadsheetId}:batchUpdate",
+      pathParams: JSON.stringify([
+        { name: "spreadsheetId", type: "string", required: true },
+      ]),
+      bodySchema: JSON.stringify({
+        type: "object",
+        properties: {
+          requests: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                addSheet: {
+                  type: "object",
+                  properties: {
+                    properties: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string", description: "Tab name (must be unique in spreadsheet)" },
+                        index: { type: "number", description: "Tab position (0-based, optional)" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+      aiUsageHint: "Add a new sheet tab. Pass requests: [{addSheet: {properties: {title: 'Tab Name'}}}]. After creating, use update_values with range 'Tab Name!A1:Z100' to write data. Tab name must be unique — duplicate names return 400.",
+      exampleArgs: JSON.stringify({
+        spreadsheetId: "abc123",
+        requests: [{ addSheet: { properties: { title: "Sheet2" } } }],
+      }),
+      blueprintId: blueprint._id,
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    console.log("✅ Patched Google Sheets: added add_sheet tool");
+    return { patched: true, toolsAdded: 1 };
   },
 });

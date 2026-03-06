@@ -53,6 +53,15 @@ export const beat = mutation({
       v.literal("offline")
     ),
     currentTaskId: v.optional(v.string()),
+    serverMetrics: v.optional(v.object({
+      cpuPercent: v.number(),
+      memoryUsedMb: v.number(),
+      memoryTotalMb: v.number(),
+      diskUsedGb: v.number(),
+      diskTotalGb: v.number(),
+      uptimeSeconds: v.number(),
+      loadAvg1m: v.number(),
+    })),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -67,6 +76,9 @@ export const beat = mutation({
       };
       if (args.currentTaskId !== undefined) {
         patch.currentTaskId = args.currentTaskId || undefined;
+      }
+      if (args.serverMetrics) {
+        patch.serverMetrics = args.serverMetrics;
       }
       await ctx.db.patch(existing._id, patch);
       return { action: "updated", agentId: existing._id };

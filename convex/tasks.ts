@@ -181,6 +181,42 @@ export const create = mutation({
       ...(args.requiredUserId ? { requiredUserId: args.requiredUserId } : {}),
     });
 
+    // Integration pre-flight check (BUG-007)
+    // If task requires integrations and we know the user, verify connections exist.
+    // If missing, post a system comment so the agent knows before starting.
+    if (args.requiredIntegrations && args.requiredIntegrations.length > 0 && args.requiredUserId) {
+      const connections = await ctx.db
+        .query("connections")
+        .withIndex("by_user", (q) => q.eq("userId", args.requiredUserId!))
+        .filter((q) => q.eq(q.field("status"), "active"))
+        .collect();
+
+      const connectedSlugs = new Set(
+        (
+          await Promise.all(
+            connections.map(async (conn) => {
+              const bp = await ctx.db.get(conn.blueprintId);
+              return bp?.slug;
+            })
+          )
+        ).filter(Boolean)
+      );
+
+      const missingIntegrations = args.requiredIntegrations.filter(
+        (slug) => !connectedSlugs.has(slug)
+      );
+
+      if (missingIntegrations.length > 0) {
+        await ctx.db.insert("comments", {
+          taskId,
+          author: "System",
+          content: `⚠️ **Integration Pre-flight Warning**: This task requires integrations that are not connected: **${missingIntegrations.join(", ")}**. Agent may not be able to complete this task. Please connect these integrations in the Integrations page before proceeding.`,
+          createdAt: now,
+          mentions: [],
+        });
+      }
+    }
+
     // Auto-update assigned agent's status and trigger wakeup
     if (args.assignee) {
       const agent = await ctx.db
@@ -241,6 +277,12 @@ export const listByMission = query({
   },
 });
 
+/**
+ * Update task fields. Schema is FLAT — pass `id` plus any fields to update directly.
+ * Correct usage: { id: "taskId", status: "assigned" }
+ * Wrong usage:   { taskId: "..." } — use `id`, not `taskId`
+ * Wrong usage:   { id: "...", updates: { status: "assigned" } } — no nesting, flat fields only
+ */
 export const update = mutation({
   args: {
     id: v.id("tasks"),
@@ -357,6 +399,23 @@ export const update = mutation({
             tasksCompleted: agent.tasksCompleted + 1,
             ...(stillWorking ? {} : { status: "idle", currentTaskId: undefined }),
           });
+
+          // Auto-pickup: if agent just went idle but has assigned tasks, wake them immediately
+          if (!stillWorking && existing.assignee) {
+            const nextAssigned = await ctx.db
+              .query("tasks")
+              .withIndex("by_assignee_status", (q) =>
+                q.eq("assignee", existing.assignee!).eq("status", "assigned")
+              )
+              .first();
+            if (nextAssigned) {
+              await ctx.scheduler.runAfter(1000, internal.agentWakeup.triggerWakeup, {
+                agentName: existing.assignee!,
+                taskId: nextAssigned._id as string,
+                reason: "auto_pickup",
+              });
+            }
+          }
         }
       }
 
@@ -895,6 +954,23 @@ export const completeTask = mutation({
         tasksCompleted: agent.tasksCompleted + 1,
         ...(stillWorking ? {} : { status: "idle", currentTaskId: undefined }),
       });
+
+      // Auto-pickup: if agent just went idle but has assigned tasks, wake them immediately
+      if (!stillWorking) {
+        const nextAssigned = await ctx.db
+          .query("tasks")
+          .withIndex("by_assignee_status", (q) =>
+            q.eq("assignee", args.agentName as any).eq("status", "assigned")
+          )
+          .first();
+        if (nextAssigned && nextAssigned._id !== args.taskId) {
+          await ctx.scheduler.runAfter(1000, internal.agentWakeup.triggerWakeup, {
+            agentName: args.agentName,
+            taskId: nextAssigned._id as string,
+            reason: "auto_pickup",
+          });
+        }
+      }
     }
 
     // 6. Chain reactions (same as update mutation)
@@ -1116,16 +1192,16 @@ export const reviewSweep = internalMutation({
 export const sentinelReviewSweep = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+    const oneMinuteAgo = Date.now() - 1 * 60 * 1000;
 
     const inReviewTasks = await ctx.db
       .query("tasks")
       .withIndex("by_status", (q) => q.eq("status", "in_review"))
       .collect();
 
-    // Filter: tasks in_review for >10 min, not assigned to Kaze (Kaze reviews her own)
+    // Filter: tasks in_review for >1 min, not assigned to Kaze (Kaze reviews her own)
     const unreviewedTasks = inReviewTasks.filter(
-      (t) => t.updatedAt && t.updatedAt < tenMinutesAgo && t.assignee !== "Kaze"
+      (t) => t.updatedAt && t.updatedAt < oneMinuteAgo && t.assignee !== "Kaze"
     );
 
     if (unreviewedTasks.length > 0) {
@@ -1140,7 +1216,7 @@ export const sentinelReviewSweep = internalMutation({
 
       if (!sentinelActive) {
         const oldest = unreviewedTasks.sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0))[0];
-        console.log(`[SentinelSweep] ${unreviewedTasks.length} task(s) unreviewed >10min. Waking Sentinel for ${oldest._id}`);
+        console.log(`[SentinelSweep] ${unreviewedTasks.length} task(s) unreviewed >1min. Waking Sentinel for ${oldest._id}`);
         await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
           agentName: "Sentinel",
           taskId: oldest._id as string,
