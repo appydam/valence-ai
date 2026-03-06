@@ -23,7 +23,7 @@ export async function checkPlanLimit(
 ): Promise<PlanCheckResult> {
   // Get current subscription
   const sub = await ctx.db.query("subscriptions").first();
-  const plan = sub?.plan ?? "starter";
+  const plan = sub?.plan ?? "business";
 
   // Get plan limits
   const limits = await ctx.db

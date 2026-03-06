@@ -26,7 +26,7 @@ export const getPlanLimits = query({
     }
     // If no plan specified, get the active subscription's plan limits
     const sub = await ctx.db.query("subscriptions").first();
-    const plan = sub?.plan ?? "starter";
+    const plan = sub?.plan ?? "business";
     return await ctx.db
       .query("planLimits")
       .withIndex("by_plan", (q) => q.eq("plan", plan))
@@ -108,7 +108,7 @@ export const upsertSubscription = mutation({
   args: {
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
-    plan: v.union(v.literal("starter"), v.literal("pro"), v.literal("enterprise")),
+    plan: v.union(v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
     status: v.union(
       v.literal("active"),
       v.literal("past_due"),
@@ -155,31 +155,31 @@ export const seedPlanLimits = mutation({
 
     const plans = [
       {
-        plan: "starter",
-        maxUsers: 3,
-        maxAgents: 3,
-        maxIntegrations: 10,
-        maxTasksPerMonth: 500,
-        maxApiCallsPerMonth: 5000,
-        features: ["board", "tasks", "integrations_basic"],
-      },
-      {
-        plan: "pro",
-        maxUsers: 10,
+        plan: "business",
+        maxUsers: 25,
         maxAgents: 5,
-        maxIntegrations: 50,
-        maxTasksPerMonth: 5000,
-        maxApiCallsPerMonth: 50000,
-        features: ["board", "tasks", "integrations_full", "webhooks", "memory", "autopilot", "analytics", "branding", "audit_log"],
+        maxIntegrations: 30,
+        maxTasksPerMonth: 60000, // 20 users × 10 missions/day × 10 avg tasks × 30 days
+        maxApiCallsPerMonth: 500000,
+        features: ["board", "tasks", "integrations", "webhooks", "memory", "autopilot", "analytics", "audit_log", "sonnet", "war_room", "daily_digest"],
       },
       {
         plan: "enterprise",
-        maxUsers: 999,
+        maxUsers: 25,
         maxAgents: 10,
+        maxIntegrations: 100,
+        maxTasksPerMonth: 75000, // 25 users × 10 missions/day × 10 avg tasks × 30 days
+        maxApiCallsPerMonth: 1000000,
+        features: ["board", "tasks", "integrations", "webhooks", "memory", "autopilot", "analytics", "audit_log", "sonnet", "opus", "war_room", "daily_digest", "dedicated_server", "custom_agents"],
+      },
+      {
+        plan: "enterprise_plus",
+        maxUsers: 999,
+        maxAgents: 999,
         maxIntegrations: 999,
         maxTasksPerMonth: 999999,
         maxApiCallsPerMonth: 999999,
-        features: ["board", "tasks", "integrations_full", "webhooks", "memory", "autopilot", "analytics", "branding", "audit_log", "voice", "custom_agents", "sla"],
+        features: ["board", "tasks", "integrations", "webhooks", "memory", "autopilot", "analytics", "audit_log", "sonnet", "opus", "war_room", "daily_digest", "dedicated_server", "custom_agents", "onprem", "sla", "unlimited_missions", "custom_integrations", "voice"],
       },
     ];
 

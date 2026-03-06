@@ -10,7 +10,7 @@ import { api } from "./_generated/api";
  */
 export const createCheckoutSession = action({
   args: {
-    plan: v.union(v.literal("starter"), v.literal("pro"), v.literal("enterprise")),
+    plan: v.union(v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
     successUrl: v.string(),
     cancelUrl: v.string(),
   },
@@ -23,9 +23,9 @@ export const createCheckoutSession = action({
 
     // Map plan to Stripe price ID
     const priceMap: Record<string, string | undefined> = {
-      starter: process.env.STRIPE_PRICE_STARTER,
-      pro: process.env.STRIPE_PRICE_PRO,
+      business: process.env.STRIPE_PRICE_BUSINESS,
       enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
+      enterprise_plus: process.env.STRIPE_PRICE_ENTERPRISE_PLUS,
     };
 
     const priceId = priceMap[args.plan];
@@ -98,11 +98,11 @@ export const handleWebhook = action({
       case "customer.subscription.created":
       case "customer.subscription.updated": {
         const sub = event.data.object as any;
-        const plan = sub.metadata?.plan ?? "starter";
+        const plan = sub.metadata?.plan ?? "business";
         await ctx.runMutation(api.billing.upsertSubscription, {
           stripeCustomerId: sub.customer as string,
           stripeSubscriptionId: sub.id,
-          plan: plan as "starter" | "pro" | "enterprise",
+          plan: plan as "business" | "enterprise" | "enterprise_plus",
           status: sub.status as any,
           currentPeriodStart: sub.current_period_start * 1000,
           currentPeriodEnd: sub.current_period_end * 1000,
@@ -116,7 +116,7 @@ export const handleWebhook = action({
         await ctx.runMutation(api.billing.upsertSubscription, {
           stripeCustomerId: sub.customer as string,
           stripeSubscriptionId: sub.id,
-          plan: (sub.metadata?.plan ?? "starter") as "starter" | "pro" | "enterprise",
+          plan: (sub.metadata?.plan ?? "business") as "business" | "enterprise" | "enterprise_plus",
           status: "cancelled",
           currentPeriodStart: sub.current_period_start * 1000,
           currentPeriodEnd: sub.current_period_end * 1000,
