@@ -74,20 +74,21 @@ chown -R ubuntu:ubuntu /home/ubuntu/.openclaw
 # Install OpenClaw CLI (global)
 npm install -g @anthropic/openclaw@latest || true
 
-# Create a systemd service for agent management
+# Create a systemd service for OpenClaw gateway
 cat > /etc/systemd/system/openclaw-agents.service <<EOF2
 [Unit]
-Description=OpenClaw Agent Manager
+Description=OpenClaw Agent Gateway
 After=network.target
 
 [Service]
 Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/.openclaw
-ExecStart=/usr/bin/node /home/ubuntu/agent-manager.js
+ExecStart=/usr/bin/npx openclaw gateway start
 Restart=always
 RestartSec=10
 Environment=NODE_ENV=production
+Environment=HOME=/home/ubuntu
 
 [Install]
 WantedBy=multi-user.target

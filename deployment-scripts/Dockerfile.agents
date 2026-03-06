@@ -1,0 +1,90 @@
+# ─────────────────────────────────────────────────────────────
+# Mission Control — Agent Server Docker Image
+#
+# Self-contained OpenClaw agent runtime for on-prem deployments.
+#
+# Build:
+#   docker build -f Dockerfile.agents -t mission-control-agents .
+#
+# Run:
+#   docker run -d \
+#     -e MISSION_CONTROL_API_KEY=vk_live_xxx \
+#     -e MISSION_CONTROL_URL=https://your-project.convex.cloud \
+#     -e ANTHROPIC_API_KEY=sk-ant-xxx \
+#     --name mc-agents \
+#     mission-control-agents
+# ─────────────────────────────────────────────────────────────
+
+FROM node:20-slim
+
+LABEL maintainer="Mission Control <ops@valence.ai>"
+LABEL description="OpenClaw agent runtime for Mission Control"
+
+# Install minimal dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    jq \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -s /bin/bash agent
+
+USER agent
+WORKDIR /home/agent
+
+# Create OpenClaw directory structure
+RUN mkdir -p .openclaw/workspace/agents/kaze \
+             .openclaw/workspace/agents/scout \
+             .openclaw/workspace/agents/forge \
+             .openclaw/workspace/agents/ghost \
+             .openclaw/workspace/agents/sentinel \
+             .openclaw/workspace/skills/mission-control \
+             .openclaw/agents/kaze/sessions \
+             .openclaw/agents/scout/sessions \
+             .openclaw/agents/forge/sessions \
+             .openclaw/agents/ghost/sessions \
+             .openclaw/agents/sentinel/sessions
+
+# Install OpenClaw CLI
+RUN npm install -g @anthropic/openclaw@latest 2>/dev/null || \
+    (cd .openclaw && npm init -y 2>/dev/null && npm install @anthropic/openclaw@latest)
+
+# Create default SOUL files
+RUN for agent in kaze scout forge ghost sentinel; do \
+    UPPER=$(echo "$agent" | sed 's/./\U&/'); \
+    echo "# $UPPER\n\nYou are $UPPER, a Mission Control agent.\n\n## Core Rules\n- Always post partial results by turn 15\n- Use the mission-control skill for task updates\n- Check for dependency context before starting work" \
+    > .openclaw/workspace/agents/$agent/SOUL.md; \
+    done
+
+# Copy Kaze root SOUL
+RUN cp .openclaw/workspace/agents/kaze/SOUL.md .openclaw/workspace/SOUL.md
+
+# Environment variables (override at runtime)
+ENV MISSION_CONTROL_API_KEY=""
+ENV MISSION_CONTROL_URL=""
+ENV ANTHROPIC_API_KEY=""
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD pgrep -f "openclaw" > /dev/null || exit 1
+
+# Startup script
+COPY --chown=agent:agent <<'ENTRYPOINT' /home/agent/entrypoint.sh
+#!/bin/bash
+set -e
+
+# Write env vars to .env file
+cat > /home/agent/.openclaw/.env <<EOF
+MISSION_CONTROL_API_KEY=${MISSION_CONTROL_API_KEY}
+MISSION_CONTROL_URL=${MISSION_CONTROL_URL}
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+EOF
+
+echo "Starting OpenClaw agent gateway..."
+exec npx openclaw gateway start
+ENTRYPOINT
+
+RUN chmod +x /home/agent/entrypoint.sh
+
+ENTRYPOINT ["/home/agent/entrypoint.sh"]

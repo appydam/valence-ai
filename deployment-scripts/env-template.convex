@@ -1,29 +1,35 @@
 # ─────────────────────────────────────────────────────
 # Convex Environment Variables Template
-# Variables with {PLACEHOLDER} are replaced during provisioning
+# {SLUG} and {DOMAIN} are auto-replaced by provision-customer.sh
+# Lines with REPLACE_ME require manual setup
 # ─────────────────────────────────────────────────────
 
-# Auth & Security
+# Auth & Security (auto-generated per customer)
 ALLOWED_ORIGIN=https://{DOMAIN}
-INTEGRATION_ENCRYPTION_KEY=GENERATE_NEW_32BYTE_HEX_KEY
+INTEGRATION_ENCRYPTION_KEY={AUTO_GENERATED}
 
-# Clerk (shared app, per-org)
+# Clerk (shared across all customers)
 CLERK_JWT_ISSUER_DOMAIN=https://clerk.valence.ai
 
-# Stripe
-STRIPE_SECRET_KEY=sk_live_REPLACE_ME
-STRIPE_WEBHOOK_SECRET=whsec_REPLACE_ME
-STRIPE_PRICE_STARTER=price_REPLACE_ME
-STRIPE_PRICE_PRO=price_REPLACE_ME
-STRIPE_PRICE_ENTERPRISE=price_REPLACE_ME
+# SSH Proxy (shared Railway service)
+SSH_PROXY_URL=https://ssh-proxy-service-production.up.railway.app
+SSH_PROXY_SECRET={AUTO_GENERATED}
 
-# Anthropic (for doc scraper + agent sessions)
-ANTHROPIC_API_KEY=sk-ant-REPLACE_ME
+# Agent Wakeup
+AGENT_WAKEUP_WEBHOOK_URL=https://ssh-proxy-service-production.up.railway.app/wake
+AGENT_WAKEUP_WEBHOOK_SECRET={AUTO_GENERATED}
 
-# OAuth App Secrets (Valence-owned, shared across customers)
-OAUTH_SECRET_GITHUB=REPLACE_ME
-OAUTH_SECRET_SLACK=REPLACE_ME
-OAUTH_SECRET_GOOGLE=REPLACE_ME
-OAUTH_SECRET_JIRA=REPLACE_ME
-OAUTH_SECRET_LINEAR=REPLACE_ME
-OAUTH_SECRET_NOTION=REPLACE_ME
+# Anthropic (for doc scraper)
+ANTHROPIC_API_KEY=REPLACE_ME
+
+# Stripe (optional — billing not enforced during pilot)
+# STRIPE_SECRET_KEY=sk_live_REPLACE_ME
+# STRIPE_WEBHOOK_SECRET=whsec_REPLACE_ME
+# STRIPE_PRICE_STARTER=price_REPLACE_ME
+# STRIPE_PRICE_PRO=price_REPLACE_ME
+# STRIPE_PRICE_ENTERPRISE=price_REPLACE_ME
+
+# OAuth App Secrets (shared across customers — get from oauth-apps.json)
+# OAUTH_SECRET_GITHUB=REPLACE_ME
+# OAUTH_SECRET_SLACK=REPLACE_ME
+# OAUTH_SECRET_GOOGLE=REPLACE_ME
