@@ -42,6 +42,35 @@ function relevanceScore(m: {
   );
 }
 
+// ── Task-Context Boost ──────────────────────────────────────
+
+/** Boost memories whose tags/title/body match current task keywords or integrations. */
+function taskContextBoost(
+  memory: { tags: string[]; title: string; body: string },
+  keywords: string[],
+  integrations: string[]
+): number {
+  let boost = 0;
+  const text = `${memory.title} ${memory.body} ${memory.tags.join(" ")}`.toLowerCase();
+
+  // Integration match (strongest signal — agent is using the same API)
+  for (const integration of integrations) {
+    if (memory.tags.includes(integration) || text.includes(integration.toLowerCase())) {
+      boost += 0.4;
+      break;
+    }
+  }
+
+  // Keyword match (moderate signal — topic overlap)
+  let keywordHits = 0;
+  for (const kw of keywords) {
+    if (kw.length > 3 && text.includes(kw.toLowerCase())) keywordHits++;
+  }
+  boost += Math.min(0.3, keywordHits * 0.1);
+
+  return boost;
+}
+
 // ── Queries ──────────────────────────────────────────────────
 
 /** Recent memories across all agents (for Live Ops Feed) */
@@ -108,6 +137,58 @@ export const listForAgent = query({
     results.sort((a, b) => relevanceScore(b) - relevanceScore(a));
 
     return args.limit ? results.slice(0, args.limit) : results;
+  },
+});
+
+/** List active memories with task-aware boosting. Used by heartbeat when agent has active tasks. */
+export const listForAgentWithTaskContext = query({
+  args: {
+    agentName: agentNameValidator,
+    taskKeywords: v.array(v.string()),
+    taskIntegrations: v.array(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Fetch agent's active memories
+    let results = await ctx.db
+      .query("agentMemory")
+      .withIndex("by_agent_status", (q) =>
+        q.eq("agentName", args.agentName).eq("status", "active")
+      )
+      .collect();
+
+    // Include squad-wide memories (same logic as listForAgent)
+    const squadWide = await ctx.db
+      .query("agentMemory")
+      .withIndex("by_agent_status", (q) =>
+        q.eq("agentName", "Kaze").eq("status", "active")
+      )
+      .filter((q) =>
+        q.neq(q.field("agentName"), args.agentName)
+      )
+      .collect();
+    const relevant = squadWide.filter((m) =>
+      m.relatedAgents.includes(args.agentName) &&
+      m.relatedAgents.length === 4
+    );
+    results = [...results, ...relevant];
+
+    // Deduplicate by _id
+    const seen = new Set<string>();
+    results = results.filter((m) => {
+      if (seen.has(m._id)) return false;
+      seen.add(m._id);
+      return true;
+    });
+
+    // Sort by composite relevance + task-context boost
+    results.sort((a, b) => {
+      const scoreA = relevanceScore(a) + taskContextBoost(a, args.taskKeywords, args.taskIntegrations);
+      const scoreB = relevanceScore(b) + taskContextBoost(b, args.taskKeywords, args.taskIntegrations);
+      return scoreB - scoreA;
+    });
+
+    return results.slice(0, args.limit ?? 10);
   },
 });
 

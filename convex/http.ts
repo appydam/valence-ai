@@ -299,7 +299,18 @@ http.route({
     }[] = [];
 
     try {
-      // Fetch last handoff, recent activity, and top memories in parallel
+      // Extract keywords from active tasks for task-aware memory retrieval
+      const taskKeywords = tasks
+        .flatMap((t: any) => [
+          ...t.title.toLowerCase().split(/\s+/),
+          ...(t.tags || []),
+        ])
+        .filter((w: string) => w.length > 3)
+        .slice(0, 20);
+      const taskIntegrations = tasks
+        .flatMap((t: any) => t.requiredIntegrations || []);
+
+      // Fetch last handoff, recent activity, and task-aware memories in parallel
       const [handoffs, recentActivityRaw, completedTasks, agentMemories] = await Promise.all([
         ctx.runQuery(api.sessionHandoffs.listForAgent, {
           agentName: body.agentName,
@@ -307,11 +318,18 @@ http.route({
         }),
         ctx.runQuery(api.activityFns.list, { limit: 10 }),
         ctx.runQuery(api.tasks.list, { assignee: body.agentName, status: "done" }),
-        ctx.runQuery(api.agentMemory.listForAgent, {
-          agentName: body.agentName,
-          includeSquadWide: true,
-          limit: 10,
-        }),
+        taskKeywords.length > 0 || taskIntegrations.length > 0
+          ? ctx.runQuery(api.agentMemory.listForAgentWithTaskContext, {
+              agentName: body.agentName,
+              taskKeywords,
+              taskIntegrations,
+              limit: 10,
+            })
+          : ctx.runQuery(api.agentMemory.listForAgent, {
+              agentName: body.agentName,
+              includeSquadWide: true,
+              limit: 10,
+            }),
       ]);
 
       // Build recentHandoff
@@ -1195,9 +1213,19 @@ http.route({ path: "/api/ssh-proxy/pull-soul", method: "OPTIONS", handler: optio
 http.route({
   path: "/api/ssh-proxy/pull-soul",
   method: "POST",
-  handler: authenticatedHandler(async (ctx, request, _auth) => {
+  handler: authenticatedHandler(async (ctx, request, auth) => {
     const body = await request.json();
-    return forwardToSshProxy(ctx, request, "/ssh/pull-soul", { agentName: body.agentName });
+    const result = await forwardToSshProxy(ctx, request, "/ssh/pull-soul", { agentName: body.agentName });
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "soul_file.pulled",
+        resource: "soul_file",
+        resourceId: body.agentName,
+        details: JSON.stringify({ agentName: body.agentName }),
+      });
+    }
+    return result;
   }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
 });
 
@@ -1206,12 +1234,82 @@ http.route({ path: "/api/ssh-proxy/sync-soul", method: "OPTIONS", handler: optio
 http.route({
   path: "/api/ssh-proxy/sync-soul",
   method: "POST",
-  handler: authenticatedHandler(async (ctx, request, _auth) => {
+  handler: authenticatedHandler(async (ctx, request, auth) => {
     const body = await request.json();
-    return forwardToSshProxy(ctx, request, "/ssh/sync-soul", {
+    const result = await forwardToSshProxy(ctx, request, "/ssh/sync-soul", {
       agentName: body.agentName,
       content: body.content,
     });
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "soul_file.synced",
+        resource: "soul_file",
+        resourceId: body.agentName,
+        details: JSON.stringify({ agentName: body.agentName }),
+      });
+      await ctx.runMutation(api.soulFiles.markSynced, { agentName: body.agentName });
+    }
+    return result;
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/soul/approve-version — Approve a pending distillation version and sync to server
+http.route({ path: "/api/soul/approve-version", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/soul/approve-version",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const body = await request.json();
+    const { versionId, agentName } = body;
+    if (!versionId || !agentName) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "versionId and agentName required" }),
+        { status: 400, headers: corsHeaders(request) },
+      );
+    }
+
+    // Approve the version (updates soulFiles table and soulFileVersions status)
+    await ctx.runMutation(api.soulDistillation.reviewVersion, {
+      id: versionId,
+      decision: "approved",
+      reviewedBy: auth.userId,
+    });
+
+    // Fetch the approved content to sync to server
+    const version = await ctx.runQuery(api.soulDistillation.getVersion, { id: versionId });
+    if (!version) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "Version not found after approval" }),
+        { status: 404, headers: corsHeaders(request) },
+      );
+    }
+
+    // Sync the approved SOUL content to server via SSH proxy
+    const syncResult = await forwardToSshProxy(ctx, request, "/ssh/sync-soul", {
+      agentName,
+      content: version.content,
+    });
+
+    let syncedToServer = false;
+    if (syncResult.status === 200) {
+      syncedToServer = true;
+      await ctx.runMutation(api.soulFiles.markSynced, { agentName });
+    }
+
+    // Write audit log
+    await ctx.runMutation(api.auditLog.log, {
+      userId: auth.userId,
+      action: "soul_file.distillation_approved",
+      resource: "soul_file",
+      resourceId: agentName,
+      details: JSON.stringify({ agentName, versionId, version: version.version, syncedToServer }),
+    });
+
+    return new Response(
+      JSON.stringify({ ok: true, syncedToServer }),
+      { status: 200, headers: corsHeaders(request) },
+    );
   }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
 });
 

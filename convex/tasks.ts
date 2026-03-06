@@ -1045,6 +1045,15 @@ export const completeTask = mutation({
       });
     }
 
+    // Auto-extract memories from completed task (fire-and-forget)
+    if (targetStatus === "done") {
+      await ctx.scheduler.runAfter(5000, internal.memoryExtraction.extractFromTask, {
+        taskId: args.taskId,
+        agentName: args.agentName,
+        trigger: "task_completed",
+      });
+    }
+
     return { ok: true, taskId: args.taskId, status: targetStatus };
   },
 });
@@ -1114,6 +1123,13 @@ export const rejectTask = mutation({
         reason: "task_rejected",
       });
     }
+
+    // Auto-extract failure memories from rejected task
+    await ctx.scheduler.runAfter(5000, internal.memoryExtraction.extractFromTask, {
+      taskId: args.taskId,
+      agentName: task.assignee || args.reviewerName,
+      trigger: "task_rejected",
+    });
 
     return { ok: true, escalated: false, iterationCount: newIterationCount };
   },

@@ -39,6 +39,17 @@ crons.interval(
 );
 
 /**
+ * Integration learning: analyze API call patterns to auto-detect quirks and failures.
+ * Writes squad-wide api_quirk memories from integrationActivity data. No LLM call.
+ * Runs daily at 5:00 UTC.
+ */
+crons.daily(
+  "integration-learning",
+  { hourUTC: 5, minuteUTC: 0 },
+  internal.integrationLearning.analyzePatterns
+);
+
+/**
  * Memory archive: expire TTL memories and archive 30-day-old unused low-score ones.
  * Runs nightly at 3:00 UTC.
  */

@@ -9,6 +9,11 @@ const agentNameValidator = v.union(
   v.literal("Sentinel")
 );
 
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => ctx.db.query("soulFiles").collect(),
+});
+
 export const get = query({
   args: { agentName: agentNameValidator },
   handler: async (ctx, args) => {

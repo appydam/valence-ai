@@ -24,6 +24,31 @@ export const log = mutation({
   },
 });
 
+/** Fetch audit log entries for a specific resource + optional resourceId. */
+export const listForResource = query({
+  args: {
+    resource: v.string(),
+    resourceId: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    if (args.resourceId !== undefined) {
+      return ctx.db
+        .query("auditLog")
+        .withIndex("by_resource", (q) =>
+          q.eq("resource", args.resource).eq("resourceId", args.resourceId)
+        )
+        .order("desc")
+        .take(args.limit ?? 10);
+    }
+    return ctx.db
+      .query("auditLog")
+      .withIndex("by_resource", (q) => q.eq("resource", args.resource))
+      .order("desc")
+      .take(args.limit ?? 10);
+  },
+});
+
 /**
  * List audit log entries, newest first.
  */
