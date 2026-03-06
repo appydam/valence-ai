@@ -4,7 +4,8 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { generateOpenClawConfig, downloadConfig } from "@/lib/configExport";
 import { apiPost } from "@/lib/api";
-import { X, Settings, Download, Check, AlertTriangle, HelpCircle, Zap } from "lucide-react";
+import { getRelativeTime } from "@/lib/time";
+import { X, Settings, Download, Check, AlertTriangle, HelpCircle, Zap, Lock } from "lucide-react";
 
 function Tooltip({ text }: { text: string }) {
   return (
@@ -38,14 +39,22 @@ const AVAILABLE_SKILLS = [
 interface AgentConfigPanelProps {
   agentName: AgentName;
   onClose: () => void;
+  initialTab?: "settings" | "soul";
 }
 
-export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) {
+export function AgentConfigPanel({ agentName, onClose, initialTab = "settings" }: AgentConfigPanelProps) {
   const config = useQuery(api.agentConfigs.getByAgent, { agentName });
   const allConfigs = useQuery(api.agentConfigs.list) ?? [];
   const soulFile = useQuery(api.soulFiles.get, { agentName });
   const sshConfig = useQuery(api.sshConfig.get);
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const auditEntries = useQuery(api.auditLog.listForResource, {
+    resource: "soul_file",
+    resourceId: agentName,
+    limit: 5,
+  }) ?? [];
   const sshConfigured = !!(sshConfig && sshConfig.host);
+  const isAdmin = currentUser?.role === "admin";
   const updateConfig = useMutation(api.agentConfigs.update);
   const saveSoul = useMutation(api.soulFiles.save);
 
@@ -54,7 +63,7 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
   const [maxTurns, setMaxTurns] = useState(20);
   const [timeout, setTimeout] = useState(300);
   const [saved, setSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState<"settings" | "soul">("settings");
+  const [activeTab, setActiveTab] = useState<"settings" | "soul">(initialTab);
   const [soulContent, setSoulContent] = useState("");
   const [restarting, setRestarting] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -423,6 +432,13 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
 
             {/* Actions */}
             <div className="flex gap-2 pt-4 border-t border-border">
+              {!isAdmin && (
+                <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-xs text-muted-foreground">
+                  <Lock className="w-3.5 h-3.5 shrink-0" />
+                  Read-only — only admins can save settings
+                </div>
+              )}
+              {isAdmin && (
               <button
                 onClick={handleSave}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors"
@@ -436,6 +452,7 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
                   "Save Changes"
                 )}
               </button>
+              )}
               <button
                 onClick={handleDownload}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-surface-hover transition-colors"
@@ -465,11 +482,20 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
 
               <textarea
                 value={soulContent}
-                onChange={(e) => setSoulContent(e.target.value)}
+                onChange={isAdmin ? (e) => setSoulContent(e.target.value) : undefined}
+                readOnly={!isAdmin}
                 placeholder={`# ${agentName} — ${agentConfig.role}\n\nYou are ${agentName}, the ${agentConfig.role} for this AI squad.\n\n## Your Role\n${agentConfig.description}\n\n## Personality\nDescribe how you communicate, make decisions, and approach tasks...\n\n## Priorities\n1. Your top priority\n2. Second priority\n3. Third priority`}
-                className="w-full h-96 bg-background rounded-lg px-3 py-2 text-sm text-foreground font-mono border border-border focus:ring-1 focus:ring-primary outline-none resize-none"
+                className={`w-full h-96 bg-background rounded-lg px-3 py-2 text-sm text-foreground font-mono border border-border focus:ring-1 focus:ring-primary outline-none resize-none ${!isAdmin ? "opacity-70 cursor-not-allowed" : ""}`}
               />
 
+              {!isAdmin && (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-xs text-muted-foreground mt-2">
+                  <Lock className="w-3.5 h-3.5 shrink-0" />
+                  Read-only — only admins can edit and sync SOUL files
+                </div>
+              )}
+
+              {isAdmin && (
               <div className="flex gap-2 mt-4 pt-4 border-t border-border">
                 <button
                   onClick={handlePullSoul}
@@ -505,6 +531,28 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
                   Download
                 </button>
               </div>
+              )}
+
+              {/* Audit Log */}
+              {auditEntries.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-2">Recent Changes</p>
+                  <div className="space-y-1.5">
+                    {auditEntries.map((entry: any) => (
+                      <div key={entry._id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="w-1 h-1 rounded-full bg-muted-foreground shrink-0" />
+                        <span className="truncate">
+                          {entry.action === "soul_file.synced" ? "Synced to server" :
+                           entry.action === "soul_file.pulled" ? "Pulled from server" :
+                           entry.action === "soul_file.distillation_approved" ? "Distillation approved" :
+                           entry.action}
+                        </span>
+                        <span className="ml-auto shrink-0 text-[10px]">{getRelativeTime(entry.timestamp)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

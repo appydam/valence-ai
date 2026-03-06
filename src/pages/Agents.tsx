@@ -7,7 +7,7 @@ import { getRelativeTime } from "@/lib/time";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { apiPost } from "@/lib/api";
-import { Settings, RefreshCw, AlertCircle } from "lucide-react";
+import { Settings, RefreshCw, AlertCircle, GitBranch, CheckCircle, ChevronDown, ChevronUp, X } from "lucide-react";
 
 const AgentsPage = () => {
   const agents = useQuery(api.agents.list) ?? [];
@@ -15,6 +15,8 @@ const AgentsPage = () => {
   const activity = useQuery(api.activityFns.list, {}) ?? [];
   const usageData = useQuery(api.usage.listAll) ?? [];
   const agentConfigs = useQuery(api.agentConfigs.list) ?? [];
+  const soulFiles = useQuery(api.soulFiles.listAll) ?? [];
+  const pendingDistillations = useQuery(api.soulDistillation.listPendingReview) ?? [];
 
   const syncConfigs = useMutation(api.agentConfigs.syncFromServer);
   const syncSouls = useMutation(api.soulFiles.syncFromServer);
@@ -23,8 +25,60 @@ const AgentsPage = () => {
   const sshConfigured = !!(sshConfig && sshConfig.host);
 
   const [configPanelAgent, setConfigPanelAgent] = useState<AgentName | null>(null);
+  const [configPanelTab, setConfigPanelTab] = useState<"settings" | "soul">("settings");
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [expandedDiff, setExpandedDiff] = useState<string | null>(null);
+  const [approving, setApproving] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState<string | null>(null);
+
+  const handleApproveVersion = async (versionId: string, agentName: string) => {
+    setApproving(versionId);
+    try {
+      const data = await apiPost("/api/soul/approve-version", { versionId, agentName });
+      if (data.ok) {
+        setExpandedDiff(null);
+        alert(`SOUL update for ${agentName} approved${data.syncedToServer ? " and synced to server" : " (sync failed — check SSH config)"}.`);
+      } else {
+        alert(`Approval failed: ${data.error || "Unknown error"}`);
+      }
+    } catch (error: any) {
+      alert(`Error: ${error.message}`);
+    }
+    setApproving(null);
+  };
+
+  const handleRejectVersion = async (versionId: string, agentName: string) => {
+    setRejecting(versionId);
+    try {
+      await apiPost("/api/soul/reject-version", { versionId, agentName });
+      setExpandedDiff(null);
+    } catch {
+      // Best-effort — rejection via direct Convex call not possible from frontend without HTTP route
+      alert("Rejection not supported from UI yet. Use the Convex dashboard to reject.");
+    }
+    setRejecting(null);
+  };
+
+  // Simple line diff renderer
+  function renderDiff(oldContent: string, newContent: string) {
+    const oldLines = oldContent.split("\n");
+    const newLines = newContent.split("\n");
+    const maxLen = Math.max(oldLines.length, newLines.length);
+    const result: { type: "same" | "removed" | "added"; line: string }[] = [];
+
+    for (let i = 0; i < maxLen; i++) {
+      const oldLine = oldLines[i] ?? "";
+      const newLine = newLines[i] ?? "";
+      if (oldLine === newLine) {
+        result.push({ type: "same", line: newLine });
+      } else {
+        if (oldLine) result.push({ type: "removed", line: oldLine });
+        if (newLine) result.push({ type: "added", line: newLine });
+      }
+    }
+    return result;
+  }
 
   const handleSyncFromServer = async () => {
     setSyncing(true);
@@ -124,6 +178,87 @@ const AgentsPage = () => {
           </div>
         )}
 
+        {/* Distillation pending banner */}
+        {pendingDistillations.length > 0 && (
+          <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 overflow-hidden">
+            <div className="p-3 flex items-center gap-2">
+              <GitBranch className="w-4 h-4 text-blue-400 shrink-0" />
+              <p className="text-sm font-medium text-blue-400 flex-1">
+                {pendingDistillations.length} SOUL update{pendingDistillations.length > 1 ? "s" : ""} ready for review
+              </p>
+              <span className="text-xs text-muted-foreground">Weekly distillation from agent memories</span>
+            </div>
+            <div className="divide-y divide-border">
+              {pendingDistillations.map((version: any) => {
+                const currentSoul = soulFiles.find((s: any) => s.agentName === version.agentName);
+                const isExpanded = expandedDiff === version._id;
+                const diffLines = isExpanded && currentSoul
+                  ? renderDiff(currentSoul.content || "", version.content)
+                  : [];
+
+                return (
+                  <div key={version._id} className="bg-card">
+                    <button
+                      onClick={() => setExpandedDiff(isExpanded ? null : version._id)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-hover transition-colors text-left"
+                    >
+                      <span className="text-base">{AGENT_CONFIG[version.agentName as AgentName]?.emoji || "🤖"}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-foreground">{version.agentName}</span>
+                        <span className="text-xs text-muted-foreground ml-2">v{version.version} distillation</span>
+                      </div>
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-4 pb-4">
+                        {currentSoul ? (
+                          <div className="rounded-lg border border-border overflow-auto max-h-80 bg-background font-mono text-xs">
+                            {diffLines.map((dl, i) => (
+                              <div
+                                key={i}
+                                className={`px-3 py-0.5 whitespace-pre-wrap ${
+                                  dl.type === "added" ? "bg-green-500/10 text-green-400" :
+                                  dl.type === "removed" ? "bg-red-500/10 text-red-400 line-through" :
+                                  "text-muted-foreground"
+                                }`}
+                              >
+                                {dl.type === "added" ? "+ " : dl.type === "removed" ? "− " : "  "}{dl.line || " "}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-lg border border-border overflow-auto max-h-80 bg-background font-mono text-xs p-3 text-muted-foreground whitespace-pre-wrap">
+                            {version.content}
+                          </div>
+                        )}
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() => handleApproveVersion(version._id, version.agentName)}
+                            disabled={approving === version._id}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors disabled:opacity-50"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            {approving === version._id ? "Approving..." : "Approve & Sync"}
+                          </button>
+                          <button
+                            onClick={() => handleRejectVersion(version._id, version.agentName)}
+                            disabled={rejecting === version._id}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/30 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                          >
+                            <X className="w-4 h-4" />
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {agents.map(agent => {
             const config = AGENT_CONFIG[agent.name];
@@ -133,6 +268,8 @@ const AgentsPage = () => {
             const agentUsage = usageData.find(u => u.agentName === agent.name);
             const agentConfig = agentConfigs.find(c => c.agentName === agent.name);
             const isActive = agent.status === "online" || agent.status === "working";
+            const soulFile = soulFiles.find((s: any) => s.agentName === agent.name);
+            const hasPendingDistillation = pendingDistillations.some((v: any) => v.agentName === agent.name);
 
             return (
               <div key={agent._id} className="p-5 rounded-xl border bg-card hover:bg-surface-hover transition-all"
@@ -150,7 +287,7 @@ const AgentsPage = () => {
                       <h3 className="text-lg font-bold text-foreground">{agent.name}</h3>
                       <StatusBadge status={agent.status} />
                       <button
-                        onClick={() => setConfigPanelAgent(agent.name)}
+                        onClick={() => { setConfigPanelAgent(agent.name); setConfigPanelTab("settings"); }}
                         className="ml-auto p-1 rounded hover:bg-secondary transition-colors"
                         title="Configure agent"
                       >
@@ -158,6 +295,32 @@ const AgentsPage = () => {
                       </button>
                     </div>
                     <p className="text-sm text-muted-foreground">{config.role}</p>
+                    {/* SOUL sync status badge */}
+                    {hasPendingDistillation ? (
+                      <button
+                        onClick={() => setExpandedDiff(pendingDistillations.find((v: any) => v.agentName === agent.name)?._id ?? null)}
+                        className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
+                      >
+                        <GitBranch className="w-2.5 h-2.5" />
+                        Update ready
+                      </button>
+                    ) : soulFile?.syncedToServer === true ? (
+                      <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-400">
+                        <CheckCircle className="w-2.5 h-2.5" />
+                        SOUL synced
+                      </span>
+                    ) : soulFile?.syncedToServer === false ? (
+                      <button
+                        onClick={() => { setConfigPanelAgent(agent.name); setConfigPanelTab("soul"); }}
+                        className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 transition-colors"
+                      >
+                        Changes pending
+                      </button>
+                    ) : (
+                      <span className="mt-1 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                        No SOUL
+                      </span>
+                    )}
                     {agentConfig && (
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
@@ -232,7 +395,8 @@ const AgentsPage = () => {
       {configPanelAgent && (
         <AgentConfigPanel
           agentName={configPanelAgent}
-          onClose={() => setConfigPanelAgent(null)}
+          initialTab={configPanelTab}
+          onClose={() => { setConfigPanelAgent(null); setConfigPanelTab("settings"); }}
         />
       )}
     </DashboardLayout>
