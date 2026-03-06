@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { SSH_PROXY_URL } from "@/lib/utils";
+import { apiPost } from "@/lib/api";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 function Tooltip({ text }: { text: string }) {
@@ -668,7 +668,7 @@ const SettingsPage = () => {
 
   // SSH state
   const sshConfig = useQuery(api.sshConfig.get) ?? null;
-  const saveSSH = useMutation(api.sshConfig.save);
+  const saveSSH = useAction(api.sshConfigActions.saveEncrypted);
   const [sshHost, setSshHost] = useState("");
   const [sshPort, setSshPort] = useState("22");
   const [sshUser, setSshUser] = useState("");
@@ -696,9 +696,13 @@ const SettingsPage = () => {
     }
   }, [sshConfig]);
 
+  const sshConfigured = !!(sshConfig && sshConfig.host);
+
   useEffect(() => {
-    loadTools();
-  }, []);
+    if (sshConfigured) {
+      loadTools();
+    }
+  }, [sshConfigured]);
 
   const handleSave = async () => {
     try {
@@ -719,28 +723,11 @@ const SettingsPage = () => {
     setTesting(true);
     setTestResult(null);
     try {
-      let keyToUse = sshKey;
-      if (!keyToUse) {
-        const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-        const fullConfig = await configResponse.json();
-        if (fullConfig && fullConfig.privateKey) {
-          keyToUse = fullConfig.privateKey;
-        } else {
-          setTestResult({ ok: false, message: "No SSH private key found. Please enter and save your SSH credentials first." });
-          setTesting(false);
-          return;
-        }
-      }
-
-      const response = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const data = await response.json();
+      // Test SSH connection via Convex proxy (config + auth handled server-side)
+      const data = await apiPost("/api/ssh-proxy/test", {});
       setTestResult(data);
     } catch (error: any) {
-      setTestResult({ ok: false, message: `Cannot connect to SSH proxy service: ${error.message}` });
+      setTestResult({ ok: false, message: `Error: ${error.message}` });
     }
     setTesting(false);
   };
@@ -749,21 +736,7 @@ const SettingsPage = () => {
     setSkillsLoading(true);
     setSkillsError(null);
     try {
-      const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-      const sshCfg = await configResponse.json();
-
-      if (!sshCfg || !sshCfg.host) {
-        setSkillsError("No SSH configuration found. Please configure SSH in the Server tab first.");
-        setSkillsLoading(false);
-        return;
-      }
-
-      const response = await fetch("http://localhost:3001/openclaw/tools-list", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sshCfg),
-      });
-      const data = await response.json();
+      const data = await apiPost("/api/ssh-proxy/tools-list", {});
 
       if (data.ok) {
         setSkills(data.skills || []);
@@ -776,7 +749,7 @@ const SettingsPage = () => {
         setSkillsError(data.error || "Failed to load skills");
       }
     } catch (error: any) {
-      setSkillsError(`Cannot connect to SSH proxy service. Make sure it's running on port 3001. Error: ${error.message}`);
+      setSkillsError(`Error loading skills: ${error.message}`);
     }
     setSkillsLoading(false);
   };
@@ -784,15 +757,7 @@ const SettingsPage = () => {
   const installSkill = async (skillName: string) => {
     setInstalling(skillName);
     try {
-      const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-      const sshCfg = await configResponse.json();
-
-      const response = await fetch("http://localhost:3001/openclaw/tools-install", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...sshCfg, toolName: skillName }),
-      });
-      const data = await response.json();
+      const data = await apiPost("/api/ssh-proxy/tools-install", { toolName: skillName });
 
       if (data.ok) {
         alert(`${skillName} installed successfully! Refreshing list...`);
@@ -1070,6 +1035,15 @@ const SettingsPage = () => {
 
           {/* ── Skills Tab ── */}
           <TabsContent value="skills" className="space-y-6">
+            {!sshConfigured ? (
+              <div className="rounded-xl border bg-card p-6 text-center space-y-3">
+                <Package className="w-10 h-10 text-muted-foreground mx-auto" />
+                <h3 className="text-lg font-semibold text-foreground">SSH Not Configured</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Skills are managed on your agent server. Configure SSH access in the <strong>Server</strong> tab to view and install skills.
+                </p>
+              </div>
+            ) : (<>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">
@@ -1302,6 +1276,7 @@ const SettingsPage = () => {
                 </p>
               </div>
             </div>
+            </>)}
           </TabsContent>
         </Tabs>
       </div>

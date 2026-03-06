@@ -5,7 +5,8 @@ import { MarkdownContent } from "@/components/MarkdownContent";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { X, Check, Inbox, Trash2, MessageSquare, Package, ChevronDown, ChevronRight, AlertTriangle, Link2, XCircle, Plus, Search } from "lucide-react";
+import { X, Check, Inbox, Trash2, MessageSquare, Package, ChevronDown, ChevronRight, AlertTriangle, Link2, XCircle, Plus, Search, Zap } from "lucide-react";
+import { ReasoningStream } from "@/components/ReasoningStream";
 
 const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_URL?.replace(".convex.cloud", ".convex.site") as string;
 
@@ -68,6 +69,10 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
     api.tasks.getByIds,
     blocksIds.length > 0 ? { ids: blocksIds } : "skip"
   ) ?? [];
+
+  // Integration execution logs
+  const [showIntegrationLogs, setShowIntegrationLogs] = useState(false);
+  const integrationLogs = useQuery(api.integrationActivity.listByTask, { taskId: task._id as string, limit: 50 }) ?? [];
 
   // All tasks for dependency picker
   const allTasks = useQuery(api.tasks.list, {}) ?? [];
@@ -137,6 +142,7 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
   const hasRejection = !!task.rejectionReason && task.status === "in_progress";
   const iterationCount = task.iterationCount ?? 0;
   const maxIterations = task.maxIterations ?? 3;
+  const isEscalated = iterationCount > maxIterations;
 
   const statusColor: Record<string, string> = {
     done: "text-status-online",
@@ -177,8 +183,23 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
       </div>
 
       <div className="p-5 space-y-5">
+        {/* Escalated banner — max iterations exceeded, human review required */}
+        {isEscalated && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0" />
+              <span className="text-xs font-semibold text-destructive">
+                Escalated — Human Review Required ({iterationCount} revisions)
+              </span>
+            </div>
+            <p className="text-xs text-destructive/80 leading-relaxed">
+              This task has exceeded the maximum revision limit ({maxIterations}). The agent could not complete it autonomously. Please review, update the task description, and reassign manually.
+            </p>
+          </div>
+        )}
+
         {/* Rejection reason banner */}
-        {hasRejection && (
+        {hasRejection && !isEscalated && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
             <div className="flex items-center gap-2 mb-1">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
@@ -405,6 +426,50 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
             </div>
           )}
         </div>
+
+        {/* Agent Reasoning Stream */}
+        {task.assignee && (
+          <ReasoningStream taskId={task._id} compact />
+        )}
+
+        {/* Integration Calls (IMPROVE-005) */}
+        {integrationLogs.length > 0 && (
+          <div>
+            <button
+              onClick={() => setShowIntegrationLogs(v => !v)}
+              className="w-full flex items-center justify-between group"
+            >
+              <label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 cursor-pointer">
+                <Zap className="w-3 h-3" /> Integration Calls
+                <span className="px-1.5 py-0.5 rounded-full bg-secondary text-[10px]">
+                  {integrationLogs.length}
+                </span>
+              </label>
+              {showIntegrationLogs ? (
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+              )}
+            </button>
+            {showIntegrationLogs && (
+              <div className="mt-2 space-y-1 max-h-64 overflow-y-auto">
+                {integrationLogs.map((log: any) => (
+                  <div key={log._id} className="flex items-start gap-2 px-2 py-1.5 rounded bg-secondary text-[11px]">
+                    <span className={`shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full ${log.status === "success" ? "bg-status-online" : "bg-destructive"}`} />
+                    <span className="font-mono text-muted-foreground shrink-0">{log.integrationType}</span>
+                    <span className="text-foreground truncate flex-1">{log.toolName}</span>
+                    {log.errorMessage && (
+                      <span className="text-destructive/80 truncate max-w-[140px]" title={log.errorMessage}>{log.errorMessage}</span>
+                    )}
+                    <span className="text-muted-foreground shrink-0 ml-auto">
+                      {new Date(log.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tags */}
         {task.tags.length > 0 && (

@@ -6,7 +6,8 @@ import { AGENT_CONFIG, AgentName } from "@/types/mission";
 import { getRelativeTime } from "@/lib/time";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Settings, RefreshCw } from "lucide-react";
+import { apiPost } from "@/lib/api";
+import { Settings, RefreshCw, AlertCircle } from "lucide-react";
 
 const AgentsPage = () => {
   const agents = useQuery(api.agents.list) ?? [];
@@ -18,39 +19,27 @@ const AgentsPage = () => {
   const syncConfigs = useMutation(api.agentConfigs.syncFromServer);
   const syncSouls = useMutation(api.soulFiles.syncFromServer);
 
+  const sshConfig = useQuery(api.sshConfig.get);
+  const sshConfigured = !!(sshConfig && sshConfig.host);
+
   const [configPanelAgent, setConfigPanelAgent] = useState<AgentName | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const handleSyncFromServer = async () => {
     setSyncing(true);
+    setSyncError(null);
     try {
-      // Get SSH config from Convex
-      const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-      const sshConfig = await configResponse.json();
-
-      if (!sshConfig || !sshConfig.host) {
-        alert("No SSH configuration found. Please configure SSH in Settings first.");
-        setSyncing(false);
-        return;
-      }
-
-      // Call SSH proxy to pull everything
-      const response = await fetch("http://localhost:3001/ssh/sync-all", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sshConfig),
-      });
-      const data = await response.json();
+      const data = await apiPost("/api/ssh-proxy/sync-all", {});
 
       if (!data.ok) {
-        alert(`Sync failed: ${data.error}`);
+        setSyncError(data.error || "Sync failed");
         setSyncing(false);
         return;
       }
 
       let syncedItems: string[] = [];
 
-      // Sync agent configs from openclaw.json (agents.list is an array)
       if (data.openclawConfig?.agents?.list) {
         const validAgents = ["kaze", "scout", "forge", "ghost", "sentinel"];
         const agentMap: Record<string, "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel"> = {
@@ -74,7 +63,6 @@ const AgentsPage = () => {
         }
       }
 
-      // Sync SOUL files
       if (data.soulFiles && Object.keys(data.soulFiles).length > 0) {
         const soulFiles = Object.entries(data.soulFiles).map(
           ([agentName, content]) => ({
@@ -87,12 +75,13 @@ const AgentsPage = () => {
       }
 
       if (syncedItems.length > 0) {
+        setSyncError(null);
         alert(`Synced from server: ${syncedItems.join(", ")}`);
       } else {
         alert("No data found on server to sync.");
       }
     } catch (error: any) {
-      alert(`Error: Cannot connect to SSH proxy service. Make sure it's running on port 3001.\n\n${error.message}`);
+      setSyncError(`Cannot connect to server: ${error.message}`);
     }
     setSyncing(false);
   };
@@ -107,13 +96,33 @@ const AgentsPage = () => {
           </div>
           <button
             onClick={handleSyncFromServer}
-            disabled={syncing}
+            disabled={syncing || !sshConfigured}
+            title={!sshConfigured ? "Configure SSH in Settings → Server first" : undefined}
             className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm font-medium hover:bg-surface-hover transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
             {syncing ? "Syncing..." : "Sync from Server"}
           </button>
         </div>
+
+        {!sshConfigured && sshConfig !== undefined && (
+          <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-yellow-500">SSH not configured</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Go to <a href="/settings" className="underline hover:text-foreground">Settings → Server</a> to configure SSH access. Agents will still appear here via heartbeat, but server sync and remote operations require SSH.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {syncError && (
+          <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-400">{syncError}</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {agents.map(agent => {

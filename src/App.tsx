@@ -3,12 +3,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+import { Authenticated, Unauthenticated, AuthLoading, useMutation } from "convex/react";
+import { useUser } from "@clerk/clerk-react";
+import { useEffect, useRef } from "react";
+import { api } from "../convex/_generated/api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import Board from "./pages/Board";
 import Missions from "./pages/Missions";
 import AgentsPage from "./pages/Agents";
+import AgentHealth from "./pages/AgentHealth";
 
 import Settings from "./pages/Settings";
 import Integrations from "./pages/Integrations";
@@ -27,6 +31,10 @@ import UseCasePage from "./pages/UseCase";
 import Autopilot from "./pages/Autopilot";
 import Billing from "./pages/Billing";
 import Onboarding from "./pages/Onboarding";
+import OperationsHub from "./pages/OperationsHub";
+import MorningBrief from "./pages/MorningBrief";
+import Docs from "./pages/Docs";
+import WarRoom from "./pages/WarRoom";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -56,6 +64,22 @@ function AuthRoutes() {
 
 function AuthenticatedRoutes() {
   const location = useLocation();
+  const { user } = useUser();
+  const syncUser = useMutation(api.users.getOrCreateUser);
+  const synced = useRef(false);
+
+  useEffect(() => {
+    if (user && !synced.current) {
+      synced.current = true;
+      syncUser({
+        clerkId: user.id,
+        email: user.primaryEmailAddress?.emailAddress ?? "",
+        name: user.fullName ?? undefined,
+        avatarUrl: user.imageUrl ?? undefined,
+      });
+    }
+  }, [user, syncUser]);
+
   // Redirect /login to / for authenticated users
   if (location.pathname === "/login") {
     return <Navigate to="/" replace />;
@@ -69,7 +93,9 @@ function AuthenticatedRoutes() {
         <Route path="/board" element={<Board />} />
         <Route path="/missions" element={<Missions />} />
         <Route path="/missions/:missionId" element={<MissionReport />} />
+        <Route path="/missions/:missionId/warroom" element={<WarRoom />} />
         <Route path="/agents" element={<AgentsPage />} />
+        <Route path="/health" element={<AgentHealth />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/integrations/blueprint/new" element={<BlueprintWizard />} />
         <Route path="/integrations/blueprint/:id" element={<BlueprintDetail />} />
@@ -80,6 +106,9 @@ function AuthenticatedRoutes() {
         <Route path="/soul/review/:versionId" element={<SoulReview />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/ops" element={<OperationsHub />} />
+        <Route path="/brief" element={<MorningBrief />} />
+        <Route path="/docs" element={<Docs />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </ErrorBoundary>

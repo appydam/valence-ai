@@ -3,6 +3,7 @@ import { AGENT_CONFIG, AgentName } from "@/types/mission";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { generateOpenClawConfig, downloadConfig } from "@/lib/configExport";
+import { apiPost } from "@/lib/api";
 import { X, Settings, Download, Check, AlertTriangle, HelpCircle, Zap } from "lucide-react";
 
 function Tooltip({ text }: { text: string }) {
@@ -43,6 +44,8 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
   const config = useQuery(api.agentConfigs.getByAgent, { agentName });
   const allConfigs = useQuery(api.agentConfigs.list) ?? [];
   const soulFile = useQuery(api.soulFiles.get, { agentName });
+  const sshConfig = useQuery(api.sshConfig.get);
+  const sshConfigured = !!(sshConfig && sshConfig.host);
   const updateConfig = useMutation(api.agentConfigs.update);
   const saveSoul = useMutation(api.soulFiles.save);
 
@@ -80,18 +83,7 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
       (async () => {
         setPulling(true);
         try {
-          const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-          const sshConfig = await configResponse.json();
-          if (!sshConfig || !sshConfig.host) {
-            setPulling(false);
-            return;
-          }
-          const response = await fetch("http://localhost:3001/ssh/pull-soul", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...sshConfig, agentName }),
-          });
-          const data = await response.json();
+          const data = await apiPost("/api/ssh-proxy/pull-soul", { agentName });
           if (data.ok && data.content) {
             setSoulContent(data.content);
             await saveSoul({ agentName, content: data.content });
@@ -135,22 +127,11 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
     // Auto-generate SKILL.md template on server when enabling non-mission-control skills
     if (isEnabling && skillId !== "mission-control") {
       try {
-        const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-        const sshConfig = await configResponse.json();
-
-        if (sshConfig && sshConfig.host) {
-          const skill = AVAILABLE_SKILLS.find(s => s.id === skillId);
-
-          await fetch("http://localhost:3001/ssh/generate-skill", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...sshConfig,
-              skillId,
-              skillName: skill?.name || skillId,
-            }),
-          });
-        }
+        const skill = AVAILABLE_SKILLS.find(s => s.id === skillId);
+        await apiPost("/api/ssh-proxy/generate-skill", {
+          skillId,
+          skillName: skill?.name || skillId,
+        });
       } catch (error) {
         console.error("Failed to generate skill template:", error);
         // Continue with toggle even if template generation fails
@@ -168,16 +149,6 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
   const handleRestartOpenClaw = async () => {
     setRestarting(true);
     try {
-      // Get SSH config (with private key) from Convex
-      const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-      const sshConfig = await configResponse.json();
-
-      if (!sshConfig || !sshConfig.host) {
-        alert("❌ No SSH configuration found. Please configure SSH in Settings first.");
-        setRestarting(false);
-        return;
-      }
-
       // Save config to Convex first
       await updateConfig({
         agentName,
@@ -187,24 +158,15 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
         sessionTimeout: timeout,
       });
 
-      // Call SSH proxy service — push config changes + restart
-      const response = await fetch("http://localhost:3001/ssh/restart-openclaw", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...sshConfig,
-          agentName,
-          model,
-        }),
-      });
-      const data = await response.json();
+      // Call SSH proxy service via Convex (config + auth handled server-side)
+      const data = await apiPost("/api/ssh-proxy/restart-openclaw", { agentName, model });
       if (data.ok) {
         alert(`✅ ${data.message}`);
       } else {
-        alert(`❌ Restart failed: ${data.error}`);
+        alert(`❌ Restart failed: ${data.error || "Check SSH configuration in Settings → Server."}`);
       }
     } catch (error: any) {
-      alert(`❌ Error: Cannot connect to SSH proxy service. Make sure it's running on port 3001.\n\n${error.message}`);
+      alert(`❌ Cannot reach server. Check SSH configuration in Settings → Server.\n\n${error.message}`);
     }
     setRestarting(false);
   };
@@ -215,28 +177,15 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
       // First save to Convex
       await saveSoul({ agentName, content: soulContent });
 
-      // Get SSH config (with private key)
-      const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-      const sshConfig = await configResponse.json();
-
-      // Call SSH proxy service to sync to server
-      const response = await fetch("http://localhost:3001/ssh/sync-soul", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...sshConfig,
-          agentName,
-          content: soulContent
-        }),
-      });
-      const data = await response.json();
+      // Sync to server via Convex proxy (config + auth handled server-side)
+      const data = await apiPost("/api/ssh-proxy/sync-soul", { agentName, content: soulContent });
       if (data.ok) {
         alert("✅ SOUL file synced to server successfully!");
       } else {
-        alert(`❌ Sync failed: ${data.error}`);
+        alert(`❌ Sync failed: ${data.error || "Check SSH configuration in Settings → Server."}`);
       }
     } catch (error: any) {
-      alert(`❌ Error: Cannot connect to SSH proxy service. Make sure it's running on port 3001.\n\n${error.message}`);
+      alert(`❌ Cannot reach server. Check SSH configuration in Settings → Server.\n\n${error.message}`);
     }
     setSyncing(false);
   };
@@ -244,40 +193,18 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
   const handlePullSoul = async () => {
     setPulling(true);
     try {
-      // Get SSH config (with private key)
-      const configResponse = await fetch("https://beloved-squirrel-599.convex.site/api/ssh/config-full");
-      const sshConfig = await configResponse.json();
-
-      if (!sshConfig || !sshConfig.host) {
-        alert("❌ No SSH configuration found. Please configure SSH in Settings first.");
-        setPulling(false);
-        return;
-      }
-
-      // Call SSH proxy service to pull SOUL file
-      const response = await fetch("http://localhost:3001/ssh/pull-soul", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...sshConfig,
-          agentName,
-        }),
-      });
-      const data = await response.json();
+      // Pull SOUL file via Convex proxy (config + auth handled server-side)
+      const data = await apiPost("/api/ssh-proxy/pull-soul", { agentName });
 
       if (data.ok) {
-        // Update local state
         setSoulContent(data.content);
-
-        // Save to Convex
         await saveSoul({ agentName, content: data.content });
-
         alert("✅ SOUL file pulled from server successfully!");
       } else {
-        alert(`❌ Pull failed: ${data.error}`);
+        alert(`❌ Pull failed: ${data.error || "Check SSH configuration in Settings → Server."}`);
       }
     } catch (error: any) {
-      alert(`❌ Error: Cannot connect to SSH proxy service. Make sure it's running on port 3001.\n\n${error.message}`);
+      alert(`❌ Cannot reach server. Check SSH configuration in Settings → Server.\n\n${error.message}`);
     }
     setPulling(false);
   };
@@ -357,11 +284,12 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
           </div>
           <button
             onClick={handleRestartOpenClaw}
-            disabled={restarting}
+            disabled={restarting || !sshConfigured}
+            title={!sshConfigured ? "Configure SSH in Settings → Server first" : undefined}
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-xs font-medium text-yellow-600 transition-colors disabled:opacity-50"
           >
             <Zap className="w-3.5 h-3.5" />
-            {restarting ? "Restarting..." : "Auto-Restart OpenClaw"}
+            {restarting ? "Restarting..." : !sshConfigured ? "Restart (SSH not configured)" : "Auto-Restart OpenClaw"}
           </button>
         </div>
 
@@ -545,7 +473,8 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
               <div className="flex gap-2 mt-4 pt-4 border-t border-border">
                 <button
                   onClick={handlePullSoul}
-                  disabled={pulling}
+                  disabled={pulling || !sshConfigured}
+                  title={!sshConfigured ? "Configure SSH in Settings → Server first" : undefined}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-surface-hover transition-colors disabled:opacity-50"
                 >
                   <Download className="w-4 h-4" />
@@ -553,7 +482,8 @@ export function AgentConfigPanel({ agentName, onClose }: AgentConfigPanelProps) 
                 </button>
                 <button
                   onClick={handleSyncSoul}
-                  disabled={syncing || !soulContent}
+                  disabled={syncing || !soulContent || !sshConfigured}
+                  title={!sshConfigured ? "Configure SSH in Settings → Server first" : undefined}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/80 transition-colors disabled:opacity-50"
                 >
                   <Check className="w-4 h-4" />

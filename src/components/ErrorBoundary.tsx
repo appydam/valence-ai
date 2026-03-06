@@ -1,6 +1,7 @@
 import React from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import * as Sentry from "@sentry/react";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -22,15 +23,9 @@ export class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
-    // Sentry integration: if @sentry/react is installed, capture the exception
-    try {
-      const Sentry = (window as any).__SENTRY__;
-      if (Sentry?.captureException) {
-        Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
-      }
-    } catch {
-      // Sentry not available — no-op
-    }
+    Sentry.captureException(error, {
+      extra: { componentStack: errorInfo.componentStack },
+    });
   }
 
   handleReset = () => {

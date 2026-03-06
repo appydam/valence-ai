@@ -62,7 +62,7 @@ const Board = () => {
 
   const selectedTask = tasks.find(t => t._id === selectedTaskId) ?? null;
 
-  const handleCreate = async (data: { title: string; description: string; priority: TaskPriority; assignee?: AgentName; tags: string[]; missionId?: string }) => {
+  const handleCreate = async (data: { title: string; description: string; priority: TaskPriority; assignee?: AgentName; tags: string[]; missionId?: string; dependsOn?: Id<"tasks">[] }) => {
     const result = await createTask({
       title: data.title,
       description: data.description,
@@ -72,6 +72,7 @@ const Board = () => {
       tags: data.tags,
       ...(data.missionId ? { missionId: data.missionId as Id<"missions"> } : {}),
       ...(user?.id ? { requiredUserId: user.id } : {}),
+      ...(data.dependsOn ? { dependsOn: data.dependsOn } : {}),
     });
     const targetMission = data.missionId || result?.missionId;
     if (targetMission) {

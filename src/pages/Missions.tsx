@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Clock, Archive, ExternalLink, FolderPlus, FileText } from "lucide-react";
+import { CheckCircle2, Clock, Archive, ExternalLink, FolderPlus, FileText, Swords } from "lucide-react";
 
 const Missions = () => {
   const missions = useQuery(api.missions.list, {}) ?? [];
@@ -123,6 +123,13 @@ const Missions = () => {
                       >
                         <FileText className="w-3.5 h-3.5" />
                         View Report
+                      </Link>
+                      <Link
+                        to={`/missions/${mission._id}/warroom`}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-surface-hover transition-colors"
+                      >
+                        <Swords className="w-3.5 h-3.5" />
+                        War Room
                       </Link>
                       <Link
                         to={`/board?mission=${mission._id}`}

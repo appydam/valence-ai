@@ -51,6 +51,476 @@ const itemVariants = {
   },
 };
 
+// ─── Hero animated mission visual ────────────────────────────────────────────
+// Two-panel layout: Left = command center terminal, Right = notification toast stack
+// Tells the story: user gives instruction → agents decompose → execute across integrations → QA → complete
+
+const HERO_AGENTS = [
+  { name: "Kaze",     emoji: "🌀", color: "hsl(217,91%,60%)",  role: "Orchestrator", activeAt: 0,  doneAt: 999 },
+  { name: "Scout",    emoji: "🔭", color: "hsl(160,84%,39%)",  role: "Analytics",    activeAt: 6,  doneAt: 35 },
+  { name: "Forge",    emoji: "🔨", color: "hsl(38,92%,50%)",   role: "Builder",      activeAt: 12, doneAt: 62 },
+  { name: "Ghost",    emoji: "👻", color: "hsl(258,90%,66%)",  role: "Writer",       activeAt: 38, doneAt: 88 },
+  { name: "Sentinel", emoji: "🔍", color: "hsl(330,81%,60%)",  role: "QA",           activeAt: 60, doneAt: 80 },
+];
+
+// Each step in the execution timeline
+// Narrative: Weekly marketing report — pull all channel data → aggregate → analyze → write insights → build deck → QA → distribute
+const HERO_STEPS: {
+  t: number; agent: string; color: string; text: string;
+  logo?: string; type: "plan" | "tool" | "done" | "handoff" | "review" | "fix" | "complete";
+}[] = [
+  // Phase 1: Decompose
+  { t: 2,  agent: "Kaze",     color: "hsl(217,91%,60%)", text: "Decomposing mission → 9 parallel subtasks across 5 agents",       type: "plan" },
+  { t: 5,  agent: "Kaze",     color: "hsl(217,91%,60%)", text: "Delegating: Scout → channel data, Forge → dashboards, Ghost → report", type: "plan" },
+  // Phase 2: Pull channel performance data (Scout + Forge in parallel)
+  { t: 8,  agent: "Scout",    color: "hsl(160,84%,39%)", text: "Pulling website sessions, bounce rate & conversions from GA",      type: "tool", logo: "googleanalytics" },
+  { t: 12, agent: "Scout",    color: "hsl(160,84%,39%)", text: "Extracting ad spend, ROAS & CPL from Google Ads",                 type: "tool", logo: "googleads" },
+  { t: 16, agent: "Scout",    color: "hsl(160,84%,39%)", text: "Pulling Meta Ads — impressions, CTR, CPA across 12 campaigns",    type: "tool", logo: "meta" },
+  { t: 19, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Pulling LinkedIn Ads — engagement, leads & cost-per-MQL",          type: "tool", logo: "linkedin" },
+  { t: 23, agent: "Scout",    color: "hsl(160,84%,39%)", text: "Extracting email campaign metrics from HubSpot — opens, clicks, revenue", type: "tool", logo: "hubspot" },
+  { t: 27, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Pulling CRM pipeline changes — new MQLs, SQLs, opps from Salesforce", type: "tool", logo: "salesforce" },
+  { t: 31, agent: "Scout",    color: "hsl(160,84%,39%)", text: "All 6 channel data sources collected — 847 data points",          type: "done" },
+  // Phase 3: Aggregate + build dashboards
+  { t: 34, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Normalizing spend & attribution data → Google Sheets master",      type: "tool", logo: "googlesheets" },
+  { t: 38, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Building channel comparison dashboard + trend charts in Airtable", type: "tool", logo: "airtable" },
+  { t: 41, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Handoff → Scout: aggregated data for cross-channel analysis",     type: "handoff" },
+  // Phase 4: Analyze + write insights
+  { t: 44, agent: "Scout",    color: "hsl(160,84%,39%)", text: "Cross-channel attribution analysis — identifying top converters",  type: "tool", logo: "google" },
+  { t: 47, agent: "Scout",    color: "hsl(160,84%,39%)", text: "Handoff → Ghost: channel data + insights for weekly report",      type: "handoff" },
+  { t: 50, agent: "Ghost",    color: "hsl(258,90%,66%)", text: "Writing weekly marketing report in Notion — performance + insights", type: "tool", logo: "notion" },
+  { t: 54, agent: "Ghost",    color: "hsl(258,90%,66%)", text: "Drafting budget reallocation recommendations based on ROAS",      type: "tool", logo: "notion" },
+  // Phase 5: Build report deck
+  { t: 57, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Building 18-slide report deck — charts, heatmaps, funnels → Figma", type: "tool", logo: "figma" },
+  { t: 60, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Creating action items from insights → Jira tickets for next sprint", type: "tool", logo: "jira" },
+  // Phase 6: QA — flag → fix → approve
+  { t: 63, agent: "Ghost",    color: "hsl(258,90%,66%)", text: "Handoff → Sentinel: full report + deck + data for QA",            type: "handoff" },
+  { t: 66, agent: "Sentinel", color: "hsl(330,81%,60%)", text: "Auditing channel metrics — cross-checking GA vs ad platform data", type: "review" },
+  { t: 69, agent: "Sentinel", color: "hsl(330,81%,60%)", text: "⚠ Attribution mismatch — Meta CPA off by 18%, wrong UTM window", type: "review" },
+  { t: 72, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Fixing UTM attribution window, recalculating Meta CPA from source", type: "fix" },
+  { t: 75, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Re-submitted corrected data → Sentinel for re-review",            type: "handoff" },
+  { t: 78, agent: "Sentinel", color: "hsl(330,81%,60%)", text: "✓ All metrics verified — report, deck & attribution approved",    type: "done" },
+  // Phase 7: Distribute
+  { t: 81, agent: "Ghost",    color: "hsl(258,90%,66%)", text: "Emailing weekly report + deck → team via Gmail",                  type: "tool", logo: "gmail" },
+  { t: 84, agent: "Ghost",    color: "hsl(258,90%,66%)", text: "Posting highlights + key wins → Slack #marketing",                type: "tool", logo: "slack" },
+  { t: 87, agent: "Ghost",    color: "hsl(258,90%,66%)", text: "Scheduling budget review meeting → Google Calendar",              type: "tool", logo: "googlecalendar" },
+  { t: 90, agent: "Forge",    color: "hsl(38,92%,50%)",  text: "Triggering weekly snapshot archive + alerts via Zapier",           type: "tool", logo: "zapier" },
+  // Phase 8: Complete
+  { t: 93, agent: "Kaze",     color: "hsl(217,91%,60%)", text: "Mission complete — 9/9 tasks, report delivered before 9am Monday", type: "complete" },
+];
+
+// Toast notifications — mix of agent intelligence + integration results
+const HERO_TOASTS: {
+  t: number; logo?: string; emoji?: string; agentColor: string;
+  headline: string; detail: string; metric?: string; agent: string;
+  kind: "agent" | "integration";
+}[] = [
+  { t: 2,  kind: "agent",       emoji: "🌀", agentColor: "hsl(217,91%,60%)", headline: "Mission Decomposed",       detail: "Analyzed prompt — 9 subtasks: pull 6 channels, aggregate, analyze, write report, build deck, QA, distribute", metric: "9 tasks",      agent: "Kaze" },
+  { t: 10, kind: "integration", logo: "googleanalytics", agentColor: "hsl(160,84%,39%)", headline: "Website Data Pulled",  detail: "43,291 sessions, 2.8% conversion rate, 62% bounce — top pages & referral sources extracted",          metric: "43k sessions", agent: "Scout" },
+  { t: 18, kind: "integration", logo: "meta",            agentColor: "hsl(160,84%,39%)", headline: "Meta Ads Synced",      detail: "$12.4k spent across 12 campaigns — 2.1x ROAS, best: lookalike retarget at $18 CPA",                   metric: "$12.4k spend", agent: "Scout" },
+  { t: 25, kind: "integration", logo: "hubspot",         agentColor: "hsl(160,84%,39%)", headline: "Email Metrics Pulled", detail: "6 campaigns sent: 34% avg open rate, 4.2% CTR — nurture sequence driving 68% of MQLs",                metric: "34% opens",    agent: "Scout" },
+  { t: 32, kind: "agent",       emoji: "🔭", agentColor: "hsl(160,84%,39%)", headline: "All Channels Collected",   detail: "GA, Google Ads, Meta, LinkedIn, HubSpot, Salesforce — 847 data points normalized across 6 platforms", metric: "847 points",   agent: "Scout" },
+  { t: 40, kind: "integration", logo: "airtable",        agentColor: "hsl(38,92%,50%)",  headline: "Dashboard Built",      detail: "Channel comparison, spend heatmap, funnel waterfall, WoW trend lines — all auto-generated",          metric: "16 charts",    agent: "Forge" },
+  { t: 52, kind: "agent",       emoji: "👻", agentColor: "hsl(258,90%,66%)", headline: "Report Written",           detail: "12-page Notion doc: executive summary, channel breakdowns, budget recommendations & next steps",      metric: "12 pages",     agent: "Ghost" },
+  { t: 58, kind: "integration", logo: "figma",           agentColor: "hsl(38,92%,50%)",  headline: "Slide Deck Built",     detail: "18-slide deck with spend heatmaps, attribution funnels, ROAS comparisons & trend overlays",           metric: "18 slides",    agent: "Forge" },
+  { t: 67, kind: "agent",       emoji: "🔍", agentColor: "hsl(330,81%,60%)", headline: "QA Flagged Issue",         detail: "Meta CPA attribution off by 18% — wrong UTM window used. Routed back to Forge for correction.",       metric: "1 error",      agent: "Sentinel" },
+  { t: 73, kind: "agent",       emoji: "🔨", agentColor: "hsl(38,92%,50%)",  headline: "Attribution Fixed",        detail: "Corrected UTM attribution window, recalculated Meta CPA from source — re-submitted for QA",           metric: "✓ Fixed",      agent: "Forge" },
+  { t: 79, kind: "agent",       emoji: "🔍", agentColor: "hsl(142,71%,45%)", headline: "QA Approved ✓",            detail: "All metrics cross-checked against source platforms. Report, deck & dashboard verified.",               metric: "✓ Verified",   agent: "Sentinel" },
+  { t: 85, kind: "integration", logo: "slack",           agentColor: "hsl(258,90%,66%)", headline: "Report Distributed",   detail: "Weekly report emailed to team, highlights posted to #marketing, budget review meeting scheduled",     metric: "Delivered",    agent: "Ghost" },
+  { t: 94, kind: "agent",       emoji: "🌀", agentColor: "hsl(142,71%,45%)", headline: "Mission Complete",         detail: "Cross-channel marketing report built & delivered before 9am Monday. 0 manual steps.",                  metric: "✓ Done",       agent: "Kaze" },
+];
+
+function HeroMissionVisual() {
+  const [tick, setTick] = useState(0);
+  const prefersReduced = useReducedMotion();
+
+  useEffect(() => {
+    if (prefersReduced) return;
+    const id = setInterval(() => setTick((t) => (t >= 118 ? 0 : t + 1)), 220);
+    return () => clearInterval(id);
+  }, [prefersReduced]);
+
+  const rd = prefersReduced;
+  const visibleSteps = rd ? HERO_STEPS : HERO_STEPS.filter((s) => tick >= s.t);
+  const missionDone = rd || tick >= 93;
+  const isFading = !rd && tick >= 110;
+
+  // Progress
+  const doneCount = rd ? 9 : Math.min(9, visibleSteps.filter((s) => s.type === "done" || s.type === "complete").length);
+  const progress = rd ? 100 : Math.min(100, Math.round((doneCount / 9) * 100));
+
+  // Metrics
+  const sessions = rd ? 43 : tick < 10 ? 0 : tick < 20 ? Math.min(43, Math.round((tick - 10) * 4.3)) : 43;
+  const adSpend = rd ? 32 : tick < 14 ? 0 : tick < 28 ? Math.min(32, Math.round((tick - 14) * 2.3)) : 32;
+  const dataPoints = rd ? 847 : tick < 8 ? 0 : tick < 32 ? Math.min(847, Math.round((tick - 8) * 35.3)) : 847;
+
+  // Toast — show only the latest 1 active toast, each visible for 10 ticks (~1.5s)
+  const activeToast = rd ? HERO_TOASTS[HERO_TOASTS.length - 1] : HERO_TOASTS.filter((t) => tick >= t.t && tick < t.t + 10).slice(-1)[0] ?? null;
+
+  // Integration icons that have been activated
+  const INTEGRATIONS = [
+    { logo: "googleanalytics", t: 8,  name: "Analytics" },
+    { logo: "googleads", t: 12, name: "Google Ads" },
+    { logo: "meta", t: 16, name: "Meta Ads" },
+    { logo: "linkedin", t: 19, name: "LinkedIn" },
+    { logo: "hubspot", t: 23, name: "HubSpot" },
+    { logo: "salesforce", t: 27, name: "Salesforce" },
+    { logo: "googlesheets", t: 34, name: "Sheets" },
+    { logo: "airtable", t: 38, name: "Airtable" },
+    { logo: "google", t: 44, name: "Google" },
+    { logo: "notion", t: 50, name: "Notion" },
+    { logo: "figma", t: 57, name: "Figma" },
+    { logo: "jira", t: 60, name: "Jira" },
+    { logo: "gmail", t: 81, name: "Gmail" },
+    { logo: "slack", t: 84, name: "Slack" },
+    { logo: "googlecalendar", t: 87, name: "Calendar" },
+    { logo: "zapier", t: 90, name: "Zapier" },
+  ];
+  const activeIntegrations = rd ? INTEGRATIONS.length : INTEGRATIONS.filter((i) => tick >= i.t).length;
+
+  // Color helper
+  const ca = (color: string, a: number) => color.replace("hsl(", "hsla(").replace(")", `, ${a})`);
+
+  // Type badge styles
+  const typeStyle = (type: string) => {
+    const map: Record<string, { bg: string; bd: string; label: string; fg: string }> = {
+      plan:     { bg: "hsl(217 91% 60% / 0.06)", bd: "hsl(217 91% 60% / 0.15)", label: "PLAN",    fg: "hsl(217,91%,70%)" },
+      tool:     { bg: "hsl(38 92% 50% / 0.06)",  bd: "hsl(38 92% 50% / 0.15)",  label: "EXECUTE", fg: "hsl(38,92%,60%)" },
+      done:     { bg: "hsl(142 71% 45% / 0.06)", bd: "hsl(142 71% 45% / 0.15)", label: "DONE",    fg: "hsl(142,71%,55%)" },
+      handoff:  { bg: "hsl(188 80% 55% / 0.06)", bd: "hsl(188 80% 55% / 0.15)", label: "HANDOFF", fg: "hsl(188,80%,60%)" },
+      review:   { bg: "hsl(330 81% 60% / 0.06)", bd: "hsl(330 81% 60% / 0.15)", label: "REVIEW",  fg: "hsl(330,81%,70%)" },
+      fix:      { bg: "hsl(258 90% 66% / 0.06)", bd: "hsl(258 90% 66% / 0.15)", label: "FIX",     fg: "hsl(258,90%,75%)" },
+      complete: { bg: "hsl(142 71% 45% / 0.1)",  bd: "hsl(142 71% 45% / 0.35)", label: "✓ DONE",  fg: "hsl(142,71%,55%)" },
+    };
+    return map[type] || map.plan;
+  };
+
+  return (
+    <div
+      className="w-full select-none"
+      style={{ maxWidth: 820, opacity: isFading ? 0 : 1, transition: "opacity 0.8s ease" }}
+    >
+      {/* ══════ MAIN CARD — fixed dimensions ══════ */}
+      <div
+        className="rounded-2xl overflow-hidden flex flex-col w-full"
+        style={{
+          height: 560,
+          minHeight: 560,
+          maxHeight: 560,
+          background: "hsl(240 25% 4%)",
+          border: `1px solid ${missionDone ? "hsl(142 71% 45% / 0.3)" : "hsl(217 91% 60% / 0.15)"}`,
+          boxShadow: `0 32px 80px hsl(240 33% 2% / 0.9), 0 0 60px ${missionDone ? "hsl(142 71% 45% / 0.06)" : "hsl(217 91% 60% / 0.04)"}`,
+          transition: "border-color 0.6s, box-shadow 0.6s",
+        }}
+      >
+        {/* ── Row 1: Header bar ── */}
+        <div className="flex items-center gap-2 px-4 py-2 flex-shrink-0" style={{ background: "hsl(240 25% 6%)", borderBottom: "1px solid hsl(var(--border) / 0.12)" }}>
+          <div className="w-2 h-2 rounded-full bg-red-500/50" />
+          <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
+          <div className="w-2 h-2 rounded-full bg-green-500/50" />
+          <span className="ml-2 text-[10px] text-muted-foreground/30 font-mono tracking-widest">MISSION CONTROL</span>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(var(--border) / 0.15)" }}>
+                <div className="h-full rounded-full" style={{
+                  width: `${progress}%`,
+                  background: missionDone ? "hsl(142,71%,45%)" : "linear-gradient(90deg, hsl(217,91%,60%), hsl(258,90%,66%))",
+                  transition: "width 0.5s ease",
+                }} />
+              </div>
+              <span className="text-[9px] font-mono font-bold tabular-nums" style={{ color: missionDone ? "hsl(142,71%,55%)" : "hsl(217,91%,65%)" }}>
+                {doneCount}/9
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[8px] text-red-400/50 font-mono tracking-widest">LIVE</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Row 2: Mission prompt ── */}
+        <div className="px-4 py-2.5 flex-shrink-0 flex items-start gap-3" style={{
+          background: "linear-gradient(135deg, hsl(217 91% 60% / 0.04), hsl(240 25% 5%))",
+          borderBottom: "1px solid hsl(var(--border) / 0.1)",
+          opacity: rd || tick >= 1 ? 1 : 0,
+          transition: "opacity 0.5s ease",
+        }}>
+          <div className="flex items-center gap-1.5 flex-shrink-0 mt-px">
+            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: "hsl(217 91% 60% / 0.12)", border: "1px solid hsl(217 91% 60% / 0.2)" }}>
+              <span className="text-[10px]">💬</span>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[11px] leading-relaxed text-white/75 italic">
+              "Pull last week's performance across all channels, build the weekly marketing report, and send it to the team by Monday 9am."
+            </div>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-[7px] font-mono text-muted-foreground/20">YOU → KAZE</span>
+              <span className="text-[7px] font-mono px-1.5 py-px rounded-sm" style={{ background: "hsl(217 91% 60% / 0.08)", border: "1px solid hsl(217 91% 60% / 0.15)", color: "hsl(217,91%,65%)" }}>
+                5 agents · 16 integrations
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Row 3: Main body — 3 columns ── */}
+        <div className="flex flex-1 min-h-0 overflow-hidden">
+
+          {/* ── Col 1: Agent squad ── */}
+          <div className="w-[115px] flex-shrink-0 p-2 flex flex-col gap-1 overflow-hidden" style={{ borderRight: "1px solid hsl(var(--border) / 0.08)" }}>
+            <div className="text-[7px] font-mono tracking-[0.2em] text-muted-foreground/20 px-1 mb-0.5">AGENTS</div>
+            {HERO_AGENTS.map((a) => {
+              const active = rd || (tick >= a.activeAt && tick < a.doneAt);
+              const done = !rd && tick >= a.doneAt && a.doneAt < 999;
+              const isOrch = a.name === "Kaze";
+              return (
+                <div
+                  key={a.name}
+                  className="rounded-lg px-2 py-[5px] relative"
+                  style={{
+                    background: active && !done ? ca(a.color, 0.06) : "transparent",
+                    border: `1px solid ${active && !done ? ca(a.color, 0.2) : done ? "hsl(142 71% 45% / 0.12)" : "transparent"}`,
+                    transition: "all 0.4s",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px]">{a.emoji}</span>
+                    <span className="text-[9px] font-semibold" style={{ color: done ? "hsl(142,71%,55%)" : active ? a.color : "hsl(0 0% 30%)" }}>{a.name}</span>
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full flex-shrink-0" style={{
+                      background: done ? "hsl(142,71%,45%)" : active ? a.color : "hsl(0 0% 18%)",
+                      boxShadow: active && !done ? `0 0 6px ${a.color}` : "none",
+                      animation: active && !done ? "pulse 2s ease-in-out infinite" : "none",
+                    }} />
+                  </div>
+                  <div className="text-[7px] mt-0.5 font-mono" style={{ color: done ? "hsl(142,71%,45%)" : active ? ca(a.color, 0.5) : "hsl(0 0% 20%)" }}>
+                    {isOrch ? (missionDone ? "✓ Complete" : "Orchestrating") : done ? "✓ Done" : active ? a.role : "Idle"}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Metrics */}
+            <div className="mt-auto pt-2 px-1 space-y-1.5" style={{ borderTop: "1px solid hsl(var(--border) / 0.06)" }}>
+              <div className="text-[7px] font-mono tracking-[0.2em] text-muted-foreground/20">METRICS</div>
+              {[
+                { label: "Sessions",  val: `${sessions}k`,   color: "hsl(160,84%,39%)", on: sessions > 0 },
+                { label: "Ad spend",  val: `$${adSpend}k`,   color: "hsl(38,92%,50%)",  on: adSpend > 0 },
+                { label: "Data pts",  val: `${dataPoints}`,  color: "hsl(258,90%,66%)", on: dataPoints > 0 },
+              ].map((m) => (
+                <div key={m.label} className="flex items-baseline justify-between">
+                  <span className="text-[7px] font-mono text-muted-foreground/25">{m.label}</span>
+                  <span className="text-[11px] font-bold font-mono tabular-nums" style={{ color: m.on ? m.color : "hsl(0 0% 15%)", transition: "color 0.5s" }}>{m.val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Col 2: Execution log ── */}
+          <div className="flex-1 flex flex-col min-w-0" style={{ borderRight: "1px solid hsl(var(--border) / 0.08)" }}>
+            <div className="flex items-center px-3 py-1.5 flex-shrink-0" style={{ borderBottom: "1px solid hsl(var(--border) / 0.06)" }}>
+              <span className="text-[7px] font-mono tracking-[0.2em] text-muted-foreground/20">EXECUTION LOG</span>
+              <span className="ml-auto text-[7px] font-mono text-muted-foreground/12 tabular-nums">{visibleSteps.length} / {HERO_STEPS.length}</span>
+            </div>
+            <div className="flex-1 overflow-hidden relative">
+              {visibleSteps.length > 7 && (
+                <div className="absolute top-0 left-0 right-0 h-6 pointer-events-none z-10" style={{ background: "linear-gradient(to bottom, hsl(240 25% 4%), transparent)" }} />
+              )}
+              <div className="px-2 py-1 space-y-0.5 h-full">
+                {visibleSteps.slice(-8).map((s, i) => {
+                  const isLatest = i === visibleSteps.slice(-8).length - 1 && !rd;
+                  const st = typeStyle(s.type);
+                  return (
+                    <div
+                      key={`${s.t}-${s.agent}`}
+                      className="flex items-start gap-2 px-2.5 py-[6px] rounded-lg"
+                      style={{
+                        background: isLatest || s.type === "complete" ? st.bg : "transparent",
+                        border: `1px solid ${isLatest || s.type === "complete" ? st.bd : "transparent"}`,
+                        opacity: rd ? 1 : isLatest ? 1 : 0.35,
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      <div className="w-[3px] rounded-full flex-shrink-0 self-stretch mt-0.5 mb-0.5" style={{ background: s.color, opacity: isLatest ? 0.7 : 0.2 }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-semibold" style={{ color: s.color }}>{s.agent}</span>
+                          <span className="text-[7px] font-mono px-1.5 py-px rounded-sm font-medium" style={{ background: st.bg, border: `1px solid ${st.bd}`, color: st.fg }}>
+                            {st.label}
+                          </span>
+                          {s.logo && (
+                            <img src={`https://cdn.simpleicons.org/${s.logo}`} alt="" width="10" height="10"
+                              style={{ filter: "brightness(0) invert(1)", opacity: 0.35, flexShrink: 0, marginLeft: 2 }} />
+                          )}
+                        </div>
+                        <div className="text-[9px] text-muted-foreground/45 leading-relaxed mt-0.5 line-clamp-1">{s.text}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {!missionDone && visibleSteps.length > 0 && (
+                  <div className="flex items-center gap-2 px-2.5 py-1.5">
+                    <div className="flex gap-0.5">
+                      <div className="w-1 h-1 rounded-full bg-blue-400/40 animate-pulse" />
+                      <div className="w-1 h-1 rounded-full bg-blue-400/25 animate-pulse" style={{ animationDelay: "0.2s" }} />
+                      <div className="w-1 h-1 rounded-full bg-blue-400/15 animate-pulse" style={{ animationDelay: "0.4s" }} />
+                    </div>
+                    <span className="text-[8px] text-muted-foreground/15 font-mono">processing...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Col 3: Live toast + integrations ── */}
+          <div className="w-[230px] flex-shrink-0 flex flex-col overflow-hidden hidden sm:flex">
+
+            {/* Active toast */}
+            <div className="flex-1 flex flex-col justify-center p-2.5">
+              {activeToast ? (() => {
+                const age = tick - activeToast.t;
+                const entering = !rd && age < 4;
+                const exiting = !rd && age > 7;
+                return (
+                  <div
+                    key={`toast-${activeToast.t}`}
+                    className="rounded-xl overflow-hidden relative"
+                    style={{
+                      background: `linear-gradient(145deg, ${ca(activeToast.agentColor, 0.08)}, hsl(240 25% 5% / 0.98))`,
+                      border: `1px solid ${ca(activeToast.agentColor, 0.3)}`,
+                      boxShadow: `0 8px 32px hsl(240 33% 2% / 0.7), 0 0 ${entering ? 50 : 24}px ${ca(activeToast.agentColor, entering ? 0.2 : 0.08)}`,
+                      opacity: rd ? 1 : entering ? Math.min(1, age / 3) : exiting ? Math.max(0, 1 - (age - 7) / 3) : 1,
+                      transform: rd ? "none" : entering ? `translateY(${12 - age * 3}px) scale(0.95)` : "translateY(0) scale(1)",
+                      transition: "opacity 0.35s ease-out, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease",
+                    }}
+                  >
+                    {/* Top glow line */}
+                    <div className="h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${activeToast.agentColor}, transparent)`, opacity: entering ? age / 4 : 1, transition: "opacity 0.3s" }} />
+
+                    <div className="p-3.5">
+                      {/* Kind label */}
+                      <div className="text-[7px] font-mono tracking-[0.15em] mb-2" style={{ color: activeToast.kind === "agent" ? activeToast.agentColor : "hsl(0 0% 40%)" }}>
+                        {activeToast.kind === "agent" ? "🤖 AI AGENT" : "⚡ INTEGRATION"}
+                      </div>
+
+                      {/* Icon + headline */}
+                      <div className="flex items-start gap-2.5 mb-2">
+                        <div className="flex items-center justify-center flex-shrink-0" style={{
+                          width: 36, height: 36, borderRadius: 10,
+                          background: ca(activeToast.agentColor, 0.12),
+                          border: `1px solid ${ca(activeToast.agentColor, 0.2)}`,
+                          boxShadow: `0 0 16px ${ca(activeToast.agentColor, 0.12)}`,
+                        }}>
+                          {activeToast.kind === "agent" ? (
+                            <span className="text-[16px]">{activeToast.emoji}</span>
+                          ) : (
+                            <img src={`https://cdn.simpleicons.org/${activeToast.logo}`} alt="" width="18" height="18"
+                              style={{ filter: "brightness(0) invert(1)", opacity: 0.9 }} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12px] font-semibold text-white/90 leading-tight">{activeToast.headline}</div>
+                          <div className="text-[8px] font-mono text-muted-foreground/25 mt-0.5">by {activeToast.agent}</div>
+                        </div>
+                      </div>
+
+                      {/* Detail */}
+                      <div className="text-[9px] text-muted-foreground/45 leading-relaxed mb-2.5">{activeToast.detail}</div>
+
+                      {/* Metric */}
+                      {activeToast.metric && (
+                        <div className="flex items-center gap-2 rounded-md px-2.5 py-1.5" style={{
+                          background: ca(activeToast.agentColor, 0.08),
+                          border: `1px solid ${ca(activeToast.agentColor, 0.12)}`,
+                        }}>
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: activeToast.agentColor, boxShadow: `0 0 6px ${activeToast.agentColor}` }} />
+                          <span className="text-[12px] font-bold font-mono tabular-nums" style={{ color: activeToast.agentColor }}>{activeToast.metric}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })() : (
+                <div className="rounded-xl border border-dashed flex items-center justify-center py-6" style={{ borderColor: "hsl(var(--border) / 0.06)" }}>
+                  <span className="text-[9px] font-mono text-muted-foreground/12">Awaiting events...</span>
+                </div>
+              )}
+            </div>
+
+            {/* Integration strip at bottom */}
+            <div className="p-2.5 pt-0 flex-shrink-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[7px] font-mono tracking-[0.2em] text-muted-foreground/15">INTEGRATIONS</span>
+                <span className="text-[8px] font-mono font-bold tabular-nums" style={{ color: activeIntegrations > 0 ? "hsl(38,92%,55%)" : "hsl(0 0% 20%)", transition: "color 0.5s" }}>
+                  {activeIntegrations}/{INTEGRATIONS.length}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {INTEGRATIONS.map((int) => {
+                  const on = rd || tick >= int.t;
+                  const justActivated = !rd && tick >= int.t && tick < int.t + 4;
+                  return (
+                    <div key={int.logo} className="w-6 h-6 rounded-md flex items-center justify-center" style={{
+                      background: on ? "hsl(var(--foreground) / 0.05)" : "hsl(240 25% 7%)",
+                      border: `1px solid ${justActivated ? "hsl(38 92% 50% / 0.4)" : on ? "hsl(var(--foreground) / 0.08)" : "hsl(var(--border) / 0.04)"}`,
+                      boxShadow: justActivated ? "0 0 12px hsl(38 92% 50% / 0.15)" : "none",
+                      opacity: on ? 1 : 0.2,
+                      transition: "all 0.4s ease",
+                    }}>
+                      <img src={`https://cdn.simpleicons.org/${int.logo}`} alt="" width="11" height="11"
+                        style={{ filter: "brightness(0) invert(1)", opacity: on ? 0.6 : 0.1, transition: "opacity 0.4s" }} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Row 4: Footer ── */}
+        <div
+          className="px-4 py-2 flex items-center gap-2 flex-shrink-0"
+          style={{
+            borderTop: "1px solid hsl(var(--border) / 0.12)",
+            background: missionDone ? "hsl(142 71% 45% / 0.04)" : "hsl(240 25% 5%)",
+            transition: "background 0.6s",
+          }}
+        >
+          {missionDone ? (
+            <>
+              <div className="w-2 h-2 rounded-full bg-green-400" style={{ boxShadow: "0 0 8px hsl(142 71% 45% / 0.5)" }} />
+              <span className="text-[10px] font-mono font-bold text-green-400/80 tracking-wide">MISSION COMPLETE</span>
+              <div className="flex-1" />
+              {[
+                { l: "5 agents", c: "hsl(217,91%,60%)" },
+                { l: "16 integrations", c: "hsl(38,92%,50%)" },
+                { l: "6 channels", c: "hsl(258,90%,66%)" },
+                { l: "0 manual steps", c: "hsl(142,71%,45%)" },
+              ].map((m) => (
+                <span key={m.l} className="text-[7px] font-mono px-1.5 py-0.5 rounded-full" style={{ background: ca(m.c, 0.1), border: `1px solid ${ca(m.c, 0.2)}`, color: m.c }}>
+                  {m.l}
+                </span>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-1">
+                {HERO_AGENTS.map((a) => {
+                  const on = rd || (tick >= a.activeAt && (a.doneAt === 999 || tick < a.doneAt));
+                  const dn = !rd && tick >= a.doneAt && a.doneAt < 999;
+                  return <div key={a.name} className="w-1.5 h-1.5 rounded-full" style={{ background: dn ? "hsl(142,71%,45%)" : on ? a.color : "hsl(0 0% 18%)", transition: "all 0.3s" }} />;
+                })}
+              </div>
+              <span className="text-[7px] font-mono text-muted-foreground/15 ml-1">{HERO_AGENTS.filter((a) => rd || (tick >= a.activeAt && (a.doneAt === 999 || tick < a.doneAt))).length} active</span>
+              <div className="flex-1" />
+              <span className="text-[8px] text-muted-foreground/15 font-mono tabular-nums">{activeIntegrations} integrations · {Math.round(tick * 0.15)}s</span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Section wrapper with scroll reveal ─────────────────────────────────────
 function RevealSection({ children, className }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -69,10 +539,13 @@ function RevealSection({ children, className }: { children: React.ReactNode; cla
 }
 
 // ─── Compact use cases grid ─────────────────────────────────────────────────
-function UseCaseCompactGrid({ onNavigate }: { onNavigate: (slug: string) => void }) {
-  const [activeTab, setActiveTab] = useState<UseCaseCategory>(CATEGORY_ORDER[0]);
+function UseCaseCompactGrid({ onNavigate, activeTab, setActiveTab }: {
+  onNavigate: (slug: string) => void;
+  activeTab: UseCaseCategory;
+  setActiveTab: (cat: UseCaseCategory) => void;
+}) {
   const grouped = getUseCasesByCategory();
-  const activeCases = grouped[activeTab] ?? [];
+  const activeCases = (grouped[activeTab] ?? []).slice(0, 3);
   const activeAccent = activeCases[0]?.accentColor ?? "hsl(217, 91%, 60%)";
 
   return (
@@ -137,6 +610,69 @@ function UseCaseCompactGrid({ onNavigate }: { onNavigate: (slug: string) => void
         </motion.div>
       </AnimatePresence>
     </div>
+  );
+}
+
+// ─── Use cases section (tabs + workflow cards, shared state) ─────────────────
+function UseCasesSection({ onNavigate }: { onNavigate: (slug: string) => void }) {
+  const [activeTab, setActiveTab] = useState<UseCaseCategory>(CATEGORY_ORDER[0]);
+  const grouped = getUseCasesByCategory();
+  const displayCases = (grouped[activeTab] ?? []).slice(0, 3);
+
+  return (
+    <section className="py-16 px-6">
+      <div className="max-w-7xl mx-auto">
+        <RevealSection className="text-center mb-8 space-y-3">
+          <motion.div variants={itemVariants}>
+            <span
+              className="text-xs font-mono tracking-widest px-2 py-1 rounded"
+              style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
+            >
+              REAL WORKFLOWS
+            </span>
+          </motion.div>
+          <motion.h2 variants={itemVariants} className="text-4xl md:text-5xl font-bold">
+            Complex work, done autonomously.
+          </motion.h2>
+          <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-xl mx-auto">
+            Multi-agent missions with real tool calls — across your entire stack.
+          </motion.p>
+        </RevealSection>
+
+        {/* ── Compact use cases grid ── */}
+        <UseCaseCompactGrid
+          onNavigate={onNavigate}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
+
+        {/* ── Workflow cards — filtered by active tab ── */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          >
+            {displayCases.map((uc, i) => (
+              <UseCaseScenario
+                key={i}
+                title={uc.title}
+                icon={uc.icon}
+                trigger={uc.trigger}
+                steps={uc.steps}
+                result={uc.result}
+                metric={uc.metric}
+                accentColor={uc.accentColor}
+                hoursSaved={uc.hoursSaved}
+              />
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
   );
 }
 
@@ -839,6 +1375,326 @@ function WebhookVisual() {
 }
 
 // ─── Voice Command visual ────────────────────────────────────────────────────
+function LiveOpsVisual() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
+
+  const feedItems: {
+    time: string;
+    agent: string;
+    emoji: string;
+    color: string;
+    action: string;
+    detail: string;
+    type: "tool_call" | "deliverable" | "status" | "review";
+  }[] = [
+    { time: "09:41:12", agent: "Scout", emoji: "🔭", color: "hsl(160,84%,39%)", action: "web_fetch", detail: "G2 reviews → 47 results parsed", type: "tool_call" },
+    { time: "09:41:18", agent: "Scout", emoji: "🔭", color: "hsl(160,84%,39%)", action: "Deliverable posted", detail: "Competitor Matrix (3.2k words)", type: "deliverable" },
+    { time: "09:41:19", agent: "Sentinel", emoji: "🔍", color: "hsl(330,81%,60%)", action: "Review started", detail: "Checking sources, data accuracy", type: "review" },
+    { time: "09:41:24", agent: "Sentinel", emoji: "🔍", color: "hsl(330,81%,60%)", action: "Approved ✓", detail: "All 12 sources verified", type: "review" },
+    { time: "09:41:25", agent: "Ghost", emoji: "👻", color: "hsl(258,90%,66%)", action: "notion_create", detail: "Report page → workspace/Q1-Intel", type: "tool_call" },
+    { time: "09:41:28", agent: "Forge", emoji: "🔨", color: "hsl(38,92%,50%)", action: "github_pr", detail: "PR #142 → analytics-dashboard", type: "tool_call" },
+    { time: "09:41:31", agent: "Kaze", emoji: "🌀", color: "hsl(217,91%,60%)", action: "Mission 67% complete", detail: "4/6 tasks done · 2 in progress", type: "status" },
+  ];
+
+  const typeIcon: Record<string, { icon: string; bg: string; border: string }> = {
+    tool_call: { icon: "🔧", bg: "hsl(38 92% 50% / 0.08)", border: "hsl(38 92% 50% / 0.2)" },
+    deliverable: { icon: "📦", bg: "hsl(160 84% 39% / 0.08)", border: "hsl(160 84% 39% / 0.2)" },
+    review: { icon: "🛡️", bg: "hsl(330 81% 60% / 0.08)", border: "hsl(330 81% 60% / 0.2)" },
+    status: { icon: "📊", bg: "hsl(217 91% 60% / 0.08)", border: "hsl(217 91% 60% / 0.2)" },
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      className="w-full max-w-lg select-none"
+      initial={{ opacity: 0, x: 40 }}
+      animate={isInView ? { opacity: 1, x: 0 } : {}}
+      transition={{ duration: 0.7, type: "spring", stiffness: 80, damping: 18 }}
+    >
+      <div
+        className="rounded-2xl overflow-hidden font-mono"
+        style={{
+          background: "hsl(240 25% 5%)",
+          border: "1px solid hsl(217 91% 60% / 0.2)",
+          boxShadow: "0 0 40px hsl(217 91% 60% / 0.07), 0 24px 60px hsl(240 33% 3% / 0.8)",
+        }}
+      >
+        {/* Terminal header */}
+        <div
+          className="flex items-center gap-2 px-4 py-2.5"
+          style={{ background: "hsl(240 25% 7%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
+        >
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
+          <span className="ml-2 text-[10px] text-muted-foreground/40 tracking-widest">LIVE OPS FEED</span>
+          <div className="ml-auto flex items-center gap-3">
+            {/* Mini agent status dots */}
+            <div className="flex items-center gap-1.5">
+              {["🌀", "🔭", "🔨", "👻", "🔍"].map((e, i) => (
+                <div key={i} className="flex items-center gap-0.5">
+                  <span className="text-[8px]">{e}</span>
+                  <div className={`w-1 h-1 rounded-full ${i < 4 ? "bg-green-400" : "bg-green-400 animate-pulse"}`} />
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[9px] text-red-400/70 tracking-widest">REC</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Feed rows */}
+        <div className="px-3 py-2.5 space-y-px">
+          {feedItems.map((item, i) => {
+            const t = typeIcon[item.type];
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -8 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: i * 0.08, type: "spring", stiffness: 200, damping: 22 }}
+                className="flex items-start gap-2 px-2.5 py-1.5 rounded-lg"
+                style={{
+                  background: item.type === "review" ? t.bg : "transparent",
+                  border: item.type === "review" ? `1px solid ${t.border}` : "1px solid transparent",
+                }}
+              >
+                <span className="text-[10px] text-muted-foreground/20 w-[52px] flex-shrink-0 pt-0.5 tabular-nums">{item.time}</span>
+                <span className="text-[10px] flex-shrink-0 pt-px">{item.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-semibold" style={{ color: item.color }}>{item.agent}</span>
+                    <span className="text-[10px]">{t.icon}</span>
+                    <span className="text-[10px] text-muted-foreground/50 truncate">{item.action}</span>
+                  </div>
+                  <div className="text-[9px] text-muted-foreground/30 truncate">{item.detail}</div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Stats footer */}
+        <div
+          className="px-4 py-2 flex items-center gap-4 text-[9px] text-muted-foreground/30"
+          style={{ borderTop: "1px solid hsl(var(--border) / 0.25)" }}
+        >
+          <span>5 agents <span className="text-green-400/50">online</span></span>
+          <span>·</span>
+          <span>142 actions today</span>
+          <span>·</span>
+          <span>12 tool calls</span>
+          <span>·</span>
+          <span>3 reviews</span>
+          <div className="ml-auto flex items-center gap-1">
+            <div className="w-1 h-1 rounded-full bg-green-400/60" />
+            <span className="text-green-400/50">streaming</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function WarRoomVisual() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
+
+  const agents: {
+    name: string;
+    emoji: string;
+    color: string;
+    status: "working" | "idle";
+    task: string;
+    reasoning: string;
+  }[] = [
+    { name: "Scout", emoji: "🔭", color: "hsl(160,84%,39%)", status: "working", task: "Competitor analysis", reasoning: "Fetching G2 reviews for 3 vendors..." },
+    { name: "Forge", emoji: "🔨", color: "hsl(38,92%,50%)", status: "working", task: "API integration", reasoning: "Writing webhook handler for Stripe..." },
+    { name: "Ghost", emoji: "👻", color: "hsl(258,90%,66%)", status: "idle", task: "Waiting on Scout", reasoning: "" },
+  ];
+
+  const messages: {
+    agent: string;
+    emoji: string;
+    color: string;
+    type: string;
+    typeColor: string;
+    text: string;
+    time: string;
+    target?: string;
+    targetEmoji?: string;
+  }[] = [
+    { agent: "Scout", emoji: "🔭", color: "hsl(160,84%,39%)", type: "Handoff", typeColor: "hsl(188,80%,55%)", text: "Market data compiled. Passing to Ghost for report draft.", time: "2m ago", target: "Ghost", targetEmoji: "👻" },
+    { agent: "Sentinel", emoji: "🔍", color: "hsl(330,81%,60%)", type: "Blocker", typeColor: "hsl(0,72%,55%)", text: "Forge's PR missing error handling on /webhooks endpoint.", time: "1m ago", target: "Forge", targetEmoji: "🔨" },
+    { agent: "Forge", emoji: "🔨", color: "hsl(38,92%,50%)", type: "Resolved", typeColor: "hsl(142,71%,45%)", text: "Added try-catch + retry logic. Re-submitted for review.", time: "30s ago" },
+  ];
+
+  return (
+    <motion.div
+      ref={ref}
+      className="w-full max-w-lg select-none"
+      initial={{ opacity: 0, x: -40 }}
+      animate={isInView ? { opacity: 1, x: 0 } : {}}
+      transition={{ duration: 0.7, type: "spring", stiffness: 80, damping: 18 }}
+    >
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: "hsl(240 25% 5%)",
+          border: "1px solid hsl(330 81% 60% / 0.2)",
+          boxShadow: "0 0 40px hsl(330 81% 60% / 0.06), 0 24px 60px hsl(240 33% 3% / 0.8)",
+        }}
+      >
+        {/* Header bar */}
+        <div
+          className="flex items-center justify-between px-4 py-2.5"
+          style={{ background: "hsl(240 25% 7%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-sm">🗡️</span>
+            <span className="text-xs font-bold text-foreground/90">War Room</span>
+            <span className="text-[10px] text-muted-foreground/40 font-mono">Revenue Engine</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] text-green-400/70 font-mono">4/6</span>
+              <span className="text-[10px] text-muted-foreground/30">tasks</span>
+            </div>
+            <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(330 81% 60% / 0.15)" }}>
+              <div className="h-full rounded-full" style={{ width: "67%", background: "hsl(330, 81%, 60%)" }} />
+            </div>
+            <span className="text-[10px] font-bold" style={{ color: "hsl(330, 81%, 60%)" }}>67%</span>
+          </div>
+        </div>
+
+        {/* Two-column: Agent lanes + Messages */}
+        <div className="flex" style={{ minHeight: 220 }}>
+          {/* Agent Lanes */}
+          <div className="flex-1 px-3 py-2.5 space-y-1.5" style={{ borderRight: "1px solid hsl(var(--border) / 0.25)" }}>
+            <div className="text-[9px] font-mono tracking-widest text-muted-foreground/40 mb-1">AGENT LANES</div>
+            {agents.map((a, i) => (
+              <motion.div
+                key={a.name}
+                initial={{ opacity: 0, x: -10 }}
+                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ delay: 0.2 + i * 0.1, type: "spring", stiffness: 200, damping: 22 }}
+                className="rounded-lg px-2.5 py-2"
+                style={{
+                  background: a.status === "working"
+                    ? a.color.replace("hsl(", "hsla(").replace(")", ", 0.06)")
+                    : "transparent",
+                  border: `1px solid ${a.status === "working"
+                    ? a.color.replace("hsl(", "hsla(").replace(")", ", 0.2)")
+                    : "hsl(var(--border) / 0.15)"}`,
+                }}
+              >
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[11px]">{a.emoji}</span>
+                  <span className="text-[11px] font-bold text-foreground/80">{a.name}</span>
+                  <span
+                    className="ml-auto text-[8px] font-mono px-1.5 py-0.5 rounded-full"
+                    style={{
+                      background: a.status === "working"
+                        ? "hsl(142 71% 45% / 0.1)"
+                        : "hsl(0 0% 50% / 0.1)",
+                      color: a.status === "working"
+                        ? "hsl(142, 71%, 55%)"
+                        : "hsl(0, 0%, 50%)",
+                    }}
+                  >
+                    {a.status.toUpperCase()}
+                  </span>
+                </div>
+                <div className="text-[10px] text-foreground/60 truncate">{a.task}</div>
+                {a.reasoning && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: a.color }} />
+                    <span className="text-[9px] text-muted-foreground/40 truncate italic">{a.reasoning}</span>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Coordination Feed */}
+          <div className="w-[200px] px-2.5 py-2.5 space-y-1.5">
+            <div className="text-[9px] font-mono tracking-widest text-muted-foreground/40 mb-1">COORDINATION</div>
+            {messages.map((m, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: 0.5 + i * 0.15, type: "spring", stiffness: 200, damping: 22 }}
+                className="rounded-lg px-2 py-1.5"
+                style={{
+                  background: m.type === "Blocker"
+                    ? "hsl(0 72% 55% / 0.05)"
+                    : m.type === "Handoff"
+                      ? "hsl(188 80% 55% / 0.05)"
+                      : "hsl(142 71% 45% / 0.05)",
+                  border: `1px solid ${m.type === "Blocker"
+                    ? "hsl(0 72% 55% / 0.15)"
+                    : m.type === "Handoff"
+                      ? "hsl(188 80% 55% / 0.15)"
+                      : "hsl(142 71% 45% / 0.15)"}`,
+                }}
+              >
+                <div className="flex items-center gap-1 mb-0.5">
+                  <span className="text-[10px]">{m.emoji}</span>
+                  <span className="text-[9px] font-bold text-foreground/70">{m.agent}</span>
+                  <span className="text-[8px] font-mono" style={{ color: m.typeColor }}>{m.type}</span>
+                  {m.target && (
+                    <>
+                      <span className="text-[8px] text-muted-foreground/25">→</span>
+                      <span className="text-[9px]">{m.targetEmoji}</span>
+                    </>
+                  )}
+                  <span className="ml-auto text-[8px] text-muted-foreground/25">{m.time}</span>
+                </div>
+                <div className="text-[9px] text-muted-foreground/50 leading-snug line-clamp-2">{m.text}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Reasoning stream footer */}
+        <div
+          className="px-4 py-2 flex items-center gap-2"
+          style={{ borderTop: "1px solid hsl(var(--border) / 0.25)", background: "hsl(240 25% 6%)" }}
+        >
+          <div className="flex items-center gap-1.5">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-blue-400/70">
+              <path d="M12 2a8.5 8.5 0 0 0-8 9c0 3.5 2.5 6 4 7.5L12 22l4-3.5c1.5-1.5 4-4 4-7.5a8.5 8.5 0 0 0-8-9Z" />
+            </svg>
+            <span className="text-[9px] text-blue-400/60 font-mono">Thinking</span>
+          </div>
+          <div className="flex-1 h-px" style={{ background: "hsl(var(--border) / 0.15)" }} />
+          <div className="flex items-center gap-1.5">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400/70">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z" />
+            </svg>
+            <span className="text-[9px] text-amber-400/60 font-mono">Tool Call</span>
+          </div>
+          <div className="flex-1 h-px" style={{ background: "hsl(var(--border) / 0.15)" }} />
+          <div className="flex items-center gap-1.5">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-green-400/70">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span className="text-[9px] text-green-400/60 font-mono">Result</span>
+          </div>
+          <div className="ml-1 flex items-center gap-1">
+            <div className="w-1 h-1 rounded-full bg-green-400/50 animate-pulse" />
+            <span className="text-[8px] text-green-400/40 font-mono">LIVE</span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function VoiceCommandVisual() {
   return (
     <div
@@ -1425,174 +2281,26 @@ export default function Landing() {
               </motion.div>
             </div>
 
-            {/* Right: Product screenshot + floating chips */}
+            {/* Right: Animated mission visual */}
             <motion.div
-              className="flex-1 relative w-full max-w-2xl"
+              className="flex-1 relative w-full max-w-3xl flex items-center justify-center"
               initial={{ opacity: 0, x: 60, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={{ delay: 0.6, duration: 0.9, type: "spring", stiffness: 70, damping: 20 }}
-              style={{ padding: "48px 56px" }}
+              style={{ padding: "12px 16px" }}
             >
-              {/* Glow behind screenshot */}
+              {/* Glow behind visual */}
               <div
                 className="absolute inset-0 rounded-2xl pointer-events-none"
                 style={{
-                  background: "radial-gradient(ellipse at 50% 50%, hsl(217 91% 60% / 0.15) 0%, transparent 70%)",
+                  background: "radial-gradient(ellipse at 50% 50%, hsl(217 91% 60% / 0.12) 0%, transparent 70%)",
                   filter: "blur(40px)",
                   transform: "scale(1.1)",
                 }}
               />
-
-              {/* Screenshot frame */}
-              <div
-                className="relative rounded-2xl overflow-hidden"
-                style={{
-                  border: "1px solid hsl(217 91% 60% / 0.2)",
-                  boxShadow: "0 0 0 1px hsl(var(--border) / 0.5), 0 32px 80px hsl(240 33% 3% / 0.8), 0 0 60px hsl(217 91% 60% / 0.08)",
-                }}
-              >
-                {/* Fake browser chrome */}
-                <div
-                  className="flex items-center gap-2 px-4 py-2.5"
-                  style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
-                >
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-                  <div
-                    className="mx-3 flex-1 max-w-48 h-5 rounded flex items-center px-3 text-[10px] text-muted-foreground/40 font-mono"
-                    style={{ background: "hsl(240 25% 8%)" }}
-                  >
-                    app.valence.ai/mission-board
-                  </div>
-                  <div className="ml-auto flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-[10px] text-green-400/70 font-mono">LIVE</span>
-                  </div>
-                </div>
-
-                <img
-                  // src="/screenshots/mission_board.png"
-                  src="/screenshots/autopilot_page.png"
-                  alt="Valence AI Mission Board"
-                  className="w-full block"
-                  style={{ display: "block" }}
-                />
+              <div className="relative z-10 w-full">
+                <HeroMissionVisual />
               </div>
-
-              {/* ── Floating chips — outside the screenshot frame ── */}
-
-              {/* Top-left corner */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.2, type: "spring", stiffness: 120, damping: 18 }}
-                whileHover={{ scale: 1.05, y: -2 }}
-                className="absolute top-2 left-14 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
-                style={{
-                  background: "hsl(240 25% 7% / 0.97)",
-                  border: "1px solid hsl(160 84% 39% / 0.5)",
-                  color: "hsl(160, 84%, 39%)",
-                  boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 16px hsl(160 84% 39% / 0.12)",
-                  backdropFilter: "blur(10px)",
-                  animation: "float-a 4s ease-in-out infinite",
-                }}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
-                🌀 Kaze: 5 agents active
-              </motion.div>
-
-              {/* Top-right corner */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.4, type: "spring", stiffness: 120, damping: 18 }}
-                whileHover={{ scale: 1.05, y: -2 }}
-                className="absolute top-2 right-0 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
-                style={{
-                  background: "hsl(240 25% 7% / 0.97)",
-                  border: "1px solid hsl(38 92% 50% / 0.5)",
-                  color: "hsl(38, 92%, 50%)",
-                  boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 16px hsl(38 92% 50% / 0.12)",
-                  backdropFilter: "blur(10px)",
-                  animation: "float-b 5s ease-in-out infinite",
-                }}
-              >
-                🔨 Forge: PR reviewed · merged
-              </motion.div>
-
-              {/* Bottom-left corner */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.65, type: "spring", stiffness: 120, damping: 18 }}
-                whileHover={{ scale: 1.05, y: 2 }}
-                className="absolute bottom-2 left-0 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
-                style={{
-                  background: "hsl(240 25% 7% / 0.97)",
-                  border: "1px solid hsl(258 90% 66% / 0.5)",
-                  color: "hsl(258, 90%, 66%)",
-                  boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 16px hsl(258 90% 66% / 0.12)",
-                  backdropFilter: "blur(10px)",
-                  animation: "float-a 6s ease-in-out infinite 1s",
-                }}
-              >
-                <img src="https://cdn.simpleicons.org/figma" alt="Figma" width="12" height="12" style={{ filter: "brightness(0) invert(1)", opacity: 0.85, flexShrink: 0 }} />
-                14 mobile screen designed in Figma
-              </motion.div>
-
-              {/* Bottom-right corner — two stacked chips */}
-              <div className="absolute bottom-2 right-0 flex flex-col items-end gap-2">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 1.9, type: "spring", stiffness: 120, damping: 18 }}
-                  whileHover={{ scale: 1.05, y: 2 }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
-                  style={{
-                    background: "hsl(240 25% 7% / 0.97)",
-                    border: "1px solid hsl(38 92% 50% / 0.45)",
-                    color: "hsl(38, 92%, 50%)",
-                    boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 14px hsl(38 92% 50% / 0.1)",
-                    backdropFilter: "blur(10px)",
-                    animation: "float-b 4.5s ease-in-out infinite 0.5s",
-                  }}
-                >
-                  <img src="https://cdn.simpleicons.org/hubspot" alt="HubSpot" width="12" height="12" style={{ filter: "brightness(0) invert(1)", opacity: 0.85, flexShrink: 0 }} />
-                  $240k pipeline · 12 deals
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 2.1, type: "spring", stiffness: 120, damping: 18 }}
-                  whileHover={{ scale: 1.05, y: 2 }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-mono cursor-default"
-                  style={{
-                    background: "hsl(240 25% 7% / 0.97)",
-                    border: "1px solid hsl(217 91% 60% / 0.45)",
-                    color: "hsl(217, 91%, 60%)",
-                    boxShadow: "0 4px 20px hsl(240 33% 3% / 0.9), 0 0 14px hsl(217 91% 60% / 0.1)",
-                    backdropFilter: "blur(10px)",
-                    animation: "float-a 5.5s ease-in-out infinite 2s",
-                  }}
-                >
-                  <img src="https://cdn.simpleicons.org/googlecalendar" alt="Calendar" width="14" height="14" style={{ filter: "brightness(0) invert(1)", opacity: 0.85, flexShrink: 0 }} />
-                  5 demo calls booked, invites sent
-                </motion.div>
-              </div>
-
-              {/* Keyframes */}
-              <style>{`
-                @keyframes float-a {
-                  0%, 100% { transform: translateY(0px); }
-                  50% { transform: translateY(-5px); }
-                }
-                @keyframes float-b {
-                  0%, 100% { transform: translateY(0px); }
-                  50% { transform: translateY(4px); }
-                }
-              `}</style>
             </motion.div>
           </div>
 
@@ -1662,45 +2370,7 @@ export default function Landing() {
       </section>
 
       {/* ── SECTION 5: USE CASES ── */}
-      <section className="py-16 px-6">
-        <div className="max-w-7xl mx-auto">
-          <RevealSection className="text-center mb-8 space-y-3">
-            <motion.div variants={itemVariants}>
-              <span
-                className="text-xs font-mono tracking-widest px-2 py-1 rounded"
-                style={{ background: "hsl(var(--primary) / 0.1)", color: "hsl(var(--primary) / 0.8)" }}
-              >
-                REAL WORKFLOWS
-              </span>
-            </motion.div>
-            <motion.h2 variants={itemVariants} className="text-4xl md:text-5xl font-bold">
-              Complex work, done autonomously.
-            </motion.h2>
-            <motion.p variants={itemVariants} className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Multi-agent missions with real tool calls — across your entire stack.
-            </motion.p>
-          </RevealSection>
-
-          {/* ── Compact use cases grid ── */}
-          <UseCaseCompactGrid onNavigate={(slug) => navigate(`/use-cases/${slug}`)} />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {USE_CASES.map((uc, i) => (
-              <UseCaseScenario
-                key={i}
-                title={uc.title}
-                icon={uc.icon}
-                trigger={uc.trigger}
-                steps={uc.steps}
-                result={uc.result}
-                metric={uc.metric}
-                accentColor={uc.accentColor}
-                hoursSaved={uc.hoursSaved}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+      <UseCasesSection onNavigate={(slug) => navigate(`/use-cases/${slug}`)} />
 
       {/* ── SECTION 6: FEATURE DEEP DIVES ── */}
       <section
@@ -1719,6 +2389,21 @@ export default function Landing() {
               "Quality loops with rejection/rework cycles",
             ]}
             visual={<TaskScreenshotVisual />}
+          />
+
+          <FeatureBlock
+            label="WAR ROOM"
+            title="Watch every agent think, in real time."
+            description="The War Room is your live operations floor. See agent lanes side by side — what each one is working on, their reasoning stream as it happens, and coordination messages flowing between them. Blockers surface instantly. Handoffs happen automatically."
+            bullets={[
+              "Agent lanes: each agent's current task, status, and live reasoning visible at a glance",
+              "Coordination feed: handoffs, blockers, milestones — color-coded by type",
+              "Reasoning stream: watch agents think step-by-step — tool calls, decisions, results",
+              "Real-time progress: mission completion bar updates as tasks close",
+              "Sentinel review gates: deliverables flagged and approved before flowing downstream",
+            ]}
+            visual={<WarRoomVisual />}
+            reverse
           />
 
           <FeatureBlock
@@ -1801,7 +2486,7 @@ export default function Landing() {
               "Agent analytics: tasks completed, API calls made, quality scores, and error rates per agent",
               "Webhook triggers: any event from GitHub, Slack, Linear, or your own system wakes agents instantly",
             ]}
-            visual={<WebhookVisual />}
+            visual={<LiveOpsVisual />}
           />
         </div>
       </section>

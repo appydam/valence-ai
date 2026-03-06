@@ -14,18 +14,25 @@ import {
   Brain,
   Wand2,
   CreditCard,
+  HelpCircle,
+  Rocket,
+  Newspaper,
+  HeartPulse,
 } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { title: "Live Ops", path: "/", icon: Activity },
   { title: "Autopilot", path: "/autopilot", icon: Wand2 },
-
+  { title: "Daily Brief", path: "/brief", icon: Newspaper },
   { title: "Mission Board", path: "/board", icon: LayoutGrid },
   { title: "Missions", path: "/missions", icon: FolderOpen },
   { title: "Agents", path: "/agents", icon: Users },
+  { title: "Agent Health", path: "/health", icon: HeartPulse },
   { title: "Memory Bank", path: "/memory", icon: Brain },
   { title: "Integrations", path: "/integrations", icon: Plug },
   { title: "Webhooks", path: "/webhooks", icon: Webhook },
@@ -37,6 +44,8 @@ const navItems = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const isAdmin = currentUser?.role === "admin";
 
   return (
     <aside className={cn(
@@ -81,6 +90,24 @@ export function AppSidebar() {
             </Link>
           );
         })}
+        {isAdmin && (
+          <>
+            <div className="my-2 border-t border-border/50" />
+            <Link
+              to="/ops"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+                location.pathname === "/ops"
+                  ? "bg-primary/10 text-primary font-medium shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              )}
+              title={collapsed ? "Onboarding" : undefined}
+            >
+              <Rocket className="w-5 h-5 shrink-0" />
+              {!collapsed && <span className="truncate">Onboarding</span>}
+            </Link>
+          </>
+        )}
       </nav>
 
       {/* Bottom */}
@@ -107,6 +134,22 @@ export function AppSidebar() {
             </div>
           )}
         </div>
+
+        {/* Help Link */}
+        <Link
+          to="/docs"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200",
+            location.pathname === "/docs"
+              ? "bg-primary/10 text-primary font-medium shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+            collapsed ? "justify-center" : ""
+          )}
+          title={collapsed ? "Help & Docs" : undefined}
+        >
+          <HelpCircle className="w-5 h-5 shrink-0" />
+          {!collapsed && <span className="truncate">Help & Docs</span>}
+        </Link>
 
         {/* Notifications */}
         <NotificationBell collapsed={collapsed} />

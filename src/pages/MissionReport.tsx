@@ -683,10 +683,16 @@ export default function MissionReport() {
                   </div>
                 )}
               </div>
-              <Link to={`/board?mission=${mission._id}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-secondary transition-colors shrink-0">
-                <ExternalLink className="w-3.5 h-3.5" /> Open Board
-              </Link>
+              <div className="flex items-center gap-2 shrink-0">
+                <Link to={`/missions/${mission._id}/warroom`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors">
+                  <Zap className="w-3.5 h-3.5" /> War Room
+                </Link>
+                <Link to={`/board?mission=${mission._id}`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-secondary transition-colors">
+                  <ExternalLink className="w-3.5 h-3.5" /> Open Board
+                </Link>
+              </div>
             </div>
 
             {/* KPI row */}
@@ -703,10 +709,6 @@ export default function MissionReport() {
               <StatPill label="Deliverables" value={summary.totalDeliverables} sub={deliverableSub} color="blue" />
               <div className="w-px bg-border hidden md:block" />
               <StatPill label="Duration" value={formatDuration(timing.missionDuration)} sub={`avg ${formatDuration(timing.avgTaskDuration)}/task`} />
-              <div className="w-px bg-border hidden md:block" />
-              <StatPill label="Quality" value={`${quality.firstPassRate}%`}
-                sub={quality.totalIterations > 0 ? `${quality.totalIterations} revisions` : "no rework"}
-                color={quality.firstPassRate >= 80 ? "green" : quality.firstPassRate >= 50 ? "amber" : "red"} />
             </div>
           </div>
         </div>

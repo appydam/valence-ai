@@ -45,6 +45,9 @@ export default function Webhooks() {
     userId ? { userId, limit: 50 } : "skip"
   );
 
+  // Fetch dead letter events
+  const deadLetters = useQuery(api.webhookReceiver.listDeadLetters, { limit: 50 });
+
   const copyWebhookUrl = (urlPath: string) => {
     const fullUrl = `${window.location.origin}${urlPath}`;
     navigator.clipboard.writeText(fullUrl);
@@ -179,6 +182,15 @@ export default function Webhooks() {
           <TabsTrigger value="events">
             <Activity className="w-4 h-4 mr-2" />
             Event History
+          </TabsTrigger>
+          <TabsTrigger value="deadletters">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Dead Letters
+            {deadLetters && deadLetters.length > 0 && (
+              <Badge variant="destructive" className="ml-1.5 h-5 px-1.5 text-[10px]">
+                {deadLetters.length}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -363,6 +375,52 @@ export default function Webhooks() {
                         <Button variant="ghost" size="sm">
                           Details
                         </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Dead Letters Tab */}
+        <TabsContent value="deadletters" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dead Letter Queue</CardTitle>
+              <CardDescription>
+                Events that failed after 3 retry attempts. These require manual investigation.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!deadLetters || deadLetters.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                  No dead letter events — all webhooks processed successfully
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {deadLetters.map((event) => (
+                    <div
+                      key={event._id}
+                      className="flex items-center justify-between p-3 border border-red-500/20 rounded-lg bg-red-500/5"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="text-xs">
+                            {event.blueprintName || "Unknown"}
+                          </Badge>
+                          <span className="text-sm font-medium">{event.eventType}</span>
+                          <Badge variant="destructive">Failed (3 retries)</Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(event.receivedAt).toLocaleString()}
+                          {event.endpointName && ` • ${event.endpointName}`}
+                        </div>
+                        {event.errorMessage && (
+                          <p className="text-xs text-red-400 mt-1">{event.errorMessage}</p>
+                        )}
                       </div>
                     </div>
                   ))}
