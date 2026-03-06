@@ -168,3 +168,8 @@
       radial-gradient(at 50% 50%, hsl(var(--agent-scout) / 0.03) 0, transparent 70%);
   }
 }
+
+/* ── Kill native cursor — must be after all @layer blocks to win the cascade ── */
+html, body, * {
+  cursor: none !important;
+}
