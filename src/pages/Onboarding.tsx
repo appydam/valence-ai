@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2, ArrowRight, ArrowLeft, Check, Plug, Users, Bot,
-  Rocket, Sparkles, UserPlus, Mail, RefreshCw,
+  Rocket, Sparkles, UserPlus, Mail, RefreshCw, Server, Terminal,
+  Copy, CheckCircle, Key,
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -11,6 +12,7 @@ const STEPS = [
   { title: "Welcome", subtitle: "Set up your workspace" },
   { title: "Integrations", subtitle: "Connect your tools" },
   { title: "Meet Your Squad", subtitle: "Your AI agents" },
+  { title: "Server Setup", subtitle: "SSH proxy & config" },
   { title: "Invite Team", subtitle: "Bring your team" },
   { title: "Launch", subtitle: "You're ready!" },
 ];
@@ -163,7 +165,179 @@ function AgentsStep() {
   );
 }
 
-/* Step 4: Invite Team */
+/* Step 4: Server Setup */
+function CopyBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className="relative group rounded-lg bg-secondary/80 border border-border overflow-hidden">
+      <pre className="text-xs text-foreground/80 font-mono p-4 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
+        {code}
+      </pre>
+      <button
+        onClick={handleCopy}
+        className="absolute top-2 right-2 p-1.5 rounded-md bg-background/60 hover:bg-background border border-border transition-all opacity-0 group-hover:opacity-100"
+      >
+        {copied ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
+      </button>
+    </div>
+  );
+}
+
+function ServerSetupStep({
+  sshHost, setSshHost,
+  sshUsername, setSshUsername,
+  sshPrivateKey, setSshPrivateKey,
+  sshSaved, setSshSaved,
+}: {
+  sshHost: string; setSshHost: (v: string) => void;
+  sshUsername: string; setSshUsername: (v: string) => void;
+  sshPrivateKey: string; setSshPrivateKey: (v: string) => void;
+  sshSaved: boolean; setSshSaved: (v: boolean) => void;
+}) {
+  const saveSshConfig = useMutation(api.sshConfig.save);
+  const [saving, setSaving] = useState(false);
+
+  const deployCmd = `# 1. Copy SSH proxy service to your server
+scp -i ~/.ssh/LightsailKey.pem -r ./ssh-proxy-service ubuntu@${sshHost || "YOUR_SERVER_IP"}:/home/ubuntu/ssh-proxy-service
+
+# 2. SSH into server and install + start it
+ssh -i ~/.ssh/LightsailKey.pem ubuntu@${sshHost || "YOUR_SERVER_IP"} << 'EOF'
+cd /home/ubuntu/ssh-proxy-service
+npm install
+SSH_PROXY_SECRET=my-secret-key-change-me pm2 start server.js --name ssh-proxy --env SSH_PROXY_SECRET=my-secret-key-change-me
+pm2 save
+EOF`;
+
+  const convexEnvCmd = `npx convex env set SSH_PROXY_URL http://${sshHost || "YOUR_SERVER_IP"}:3001 --url https://beloved-squirrel-599.convex.cloud
+npx convex env set SSH_PROXY_SECRET my-secret-key-change-me --url https://beloved-squirrel-599.convex.cloud`;
+
+  const handleSave = async () => {
+    if (!sshHost.trim() || !sshUsername.trim() || !sshPrivateKey.trim()) return;
+    setSaving(true);
+    try {
+      await saveSshConfig({
+        host: sshHost.trim(),
+        port: 22,
+        username: sshUsername.trim(),
+        privateKey: sshPrivateKey.trim(),
+        encrypted: false,
+      });
+      setSshSaved(true);
+    } catch (err: any) {
+      alert(`Error saving SSH config: ${err.message}`);
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="max-w-lg mx-auto">
+      <div className="text-center mb-6">
+        <Server className="w-8 h-8 text-primary mx-auto mb-3" />
+        <h2 className="text-xl font-bold text-foreground mb-1">Server Setup</h2>
+        <p className="text-sm text-muted-foreground">
+          Deploy the SSH proxy so Mission Control can sync agent configs to your server.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {/* Step 1 */}
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="text-[10px] font-bold text-primary">1</span>
+            </div>
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
+              Deploy SSH Proxy to Your Server
+            </h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-2">
+            Run from your local machine (from the project root directory):
+          </p>
+          <CopyBlock code={deployCmd} />
+          <p className="text-xs text-muted-foreground mt-2">
+            Then open port 3001 in your Lightsail firewall (Networking tab → Add rule → TCP 3001).
+          </p>
+        </div>
+
+        {/* Step 2 */}
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="text-[10px] font-bold text-primary">2</span>
+            </div>
+            <h3 className="text-sm font-semibold text-foreground">Set Convex Environment Variables</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-2">
+            Run from the <code className="text-xs bg-secondary px-1 py-0.5 rounded">agent-orchestrator/</code> directory:
+          </p>
+          <CopyBlock code={convexEnvCmd} />
+        </div>
+
+        {/* Step 3: SSH Config */}
+        <div className="rounded-xl border bg-card p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="text-[10px] font-bold text-primary">3</span>
+            </div>
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-muted-foreground" />
+              Save SSH Credentials
+            </h3>
+          </div>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground font-medium mb-1 block uppercase tracking-wider">Server IP</label>
+                <input
+                  type="text"
+                  value={sshHost}
+                  onChange={(e) => setSshHost(e.target.value)}
+                  placeholder="52.66.97.31"
+                  className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground font-medium mb-1 block uppercase tracking-wider">Username</label>
+                <input
+                  type="text"
+                  value={sshUsername}
+                  onChange={(e) => setSshUsername(e.target.value)}
+                  placeholder="ubuntu"
+                  className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block uppercase tracking-wider">Private Key (PEM)</label>
+              <textarea
+                value={sshPrivateKey}
+                onChange={(e) => setSshPrivateKey(e.target.value)}
+                placeholder={"-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"}
+                className="w-full h-24 bg-secondary rounded-lg px-3 py-2 text-xs font-mono text-foreground border-0 outline-none focus:ring-2 focus:ring-primary resize-none"
+              />
+            </div>
+            <button
+              onClick={handleSave}
+              disabled={saving || !sshHost.trim() || !sshUsername.trim() || !sshPrivateKey.trim()}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/80 transition-colors disabled:opacity-50 w-full justify-center"
+            >
+              {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : sshSaved ? <CheckCircle className="w-3.5 h-3.5" /> : <Key className="w-3.5 h-3.5" />}
+              {saving ? "Saving..." : sshSaved ? "Credentials Saved ✓" : "Save SSH Credentials"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Step 5: Invite Team */
 function InviteStep({ emails, setEmails, invitesSent }: { emails: string; setEmails: (v: string) => void; invitesSent: number }) {
   return (
     <div className="max-w-md mx-auto">
@@ -198,7 +372,7 @@ function InviteStep({ emails, setEmails, invitesSent }: { emails: string; setEma
   );
 }
 
-/* Step 5: Launch */
+/* Step 6: Launch */
 function LaunchStep({ companyName, connected, invitesSent }: { companyName: string; connected: string[]; invitesSent: number }) {
   return (
     <div className="text-center max-w-md mx-auto">
@@ -272,6 +446,11 @@ const OnboardingPage = () => {
   const [inviteEmails, setInviteEmails] = useState("");
   const [invitesSent, setInvitesSent] = useState(0);
   const [finishing, setFinishing] = useState(false);
+  // SSH / Server Setup step state
+  const [sshHost, setSshHost] = useState("");
+  const [sshUsername, setSshUsername] = useState("ubuntu");
+  const [sshPrivateKey, setSshPrivateKey] = useState("");
+  const [sshSaved, setSshSaved] = useState(false);
 
   // Initialize onboarding state on mount
   useEffect(() => {
@@ -313,6 +492,9 @@ const OnboardingPage = () => {
     } else if (step === 3) {
       await updateStep({ userId, currentStep: nextStep, agentsConfigured: true });
     } else if (step === 4) {
+      // Server Setup step — SSH config saved inline; just advance
+      await updateStep({ userId, currentStep: nextStep });
+    } else if (step === 5) {
       // Send invites
       const emails = inviteEmails
         .split("\n")
@@ -331,7 +513,7 @@ const OnboardingPage = () => {
       await updateStep({ userId, currentStep: nextStep, teamInvitesSent: sent });
     }
 
-    if (nextStep <= 5) {
+    if (nextStep <= 6) {
       setStep(nextStep);
     }
   };
@@ -387,8 +569,16 @@ const OnboardingPage = () => {
           {step === 1 && <WelcomeStep companyName={companyName} setCompanyName={setCompanyName} />}
           {step === 2 && <IntegrationsStep connected={connectedIntegrations} onToggle={handleToggleIntegration} />}
           {step === 3 && <AgentsStep />}
-          {step === 4 && <InviteStep emails={inviteEmails} setEmails={setInviteEmails} invitesSent={invitesSent} />}
-          {step === 5 && <LaunchStep companyName={companyName} connected={connectedIntegrations} invitesSent={invitesSent} />}
+          {step === 4 && (
+            <ServerSetupStep
+              sshHost={sshHost} setSshHost={setSshHost}
+              sshUsername={sshUsername} setSshUsername={setSshUsername}
+              sshPrivateKey={sshPrivateKey} setSshPrivateKey={setSshPrivateKey}
+              sshSaved={sshSaved} setSshSaved={setSshSaved}
+            />
+          )}
+          {step === 5 && <InviteStep emails={inviteEmails} setEmails={setInviteEmails} invitesSent={invitesSent} />}
+          {step === 6 && <LaunchStep companyName={companyName} connected={connectedIntegrations} invitesSent={invitesSent} />}
         </div>
       </div>
 
@@ -405,7 +595,7 @@ const OnboardingPage = () => {
           </button>
 
           <div className="flex items-center gap-2">
-            {step < 5 && step > 1 && (
+            {step < 6 && step > 1 && (
               <button
                 onClick={() => { setStep(step + 1); }}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -414,7 +604,7 @@ const OnboardingPage = () => {
               </button>
             )}
 
-            {step < 5 ? (
+            {step < 6 ? (
               <button
                 onClick={handleNext}
                 disabled={!canProceed()}
