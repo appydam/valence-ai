@@ -8,12 +8,11 @@ import { useUser } from "@clerk/clerk-react";
 import { useEffect, useRef } from "react";
 import { api } from "../convex/_generated/api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { CrosshairCursor } from "./components/CrosshairCursor";
 import Index from "./pages/Index";
 import Board from "./pages/Board";
 import Missions from "./pages/Missions";
 import AgentsPage from "./pages/Agents";
-import AgentHealth from "./pages/AgentHealth";
-
 import Settings from "./pages/Settings";
 import Integrations from "./pages/Integrations";
 import BlueprintWizard from "./pages/BlueprintWizard";
@@ -30,6 +29,7 @@ import Landing from "./pages/Landing";
 import UseCasePage from "./pages/UseCase";
 import Autopilot from "./pages/Autopilot";
 import Billing from "./pages/Billing";
+import Pricing from "./pages/Pricing";
 import Onboarding from "./pages/Onboarding";
 import OperationsHub from "./pages/OperationsHub";
 import MorningBrief from "./pages/MorningBrief";
@@ -95,7 +95,6 @@ function AuthenticatedRoutes() {
         <Route path="/missions/:missionId" element={<MissionReport />} />
         <Route path="/missions/:missionId/warroom" element={<WarRoom />} />
         <Route path="/agents" element={<AgentsPage />} />
-        <Route path="/health" element={<AgentHealth />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/integrations/blueprint/new" element={<BlueprintWizard />} />
         <Route path="/integrations/blueprint/:id" element={<BlueprintDetail />} />
@@ -118,6 +117,7 @@ function AuthenticatedRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <CrosshairCursor />
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -126,6 +126,7 @@ const App = () => (
           <Route path="/landing" element={<Landing />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/use-cases/:slug" element={<UseCasePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dev/login" element={<Login />} />

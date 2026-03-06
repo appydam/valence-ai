@@ -3013,6 +3013,314 @@ export const USE_CASES: UseCase[] = [
     result:
       "28 metrics from 8 sources, unified and verified. 2 data discrepancies caught and resolved. Weekly ops report delivered Monday 8am — CEO made budget decision before lunch. Ops team saved 12 hrs/week on manual data pulling and reporting.",
   },
+
+  // ─── E-commerce: DTC Niche ───────────────────────────────────────────────
+  {
+    slug: "flash-sale-launch-autopilot",
+    title: "Flash sale launched, start to finish, in under an hour",
+    icon: "⚡",
+    category: "ecommerce",
+    categoryLabel: "E-commerce",
+    buyer: "Head of Growth / E-commerce Director, DTC brands doing $2M–$20M revenue on Shopify or WooCommerce",
+    painPoint:
+      "Running a flash sale requires 8+ hours of coordination across 5 people: someone pulls inventory availability, someone checks margins, someone writes the email + SMS + social copy, someone updates the website, someone creates the Klaviyo segment, someone schedules everything, and someone monitors performance during the sale. Most brands can only run 2–3 unplanned flash sales per year because of this friction — even though flash sales consistently outperform planned promotions by 30–50% in revenue per email sent. The opportunity is always there (competitor drops price, supplier offers excess inventory at cost, it's a slow revenue week) but the execution overhead means it almost never happens.",
+    trigger:
+      "Human or webhook triggers a flash sale: competitor price drop detected, slow revenue day, excess inventory alert, or manual 'run a sale' command — agents handle everything else",
+    accentColor: "hsl(35, 95%, 55%)",
+    metric: "<1 hr from trigger to live · 30–50% revenue lift per flash sale · 8 hrs saved per sale",
+    hoursSaved: "8 hrs saved per flash sale · run 10× more unplanned promotions per year",
+    roi: [
+      "Run 10× more flash sales per year — each one generating $5k–$50k in incremental revenue",
+      "8+ hours of cross-team coordination compressed into under 60 minutes",
+      "Every launch goes out verified: margins confirmed, inventory checked, copy QA'd, segments correct",
+      "Post-sale report auto-generated: revenue, conversion rate, unsubscribes, margin — ready for next debrief",
+      "Zero missed opportunities from 'we don't have bandwidth to spin up a sale this week'",
+    ],
+    uniqueAngle:
+      "No other tool connects the full flash sale loop end-to-end: trigger → margin check → inventory confirmation → email + SMS + social copy → Klaviyo segment creation → scheduling → performance monitoring → post-sale report. Klaviyo can schedule emails. Shopify can run discount codes. But neither one checks your margins, writes the copy, validates the inventory, and monitors performance. Valence AI is the coordinator that does all five simultaneously in under an hour.",
+    steps: [
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Receives flash sale trigger (competitor alert, manual command, or revenue anomaly) and decomposes it into a parallel task plan — inventory check, margin analysis, copy creation, and scheduling all kick off simultaneously",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Webhook", color: "#6366F1" },
+          { label: "Mission Control", color: "#8B5CF6" },
+        ],
+        detail: "Flash sale triggered at 9:14am · Goal: 20% off sitewide, Shopify only · 4 parallel tasks dispatched · completion target: 10:00am",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Checks real-time inventory across all SKUs in Shopify — flags anything that can't sustain a 3× demand spike, cross-references with supplier lead times, and recommends which products to exclude from the sale",
+        tools: [
+          { label: "Shopify", color: "#96BF48" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Airtable", color: "#18BFFF" },
+        ],
+        detail: "847 SKUs scanned · 12 excluded (would stock out in <48 hrs at 3× velocity) · 2 excluded (below margin floor at 20% off) · 833 SKUs cleared for sale",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Runs margin analysis: at 20% discount, what's the gross margin per SKU? Flags any product where the discount would push margin below policy floor. Pulls Stripe historical data to forecast expected revenue lift based on prior comparable sales",
+        tools: [
+          { label: "Stripe", color: "#6772E5" },
+          { label: "Shopify", color: "#96BF48" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "Blended margin at 20% off: 31% (above 28% floor) · Revenue forecast: $18k–$26k based on 3 comparable past sales · 2 low-margin SKUs auto-excluded",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Writes all promotional copy in parallel: flash sale email (subject line A/B variants), SMS follow-up, Instagram caption, TikTok caption, and website banner headline — all in brand voice, all referencing sale timing and urgency",
+        tools: [
+          { label: "Klaviyo", color: "#2D2D2D" },
+          { label: "Instagram", color: "#E4405F" },
+          { label: "TikTok", color: "#010101" },
+          { label: "Canva", color: "#00C4CC" },
+        ],
+        detail: "Email written · 2 subject line variants ('⚡ 20% off — 24 hrs only' vs '20% off everything, today only') · SMS 160 chars · Instagram caption + 5 hashtags · TikTok hook written · banner copy ready",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "QA pass before anything goes live: verifies discount code works in Shopify, checks Klaviyo segment isn't accidentally excluding a major cohort, confirms all excluded SKUs are properly tagged, and validates email render on mobile",
+        tools: [
+          { label: "Shopify", color: "#96BF48" },
+          { label: "Klaviyo", color: "#2D2D2D" },
+          { label: "Litmus", color: "#EA4335" },
+        ],
+        detail: "Discount code FLASH20 verified · segment covers 34,200 subscribers (all active, last 180 days) · 0 excluded SKUs still tagged for sale · mobile render: PASS · 1 issue caught: subject line exceeded 50 chars on iOS preview — Ghost rewrites",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Schedules everything: Klaviyo email send at 11am, SMS at 3pm, Instagram post at noon, Shopify discount code activation — then monitors sale performance in real-time and sends hourly revenue snapshots to Slack",
+        tools: [
+          { label: "Klaviyo", color: "#2D2D2D" },
+          { label: "Shopify", color: "#96BF48" },
+          { label: "Slack", color: "#4A154B" },
+          { label: "Google Sheets", color: "#34A853" },
+        ],
+        detail: "All assets scheduled · email launches 11am · hourly Slack updates active · Sentinel monitoring for anomalies (refund spike, coupon abuse, site slowdown)",
+      },
+    ],
+    result:
+      "Flash sale live by 10:47am — 93 minutes from trigger. Email to 34k subscribers, SMS to 18k, Instagram post live. By end of day: $22,400 in revenue, 4.1% conversion on email (vs 1.8% baseline), 0 stock-outs, 31% blended margin maintained. Post-sale report auto-delivered to Slack at midnight.",
+  },
+
+  // ─── Agency: Marketing Agency Niche ─────────────────────────────────────
+  {
+    slug: "agency-client-performance-narrative",
+    title: "Client performance report with the insight already written",
+    icon: "📊",
+    category: "agency",
+    categoryLabel: "Agency",
+    buyer: "Agency Founder / VP Client Services, digital marketing agencies managing 10–100 clients",
+    painPoint:
+      "Every account manager at a digital agency spends 8–15 hours per week per client doing the same mechanical work: log into Google Ads, Meta, GA4, email platform, and Shopify — copy numbers into a spreadsheet — calculate percent changes — write a paragraph explaining what happened — format a slide deck — send a PDF. For a 20-client agency, that's 160–300 hours of manual reporting per week. That's not analysis. That's copy-paste. The real cost: account managers spend 70% of their time on reporting and 30% on actual strategy — exactly backwards from what clients are paying for and what prevents the agency from scaling without constant hiring.",
+    trigger:
+      "Every Friday at 3pm: pull all client data from connected ad platforms + analytics + email tools and generate performance reports ready for Monday morning delivery",
+    accentColor: "hsl(200, 85%, 50%)",
+    metric: "Weekly · 10–15 hrs saved per AM · serve 2× clients without hiring",
+    hoursSaved: "10–15 hrs/week per account manager · agency scales without headcount",
+    roi: [
+      "Each AM handles 2× the client load — double agency capacity without hiring",
+      "Reports go from monthly to weekly — clients stay informed, churn drops 20%",
+      "Account managers spend 70% on strategy instead of 70% on copy-paste",
+      "Sentinel catches data errors before the client does — protects agency credibility",
+      "Agency differentiation: 'we deliver verified weekly reports with AI-generated insights' becomes a sales point",
+    ],
+    uniqueAngle:
+      "Supermetrics, AgencyAnalytics, and Databox pull the data — but you still write the narrative, interpret the trends, and format the deliverable. That's where the 10 hours go. Valence AI's Ghost agent writes the performance narrative: 'Your Meta ROAS dropped 22% because creative fatigue hit week 3 of the same ad set — we recommend introducing 3 new video variants.' That sentence is what clients pay $5k–$20k/month for. Sentinel cross-checks every number against source APIs so no stale or wrong data goes to a client. One click and the report is ready to send.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Pulls performance data from all connected ad platforms and analytics tools simultaneously — no manual login required",
+        tools: [
+          { label: "Google Ads", color: "#4285F4" },
+          { label: "Meta Ads", color: "#0866FF" },
+          { label: "TikTok Ads", color: "#010101" },
+          { label: "GA4", color: "#F9AB00" },
+          { label: "Klaviyo", color: "#2D2D2D" },
+          { label: "Shopify", color: "#96BF48" },
+        ],
+        detail: "Client: Bloom Skincare · Google Ads: $18,400 spend · Meta: $12,200 spend · GA4: 42,800 sessions · Klaviyo: 34% open rate · Shopify: $94,200 revenue · all data timestamped and source-verified",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "Cross-checks every metric against source APIs — flags stale data, attribution window mismatches, and anomalies that would embarrass the agency if sent to a client",
+        tools: [
+          { label: "Google Ads", color: "#4285F4" },
+          { label: "Meta Ads", color: "#0866FF" },
+          { label: "GA4", color: "#F9AB00" },
+          { label: "Shopify", color: "#96BF48" },
+        ],
+        detail: "2 issues caught: GA4 session count was 28-day window (client expects 7-day) — corrected · Meta ROAS used last-click vs client's agreed 7-day click attribution — recalculated · all metrics verified and timestamped",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Benchmarks client metrics against industry averages for their vertical — identifies what's actually good vs what just looks good relative to last week",
+        tools: [
+          { label: "Google Ads", color: "#4285F4" },
+          { label: "Meta Ads", color: "#0866FF" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Airtable", color: "#18BFFF" },
+        ],
+        detail: "Beauty vertical benchmarks loaded: Google Ads avg CTR 2.1% (client at 3.4% — top quartile) · Meta CPM $18.40 avg (client at $14.20 — better than 70% of vertical) · email open rate 28% avg (client at 34% — strong)",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Writes the full performance narrative in the agency's voice: executive summary, channel-by-channel analysis, what drove performance, what hurt it, and 3 specific strategic recommendations for next week",
+        tools: [
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Notion", color: "#8B8B8B" },
+          { label: "Google Slides", color: "#FBBC04" },
+        ],
+        detail: "'Meta ROAS dropped from 3.8 to 2.9 because the top-performing creative (video #3) hit frequency 6.2 — creative fatigue threshold. Google Search is compensating — ROAS up 18%. Recommendation: pause video #3, launch 2 new UGC concepts next week. Email revenue up 41% driven by abandoned cart flow — expand to browse abandonment.'",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Formats and delivers the report: Google Doc + PDF + Slack summary to internal team + email draft to client — all ready for AM to review and send in 5 minutes",
+        tools: [
+          { label: "Google Docs", color: "#4285F4" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Slack", color: "#4A154B" },
+          { label: "Notion", color: "#8B8B8B" },
+        ],
+        detail: "Google Doc formatted · PDF exported · internal Slack summary posted to #client-bloom · client email drafted with 3-sentence exec summary ready for AM to personalize and send",
+      },
+    ],
+    result:
+      "20 client reports generated by Friday 4pm. Each report has verified numbers, industry benchmarks, and a narrative that identifies what drove performance and what to do next week. Account managers spend 20 minutes reviewing and personalizing — not 12 hours building from scratch. Agency upgraded to weekly reporting for all clients. Client retention improved 18% in 90 days.",
+  },
+
+  // ─── Sales: B2B SaaS RevOps Niche ────────────────────────────────────────
+  {
+    slug: "dead-pipeline-revival-sprint",
+    title: "Turn 6 months of dead pipeline into live opportunities this week",
+    icon: "🔄",
+    category: "sales",
+    categoryLabel: "Sales",
+    buyer: "VP of Sales / Head of RevOps, B2B SaaS companies (Series B–D, $5M–$50M ARR) with 150–1,000 employees",
+    painPoint:
+      "Every B2B SaaS company with 12+ months of sales history is sitting on a goldmine nobody touches: closed-lost deals. 30–40% of them become viable again within 6–12 months because budgets refresh, champions change companies and bring the vendor with them, competitors disappoint and the prospect is looking again, or the company raised a funding round and now has budget. A 300-person SaaS company closing 200 deals/year with a 40% win rate has 300+ closed-lost deals per year sitting in Salesforce — untouched. That's conservatively $5M–$15M in pipeline at zero acquisition cost. Nobody revisits them because it takes 4–6 hours per deal to research manually: check if the champion is still at the company, look for funding news, check if they've been posting competitor complaints, find a relevant angle to reach back out.",
+    trigger:
+      "Weekly: scan all Closed Lost deals from the past 6–18 months and surface the ones worth reviving right now, with personalized outreach ready to send",
+    accentColor: "hsl(145, 70%, 42%)",
+    metric: "Weekly · revive 5–15% of dead pipeline · $200k–$800k surfaced per run",
+    hoursSaved: "4–6 hrs saved per deal researched · 50+ deals reviewed in the time it took to research 1",
+    roi: [
+      "Revive 5–15% of dead deals — at zero customer acquisition cost",
+      "Surface $200k–$800k in pipeline per weekly run from deals already in your CRM",
+      "Each revived deal comes with personalized outreach referencing the exact reason it's worth pursuing again",
+      "Original AE gets full context: what changed, what to say, why now",
+      "Sentinel tracks which revival signals actually convert — model improves over time",
+    ],
+    uniqueAngle:
+      "Clay enriches lead data. Salesforce stores deal history. LinkedIn Sales Navigator shows job changes. But none of them coordinate all three to tell you: 'This deal from 8 months ago is worth calling because the champion just moved to a company 2× the size, they just raised a Series B, and they posted a LinkedIn complaint about their current vendor last week.' That's a 4-hour research job per deal. Valence AI's Scout runs that analysis on 300 deals simultaneously every Sunday night. By Monday morning, your team has a ranked list of the 15 deals most worth pursuing this week, each with a personalized 3-sentence outreach email referencing the specific reason they're worth calling back.",
+    steps: [
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Pulls all Closed Lost deals from Salesforce/HubSpot from the past 6–18 months — filters by deal size threshold, original loss reason, and company size to focus on the highest-potential targets",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Airtable", color: "#18BFFF" },
+        ],
+        detail: "342 Closed Lost deals pulled (last 18 months) · filtered to 147 deals ≥$15k ACV · 89 excluded: price objection with no budget signal · 58 deals in active analysis queue",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Cross-references each deal against 6 revival signals: champion LinkedIn job changes, company funding events, website visit recurrence in GA4, email re-engagement in HubSpot, competitor review site complaints, and hiring signals in job boards",
+        tools: [
+          { label: "LinkedIn", color: "#0A66C2" },
+          { label: "Crunchbase", color: "#1459F4" },
+          { label: "GA4", color: "#F9AB00" },
+          { label: "HubSpot", color: "#FF7A59" },
+          { label: "G2", color: "#FF492C" },
+          { label: "Greenhouse", color: "#25b84c" },
+        ],
+        detail: "58 deals analyzed · 12 champions changed companies · 7 companies raised funding rounds · 4 companies visited pricing page in last 14 days · 3 decision-makers posted competitor complaints on LinkedIn · 9 high-signal deals identified",
+      },
+      {
+        agent: "Scout",
+        emoji: "🔭",
+        color: "hsl(160, 84%, 39%)",
+        action: "Scores each deal on a revival priority matrix: signal strength × deal size × original relationship quality × time elapsed since close — ranks the full list from highest to lowest ROI to pursue",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "Google Sheets", color: "#34A853" },
+          { label: "Airtable", color: "#18BFFF" },
+        ],
+        detail: "Top deal: Apex Logistics · $48k ACV original deal · champion Sarah Chen moved to Director at 3× size company · company raised $22M Series B · revival score: 94/100 · recommended priority: call this week",
+      },
+      {
+        agent: "Ghost",
+        emoji: "👻",
+        color: "hsl(258, 90%, 66%)",
+        action: "Writes a personalized 3-sentence re-engagement email for each high-signal deal — references the specific reason it's worth calling back, acknowledges the previous conversation, and proposes a natural next step without being pushy",
+        tools: [
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Outreach", color: "#5951FF" },
+          { label: "Salesloft", color: "#1A1A1A" },
+          { label: "HubSpot", color: "#FF7A59" },
+        ],
+        detail: "'Hi Sarah — congrats on the move to Apex and the Series B. When we spoke at DataCo last year, the main blocker was budget — that's clearly changed now. Given Apex's scale, I think the conversation would look quite different. Worth a 20-minute call this week?' — personalized for each of 9 high-signal deals",
+      },
+      {
+        agent: "Sentinel",
+        emoji: "🔍",
+        color: "hsl(330, 81%, 60%)",
+        action: "QA pass: verifies champion is still at the new company, checks email isn't going to someone already in an active deal, confirms deal data is accurate, and validates the outreach tone matches company guidelines",
+        tools: [
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "LinkedIn", color: "#0A66C2" },
+          { label: "HubSpot", color: "#FF7A59" },
+        ],
+        detail: "9 deals reviewed · 1 flagged: champion Sarah Chen already has an open opportunity with another AE — removed from outreach queue · 8 approved · 1 email tone softened (original was too aggressive for enterprise relationship) · all clear",
+      },
+      {
+        agent: "Kaze",
+        emoji: "🌀",
+        color: "hsl(217, 91%, 60%)",
+        action: "Delivers the weekly revival report to RevOps and original AEs via Slack — ranked priority list, deal context, outreach emails ready to send, and instructions for each AE on what to do today",
+        tools: [
+          { label: "Slack", color: "#4A154B" },
+          { label: "Salesforce", color: "#00A1E0" },
+          { label: "Gmail", color: "#EA4335" },
+          { label: "Outreach", color: "#5951FF" },
+        ],
+        detail: "Monday 8am Slack report to #revops: 8 high-signal deals ranked · $342k in combined ACV · individual Slack DMs to 6 AEs with their specific deal + email ready · Salesforce tasks created for each",
+      },
+    ],
+    result:
+      "58 dead deals analyzed in 4 hours (would have taken a team of 3 a full week manually). 8 high-signal revival opportunities surfaced. $342k ACV in potential pipeline identified at zero acquisition cost. 6 AEs wake up Monday with a personalized outreach email ready to send and the full context of why now. Within 3 weeks: 2 deals reopened, 1 progressed to proposal stage.",
+  },
 ];
 
 // ─── Helper: get use cases by category ──────────────────────────────────────

@@ -17,7 +17,6 @@ import {
   HelpCircle,
   Rocket,
   Newspaper,
-  HeartPulse,
 } from "lucide-react";
 import { UserButton } from "@clerk/clerk-react";
 import { useQuery } from "convex/react";
@@ -32,7 +31,6 @@ const navItems = [
   { title: "Mission Board", path: "/board", icon: LayoutGrid },
   { title: "Missions", path: "/missions", icon: FolderOpen },
   { title: "Agents", path: "/agents", icon: Users },
-  { title: "Agent Health", path: "/health", icon: HeartPulse },
   { title: "Memory Bank", path: "/memory", icon: Brain },
   { title: "Integrations", path: "/integrations", icon: Plug },
   { title: "Webhooks", path: "/webhooks", icon: Webhook },

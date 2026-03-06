@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { motion, useInView, useReducedMotion, AnimatePresence } from "framer-motion";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { PilotModal } from "@/components/landing/PilotModal";
+import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroParticleField } from "@/components/landing/HeroParticleField";
 import {
   getUseCaseBySlug,
@@ -139,7 +140,6 @@ function ComparisonRow({
 // ─── Main page ──────────────────────────────────────────────────────────────
 export default function UseCasePage() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const prefersReduced = useReducedMotion();
   const [pilotOpen, setPilotOpen] = useState(false);
 
@@ -189,52 +189,10 @@ export default function UseCasePage() {
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <PilotModal open={pilotOpen} onClose={() => setPilotOpen(false)} />
 
-      {/* ── Sticky Nav ── */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="fixed top-0 left-0 right-0 z-50"
-        style={{
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          background: "hsl(240 33% 4% / 0.85)",
-          borderBottom: "1px solid hsl(var(--border) / 0.4)",
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link to="/landing" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-              <img src="/logo.svg" alt="Valence AI" className="w-6 h-6" />
-              <span className="font-bold text-sm tracking-tight">Valence AI</span>
-            </Link>
-            <span className="text-muted-foreground/30">/</span>
-            <span className="text-xs text-muted-foreground font-medium">
-              {CATEGORY_ICONS[useCase.category]} {CATEGORY_LABELS[useCase.category]}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/landing")}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
-            >
-              All Use Cases
-            </button>
-            <motion.button
-              onClick={() => setPilotOpen(true)}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="text-sm font-semibold px-4 py-1.5 rounded-lg"
-              style={{
-                background: "hsl(var(--primary))",
-                color: "hsl(var(--primary-foreground))",
-              }}
-            >
-              Request Access →
-            </motion.button>
-          </div>
-        </div>
-      </motion.nav>
+      <LandingNav
+        onPilotClick={() => setPilotOpen(true)}
+        breadcrumb={{ icon: CATEGORY_ICONS[useCase.category], label: CATEGORY_LABELS[useCase.category] }}
+      />
 
       {/* ── Hero Section ── */}
       <section className="relative pt-24 pb-16 overflow-hidden">

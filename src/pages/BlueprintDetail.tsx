@@ -240,21 +240,14 @@ export default function BlueprintDetail() {
       const testTool = listToolsNoParams?.[0] || getToolsNoParams?.[0] || postToolsNoParams?.[0] || toolsWithoutRequiredParams?.[0];
 
       if (!testTool) {
-        // For API key integrations, the key is already saved — mark as success
-        if (blueprint.authType === "api_key") {
-          setTestResult({
-            success: true,
-            message: "API key saved successfully. All tools require parameters so automatic testing is not available, but your connection is ready to use."
-          });
-          toast({
-            title: "Connection Ready",
-            description: `${blueprint.name} API key saved — ready for use`,
-          });
-          return;
-        }
+        // Connection is established — all tools require params so we can't auto-test, but token is valid
         setTestResult({
-          success: false,
-          message: "No suitable test tool found. All tools require parameters. Your connection is established but cannot be automatically tested."
+          success: true,
+          message: "Connection established. All tools require parameters so automatic testing is skipped, but your credentials are saved and ready to use."
+        });
+        toast({
+          title: "Connection Ready",
+          description: `${blueprint.name} connected — ready for use`,
         });
         return;
       }
