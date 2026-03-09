@@ -117,14 +117,61 @@ Watch agents think in real-time — every reasoning step, tool call, and decisio
 
 ---
 
-## Use Cases
+## Use Cases (32 workflows across 10 departments)
 
-1. **Automated Cold Outreach**: Scout researches prospects → Ghost writes personalized emails → Forge sets up tracking → Kaze reviews and approves
-2. **Competitive Intelligence**: Scout gathers competitor data → Ghost synthesizes report → Kaze distributes to stakeholders
-3. **Content Marketing Pipeline**: Scout researches topics → Ghost writes blog posts/social content → Sentinel reviews quality → Kaze publishes
-4. **Developer Workflow Automation**: Forge monitors GitHub → creates Jira tickets → builds code fixes → Scout validates against docs
-5. **Customer Onboarding Automation**: Agents handle welcome emails, CRM setup, integration configuration, and follow-up sequences
-6. **Cost Optimization Audits**: Scout analyzes spending data → Forge identifies savings → Ghost writes recommendations → Kaze prioritizes actions
+The platform is not limited to these — any workflow involving research, writing, data movement, QA, or coordination across tools can be built. These are proven, demo-ready scenarios.
+
+### Sales
+- **Win back dead deals** — Weekly scan of all closed-lost deals (6–18 months). Agents cross-reference 6 revival signals (champion job changes, funding events, pricing page revisits, email re-engagement, competitor complaints, hiring signals) → ranked priority list → personalized re-engagement email per deal, ready to send. Surfaces $200k–$800k in dead pipeline per run.
+- **Enrich leads & run outbound** — Pull raw leads → Scout enriches with company data, tech stack, intent signals → scores against ICP → Ghost writes personalized outreach → Kaze sequences in Outreach/Salesloft.
+- **CRM hygiene + activity logging** — Continuously syncs call/email activity from Gong, Gmail, and calendar into Salesforce/HubSpot. Flags stale deals, missing fields, and data quality issues without reps lifting a finger.
+- **Pipeline hygiene + forecast** — Weekly: pull all open opps, check for stale stages, missing close dates, and forecast accuracy. Ghost writes the updated forecast narrative for leadership.
+- **Dead pipeline revival sprint** — Deep dive into 6–18 months of closed-lost deals. Agents analyze 300+ deals in 4 hours (a manual job that takes a team a week). Returns the 15 highest-signal revival opportunities with outreach pre-written.
+
+### Marketing
+- **Case study pipeline** — Auto-triggered when a deal closes as Won + NPS ≥ 8. Agents pull deal data from Salesforce + Stripe + Intercom, draft a 1,500-word case study, 4 content formats (LinkedIn post, tweet thread, email snippet, Google Doc), and verify every metric against source data. 48 hrs from close to draft.
+- **Competitive intel radar** — Weekly: Scout monitors competitor websites, G2/Capterra, job boards, Product Hunt, and ad platforms. Ghost writes updated battle cards and threat assessment. Delivered Monday 9am. Replaces Klue/Crayon at $30k+/yr.
+- **SEO content engine** — Weekly keyword gap analysis → Scout identifies high-opportunity topics → Ghost writes full SEO article → Sentinel QAs for accuracy → Kaze publishes to CMS. 3× content output at 1/5 the cost.
+- **Cross-channel marketing reports** — Every Monday: pull Google Ads, Meta, GA4, email, and e-commerce data. Sentinel verifies every number. Ghost writes the performance narrative with insights. Delivered before standup.
+- **One blog post → 15 content assets** — Take one long-form post → Ghost repurposes into LinkedIn carousel, tweet thread, email newsletter, YouTube script, Instagram captions, and more. Distributed automatically.
+
+### Customer Success
+- **Upsell signals** — Daily: scan product usage, support tickets, NPS scores, and billing data for expansion signals. Surfaces accounts ready to upgrade with personalized outreach for CSM.
+- **QBR prep + health scores** — Pull product usage, support history, NPS, contract details, and renewal date per account → Ghost writes the QBR narrative and account health summary → CSM shows up prepared.
+- **Customer onboarding orchestration** — Trigger on new customer creation. Agents send welcome sequences, configure CRM records, create onboarding tasks in Jira/Asana, and check completion milestones automatically.
+- **Support ticket triage & routing** — Incoming tickets classified by sentiment, urgency, and category → auto-assigned to right agent/team → Ghost drafts suggested replies for Tier 1 → Sentinel flags escalation risks.
+
+### E-commerce (DTC Niche)
+- **Competitor price response** — Daily: Scout scrapes top 10 competitor stores for price changes. On detection: analyzes your margins, drafts counter-campaign (email + SMS + social), routes for one-click approval. Counter-campaign ready within 60 minutes of price drop.
+- **Inventory restock with demand forecasting** — Daily: Scout pulls inventory levels, sales velocity, upcoming campaigns from Klaviyo, and seasonal patterns. Flags SKUs at risk of stockout before a campaign spike. Supplier emails pre-drafted with reorder quantities.
+- **Review & UGC harvester** — Weekly: pulls reviews from G2, Trustpilot, Amazon, Google → identifies best quotes and user-generated content → pushes to product pages, ads, and email flows. Conversion lift 10–25%.
+- **Flash sale launch autopilot** — Trigger (manual, competitor alert, or revenue anomaly) → agents run inventory check, margin analysis, copy creation, QA, and scheduling simultaneously → flash sale live in under 60 minutes. 8+ hours of coordination compressed into one command.
+
+### Agency (Marketing Agency Niche)
+- **Client reporting autopilot** — Every Friday: pull all client data from ad platforms + analytics + email tools. Sentinel verifies every metric. Ghost writes the performance narrative with insights. Formatted report delivered ready to send. Saves 10–15 hrs per AM per week.
+- **Client performance narrative** — Goes deeper than data: Ghost writes the "why" — which creative hit fatigue, which channel is outperforming, what to do next week. Benchmarks against industry averages. Delivered as Google Doc + formatted email draft.
+- **New client audit & strategy in 24 hrs** — On new client onboarding: Scout audits all ad accounts, analytics, email performance, and competitor landscape simultaneously. Ghost writes a strategy deck with specific recommendations. What normally takes a senior strategist 2 weeks → delivered in 24 hours.
+
+### Finance
+- **Month-end close prep** — Last business day: Scout pulls Stripe, QuickBooks, Gusto, Ramp, and cross-reconciles. Ghost writes close narrative. Sentinel verifies all numbers. CFO package ready end-of-day. Close 3–5 days faster.
+- **Month-end close in 3 days, not 12** — Full AR/AP reconciliation: 842 transactions auto-matched, invoices processed, discrepancies flagged, board package assembled.
+- **Expense anomaly detection** — Daily: Scout analyzes all corporate card transactions against policy. Flags duplicates, policy violations, and contextual anomalies (e.g., same Uber charged by 3 employees). Ghost writes policy-citing notices. Catches 90%+ of violations.
+
+### Operations
+- **Vendor & contract renewal autopilot** — Monthly: scan all SaaS subscriptions, identify upcoming renewals, pull usage data to evaluate ROI, draft renegotiation talking points. Saves $50k–$200k/yr in unnecessary renewals.
+- **Meeting notes → action items → follow-up** — After every meeting (via calendar + transcript): Ghost writes structured notes, extracts action items, assigns owners, creates tasks in Jira/Asana, and sends follow-up email. Completion rate +60–80%.
+- **Cross-tool data sync + weekly ops report** — Continuous: syncs data bidirectionally across CRM, billing, project management, and HRIS. Weekly: pulls 28+ metrics from 8 sources, catches discrepancies, Ghost writes leadership report. Delivered Monday 8am.
+
+### HR & People
+- **Performance review prep** — Per review cycle: Scout pulls OKR data, project contributions, peer feedback, and collaboration metrics for every employee. Ghost writes a data-backed first draft per employee. Managers refine in 30 min instead of 3 hrs. For a 160-person company: saves 320–640 hrs per cycle.
+
+### DevOps / Engineering
+- **Incident response autopilot** — PagerDuty fires → agents pull recent deploys, CI/CD status, error logs, and infrastructure health → Ghost writes incident summary with root cause hypothesis → Jira ticket created → Slack war room opened. On-call wakes up to full context. MTTR -60%.
+- **Release notes & changelog** — On every GitHub merge to main: Scout reads the diff → Ghost writes user-facing release notes in plain English → Sentinel checks for breaking changes → published to docs site and Slack. Feature adoption +15–30%.
+
+### Legal & Compliance
+- **Regulatory change tracker** — Weekly: Scout monitors Federal Register, state AGs, SEC, FINRA, and relevant regulatory bodies. Ghost writes plain-English summary of anything affecting the business. Sentinel verifies citations. Jira compliance tasks created with deadlines. Never miss a regulatory deadline.
+- **Contract review & risk flagging** — Upload any vendor contract → Scout identifies non-standard clauses, missing protections, and liability risks → Ghost writes a plain-English risk summary with redline suggestions → Sentinel benchmarks against your standard terms. Review time -70%.
 
 ---
 

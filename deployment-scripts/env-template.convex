@@ -11,12 +11,12 @@ INTEGRATION_ENCRYPTION_KEY={AUTO_GENERATED}
 # Clerk (shared across all customers)
 CLERK_JWT_ISSUER_DOMAIN=https://clerk.valence.ai
 
-# SSH Proxy (shared Railway service)
-SSH_PROXY_URL=https://ssh-proxy-service-production.up.railway.app
+# SSH Proxy (runs on the customer's Lightsail agent server)
+SSH_PROXY_URL=http://{LIGHTSAIL_IP}:3001
 SSH_PROXY_SECRET={AUTO_GENERATED}
 
-# Agent Wakeup
-AGENT_WAKEUP_WEBHOOK_URL=https://ssh-proxy-service-production.up.railway.app/wake
+# Agent Wakeup (runs on the customer's Lightsail agent server)
+AGENT_WAKEUP_WEBHOOK_URL=http://{LIGHTSAIL_IP}:3333
 AGENT_WAKEUP_WEBHOOK_SECRET={AUTO_GENERATED}
 
 # Anthropic (for doc scraper)
