@@ -97,10 +97,10 @@ Required packages: `framer-motion`, `lucide-react`
 
 ## Code Output — GitHub Required
 
-- GitHub org/user: `appydam` — ALL repos go here, no exceptions
-- **Preferred:** Use `github/create_repository` integration tool via `/api/integrations/execute` — this creates under the OAuth-authenticated user (`appydam`)
-- **Fallback (if integration fails):** Use `gh` CLI: `gh repo create appydam/<project-name> --public --description "..." --clone`
-  - After cloning, set git user: `git config user.name "appydam" && git config user.email "appydam@users.noreply.github.com"`
+- **GitHub account**: Use whatever GitHub account is connected in the integration engine. Check `availableTools` in your heartbeat response — the `github/create_repository` tool's `aiUsageHint` will show the authenticated user. Do NOT hardcode an org name.
+- **Preferred:** Use `github/create_repository` integration tool via `/api/integrations/execute` — this creates under the OAuth-authenticated user automatically
+- **Fallback (if integration fails):** Use `gh` CLI: `gh repo create <project-name> --public --description "..." --clone`
+  - After cloning, set git user to match the authenticated GitHub account
 - Push all code with conventional commit messages. Include README.md.
 - Use descriptive, lowercase, hyphenated repo names
 
@@ -114,6 +114,29 @@ After pushing to GitHub: `rm -rf node_modules .next dist build .turbo`
 - **Never exceed 20 tool calls** in a single session.
 - **Signs of crash**: rate limit errors, timeout warnings — post immediately.
 - **Multi-deliverable tasks**: Build ONE deliverable per session, push, post partial update.
+
+### ⛔ PUSH BEFORE BUILD — Non-Negotiable
+
+**The session process is killed after 300 seconds.** `npm run build` / `next build` / `tsc` routinely exceed 300s on real projects. If you run the build first, the session dies mid-build and **your work is lost** — no deliverable, no GitHub push, nothing.
+
+**Mandatory order of operations for every build task:**
+1. Write all code
+2. `git add -A && git commit -m "feat: ..." && git push` ← **push first**
+3. Post partial deliverable to MC with GitHub URL (e.g. `"Pushed to GitHub — build verification in progress"`)
+4. **Then** run `npm run build` / `tsc` — if it passes, update the deliverable; if the session dies, the partial deliverable + repo URL already exist in MC
+5. Sentinel can clone and verify the repo independently
+
+**Never run `npm run build` before pushing and posting a partial deliverable.** The partial is infinitely better than zero.
+
+### Mid-Session Heartbeat (MANDATORY every 3-4 tool calls)
+
+Send a heartbeat after every 3-4 tool calls during a build to keep `lastAgentActivity` fresh. This prevents false "Delayed" banners in the dashboard. Fire-and-forget — do not block on it.
+
+```bash
+curl -s -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "Forge", "status": "working", "userId": "user_39f60iciK4nX4Q0efRxrfyuHqj2", "currentTaskId": "YOUR_TASK_ID"}'
+```
 
 ## Quality & Iteration
 
@@ -213,7 +236,7 @@ If curl fails with bash syntax errors, use `web_fetch POST https://beloved-squir
 
 ### Key Rules
 - **MANDATORY**: Claim "created GitHub issue" or "posted to Slack" ONLY if you actually called the API. Lying about tool execution is a terminal failure.
-- **If a tool fails**: Report actual error in MC comment. Retry with corrected params. Fall back to MC deliverable.
+- **If a tool fails 2+ times**: Stop retrying. Post content as MC deliverable via `POST /api/tasks/complete`. Note the failure in your comment. Never get stuck in an integration retry loop — MC deliverable is always valid fallback output.
 - **New integrations** appear automatically in `availableTools`. Read their `aiUsageHint`.
 - **Google Sheets**: `spreadsheetId` = string between `/d/` and `/edit` in URL. One row per call.
 

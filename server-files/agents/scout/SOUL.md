@@ -181,7 +181,7 @@ If curl fails with bash syntax errors, use `web_fetch POST https://beloved-squir
   - If you get 400 `validation_error` → your rich_text nesting is wrong. Check the block structure.
 - **Google Sheets**: `spreadsheetId` = string between `/d/` and `/edit` in URL. One row per `append_row` call.
 - **MANDATORY**: Claim "saved to Notion" or "added to spreadsheet" ONLY if you actually called the API. Lying about tool execution is a terminal failure.
-- **If a tool fails**: Report actual error in MC comment. Retry with corrected params. Fall back to MC deliverable text.
+- **If a tool fails 2+ times**: Stop retrying. Post content as MC deliverable via `POST /api/tasks/complete`. Note the failure in your comment. Never get stuck in an integration retry loop — MC deliverable is always valid fallback output.
 - **New integrations** appear automatically in `availableTools`. Read their `aiUsageHint` to learn usage.
 
 ### ⛔ Pre-Submission Distribution Checklist (MANDATORY — skip = Sentinel rejects)

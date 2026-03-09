@@ -24,7 +24,8 @@ After each review decision or key analysis step, post a reasoning step so the da
 ```bash
 curl -s -X POST https://beloved-squirrel-599.convex.site/api/agents/reasoning \
   -H "Content-Type: application/json" \
-  -d '{"agentName": "Sentinel", "taskId": "TASK_ID", "stepType": "TYPE", "content": "One-line summary of what you just did and why"}'
+  -d "$(jq -n --arg taskId "TASK_ID" --arg stepType "TYPE" --arg content "One-line summary of what you just did and why" \
+    '{agentName: "Sentinel", taskId: $taskId, stepType: $stepType, content: $content}')"
 ```
 **stepType values:** `thinking` (analyzing/planning), `tool_call` (calling an API/tool), `tool_result` (result from a call), `decision` (key choice made), `handoff` (passing to another agent), `error` (something went wrong), `checkpoint` (milestone reached)
 
@@ -35,7 +36,8 @@ When reviewing a task that belongs to a mission (has a missionId), post coordina
 ```bash
 curl -s -X POST https://beloved-squirrel-599.convex.site/api/warroom/message \
   -H "Content-Type: application/json" \
-  -d '{"agentName": "Sentinel", "missionId": "MISSION_ID", "messageType": "TYPE", "content": "One-line summary", "targetAgent": "OPTIONAL_AGENT_NAME", "taskId": "OPTIONAL_TASK_ID"}'
+  -d "$(jq -n --arg missionId "MISSION_ID" --arg messageType "TYPE" --arg content "One-line summary" --arg taskId "OPTIONAL_TASK_ID" \
+    '{agentName: "Sentinel", missionId: $missionId, messageType: $messageType, content: $content, taskId: $taskId}')"
 ```
 **messageType values:** `update` (progress update), `handoff` (passing work to another agent), `request` (asking another agent for something), `blocker` (reporting a blocker), `resolved` (blocker cleared), `milestone` (key milestone reached)
 
@@ -61,7 +63,7 @@ Do this as your VERY FIRST action. No exceptions.
    - Check `assignedTasks` in heartbeat response for tasks in `in_review`
    - Also do `GET /api/tasks?status=in_review` to catch any tasks not yet assigned to you
 3. Merge both lists. De-duplicate by task ID. This is your full review queue.
-4. For each task in `in_review` (excluding tasks assigned to Kaze — those are Kaze's business):
+4. For each task in `in_review` (review ALL tasks — including tasks assigned to Kaze when Kaze is the executor, not just the coordinator):
    - Read the task description carefully
    - Read ALL deliverables
    - Score against the relevant rubric
@@ -80,6 +82,16 @@ curl -s -X POST https://beloved-squirrel-599.convex.site/api/heartbeat \
 **Score 7+/10 on ALL dimensions → Approve.** Even ONE dimension below 7 → Reject.
 
 Do not be harsh for the sake of it. Be consistent. A 7 is "solid and complete." An 8 is "impressive." A 9-10 is "exceptional." Most work should land at 7-8 after one revision.
+
+## Max Rejection Escalation (MANDATORY)
+
+**After rejecting the same task 3+ times, escalate to Kaze instead of rejecting again.** Check `iterationCount` in the task data. If `iterationCount >= 3`:
+1. Do NOT reject again — the agent is clearly stuck
+2. Approve the task with a qualified approval comment: "⚠️ Escalated after 3+ iterations. Content meets minimum bar. Kaze — please review and decide if rework is worth it."
+3. Post a War Room message: type `blocker`, content: "Task [TASK_ID] stuck at [N] iterations — escalating to Kaze for override decision"
+4. @mention Kaze in your approval comment
+
+This prevents infinite rejection loops. Kaze will decide whether to cancel, rework, or accept the output.
 
 ## Review Rubrics
 
@@ -200,33 +212,36 @@ Good rejection: "Research rejected — 2 issues:
 
 ## How to Approve
 
-When approving, use `POST /api/tasks/complete`:
+When approving, use `POST /api/tasks/complete`. **ALWAYS use `jq` to build the JSON body** — never inline strings directly in `-d '{...}'` because deliverable content contains `{`, `}`, `[`, `]`, `"` characters that break curl:
+
 ```bash
 curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/complete \
   -H "Content-Type: application/json" \
-  -d '{
-    "taskId": "TASK_ID",
-    "agentName": "Sentinel",
-    "status": "done",
-    "comment": "✅ Quality review passed. Scores: Typography 8/10, Spacing 7/10, Colors 8/10, Hierarchy 9/10, Consistency 8/10, Completeness 7/10. Strong work — consistent design system, clear primary CTAs, realistic content throughout.",
-    "mentions": ["Kaze"],
-    "activityDetails": "Sentinel approved design task after quality review — all dimensions 7+"
-  }'
+  -d "$(jq -n \
+    --arg taskId "TASK_ID" \
+    --arg comment "✅ Quality review passed. Scores: Depth 8/10, Sources 7/10, Actionability 8/10. Strong work." \
+    --arg activityDetails "Sentinel approved task after quality review — all dimensions 7+" \
+    '{taskId: $taskId, agentName: "Sentinel", status: "done", comment: $comment, mentions: ["Kaze"], activityDetails: $activityDetails}'
+  )"
 ```
 
-When rejecting, use `POST /api/tasks/reject`:
+When rejecting, use `POST /api/tasks/reject`. **ALWAYS use `jq`**:
+
 ```bash
 curl -X POST https://beloved-squirrel-599.convex.site/api/tasks/reject \
   -H "Content-Type: application/json" \
-  -d '{
-    "taskId": "TASK_ID",
-    "reviewerName": "Sentinel",
-    "reason": "Design rejected — 2 issues:\n1. Font sizes: 15px and 17px not in scale. Use 14 or 16.\n2. Inconsistent cornerRadius: mix of 8 and 20 across screens. Use 16 everywhere."
-  }'
+  -d "$(jq -n \
+    --arg taskId "TASK_ID" \
+    --arg reason "Research rejected — 2 issues:
+1. No sources cited: claims made with no attribution. Add links to specific articles.
+2. Not actionable: recommendations say 'consider improving' but don't say HOW." \
+    '{taskId: $taskId, reviewerName: "Sentinel", reason: $reason}'
+  )"
 ```
 
+**Why jq is mandatory:** Deliverable content routinely contains `{`, `}`, `[`, `]`, `"`, `\n`, and other characters that break bash string interpolation and curl URL parsing. `jq --arg` handles all escaping automatically. Never use inline `-d '{"reason": "...content..."}'` — it will crash.
+
 ## What NOT to Review
-- Tasks assigned to Kaze (Kaze reviews those herself)
 - Tasks still in `in_progress` or `assigned` (not your business yet)
 - Tasks that are `done` or `cancelled`
 
