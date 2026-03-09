@@ -1,6 +1,6 @@
 import { SignIn, SignUp } from "@clerk/clerk-react";
 import { dark } from "@clerk/themes";
-import { Sparkles, Zap, Shield, Users } from "lucide-react";
+import { Bot, Layers, Plug, BarChart3 } from "lucide-react";
 import { useState } from "react";
 
 const Login = () => {
@@ -21,25 +21,25 @@ const Login = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-500 p-2 flex items-center justify-center">
-                <img src="/logo.svg" alt="Mission Control" className="w-8 h-8" />
+                <img src="/logo.svg" alt="Valence" className="w-8 h-8" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
-                  Mission Control
+                  Valence
                 </h1>
-                <p className="text-sm text-muted-foreground">Zero Human Platform</p>
+                <p className="text-sm text-muted-foreground">Your AI Agent Command Center</p>
               </div>
             </div>
 
             <h2 className="text-4xl font-bold leading-tight">
-              Orchestrate your AI agents with{" "}
+              Run your business with{" "}
               <span className="bg-gradient-to-r from-primary via-blue-500 to-purple-500 bg-clip-text text-transparent">
-                precision and power
+                autonomous AI agents
               </span>
             </h2>
 
             <p className="text-lg text-muted-foreground">
-              Deploy, manage, and scale your autonomous AI workforce across 130+ integrations.
+              Assign missions, track deliverables, and connect your entire SaaS stack — all in one place.
             </p>
           </div>
 
@@ -47,41 +47,41 @@ const Login = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-start gap-3 p-4 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-5 h-5 text-primary" />
+                <Bot className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm mb-1">Lightning Fast</h3>
-                <p className="text-xs text-muted-foreground">Real-time agent orchestration</p>
+                <h3 className="font-semibold text-sm mb-1">5 Specialized Agents</h3>
+                <p className="text-xs text-muted-foreground">Kaze, Scout, Forge, Ghost & Sentinel</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-4 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-5 h-5 text-blue-500" />
+                <Layers className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm mb-1">Secure & Private</h3>
-                <p className="text-xs text-muted-foreground">Enterprise-grade security</p>
+                <h3 className="font-semibold text-sm mb-1">Missions & War Room</h3>
+                <p className="text-xs text-muted-foreground">Assign tasks, review deliverables</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-4 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm">
               <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-purple-500" />
+                <Plug className="w-5 h-5 text-purple-500" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm mb-1">Multi-Agent</h3>
-                <p className="text-xs text-muted-foreground">Coordinate agent squads</p>
+                <h3 className="font-semibold text-sm mb-1">Native Integrations</h3>
+                <p className="text-xs text-muted-foreground">Notion, Slack, GitHub, HubSpot & more</p>
               </div>
             </div>
 
             <div className="flex items-start gap-3 p-4 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm">
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-green-500" />
+                <BarChart3 className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm mb-1">130+ Integrations</h3>
-                <p className="text-xs text-muted-foreground">Connect to any SaaS tool</p>
+                <h3 className="font-semibold text-sm mb-1">Analytics & Autopilot</h3>
+                <p className="text-xs text-muted-foreground">Morning briefs, health monitoring</p>
               </div>
             </div>
           </div>
@@ -89,16 +89,16 @@ const Login = () => {
           {/* Stats */}
           <div className="flex items-center gap-8 pt-6 border-t border-border/50">
             <div>
-              <div className="text-2xl font-bold text-foreground">4</div>
+              <div className="text-2xl font-bold text-foreground">5</div>
               <div className="text-xs text-muted-foreground">Active Agents</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-foreground">130+</div>
+              <div className="text-2xl font-bold text-foreground">10+</div>
               <div className="text-xs text-muted-foreground">Integrations</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-foreground">99.9%</div>
-              <div className="text-xs text-muted-foreground">Uptime</div>
+              <div className="text-2xl font-bold text-foreground">24/7</div>
+              <div className="text-xs text-muted-foreground">Autonomous</div>
             </div>
           </div>
         </div>
@@ -112,8 +112,8 @@ const Login = () => {
                 <img src="/logo.svg" alt="Mission Control" className="w-8 h-8" />
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">Mission Control</h1>
-            <p className="text-sm text-muted-foreground">Zero Human Platform</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Valence</h1>
+            <p className="text-sm text-muted-foreground">Your AI Agent Command Center</p>
           </div>
 
           <div className="w-full max-w-md">
@@ -207,11 +207,11 @@ const Login = () => {
             {/* Custom footer */}
             <div className="mt-4 text-center text-xs text-muted-foreground">
               By continuing, you agree to our{" "}
-              <a href="#" className="text-primary hover:underline">
+              <a href="/terms" className="text-primary hover:underline">
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="#" className="text-primary hover:underline">
+              <a href="/privacy" className="text-primary hover:underline">
                 Privacy Policy
               </a>
             </div>

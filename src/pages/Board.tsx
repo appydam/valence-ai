@@ -9,10 +9,11 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { TaskStatus, AgentName, TaskPriority } from "@/types/mission";
-import { Plus, List, FolderPlus, Zap, Swords, LayoutGrid, GitBranch, ChevronRight, ArrowRight, FileText } from "lucide-react";
+import { Plus, List, FolderPlus, Zap, Swords, LayoutGrid, GitBranch, ChevronRight, ArrowRight, FileText, AlertTriangle, RotateCw } from "lucide-react";
 import { AGENT_CONFIG } from "@/types/mission";
 import { Link, useSearchParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
+import { tenant } from "@/tenant";
 import { useToast } from "@/hooks/use-toast";
 
 const columns: { key: TaskStatus; label: string }[] = [
@@ -55,6 +56,41 @@ const Board = () => {
   const tasks = useQuery(api.tasks.listByMission, { missionId: missionIdToUse }) ?? [];
 
   const createTask = useMutation(api.tasks.create);
+  const updateTask = useMutation(api.tasks.update);
+
+  const STUCK_THRESHOLD_MS = 15 * 60 * 1000;
+  const stuckTasks = tasks.filter(t =>
+    (t.status === "assigned" || t.status === "in_progress") &&
+    Date.now() - ((t as any).lastAgentActivity ?? t.updatedAt) > STUCK_THRESHOLD_MS
+  );
+
+  const [retrying, setRetrying] = useState<string | null>(null);
+
+  const handleRetry = async (taskId: string) => {
+    setRetrying(taskId);
+    try {
+      const task = tasks.find(t => t._id === taskId);
+      if (!task) return;
+      await updateTask({ id: taskId as Id<"tasks">, status: task.status as any });
+      toast({ title: "Task retried", description: "Agent will pick it up within 2 minutes." });
+    } catch {
+      toast({ title: "Retry failed", description: "Could not reset task.", variant: "destructive" });
+    } finally {
+      setRetrying(null);
+    }
+  };
+
+  const handleRetryAll = async () => {
+    setRetrying("all");
+    try {
+      await Promise.all(stuckTasks.map(t => updateTask({ id: t._id as Id<"tasks">, status: t.status as any })));
+      toast({ title: `${stuckTasks.length} tasks retried`, description: "Agents will pick them up within 2 minutes." });
+    } catch {
+      toast({ title: "Retry failed", description: "Could not reset tasks.", variant: "destructive" });
+    } finally {
+      setRetrying(null);
+    }
+  };
 
   const [selectedTaskId, setSelectedTaskId] = useState<Id<"tasks"> | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
@@ -83,8 +119,7 @@ const Board = () => {
   const handleWakeAgents = async () => {
     setWakingAgents(true);
     try {
-      const convexSiteUrl = import.meta.env.VITE_CONVEX_URL.replace('.convex.cloud', '.convex.site');
-      const response = await fetch(`${convexSiteUrl}/api/agents/wake`, {
+      const response = await fetch(`${tenant.convexSiteUrl}/api/agents/wake`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -256,6 +291,24 @@ const Board = () => {
           </div>
         )}
 
+        {/* Mission health banner */}
+        {stuckTasks.length > 0 && view === "board" && (
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-2">
+            <span className="flex items-center gap-2 text-xs text-amber-500 font-medium">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              {stuckTasks.length} task{stuckTasks.length > 1 ? "s" : ""} appear delayed — agents may be recovering.
+            </span>
+            <button
+              onClick={handleRetryAll}
+              disabled={retrying === "all"}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-500/15 text-amber-500 hover:bg-amber-500/25 transition-colors disabled:opacity-50 shrink-0 ml-3"
+            >
+              <RotateCw className={`w-3 h-3 ${retrying === "all" ? "animate-spin" : ""}`} />
+              Retry All
+            </button>
+          </div>
+        )}
+
         {/* Kanban view */}
         {view === "board" && (
           <div className="flex gap-2 pb-4">
@@ -269,7 +322,7 @@ const Board = () => {
                   </div>
                   <div className="space-y-2">
                     {colTasks.map(task => (
-                      <TaskCard key={task._id} task={task} onClick={() => setSelectedTaskId(task._id)} />
+                      <TaskCard key={task._id} task={task} onClick={() => setSelectedTaskId(task._id)} onRetry={handleRetry} />
                     ))}
                     {colTasks.length === 0 && (
                       <div className="p-6 rounded-lg border border-dashed border-border text-center">

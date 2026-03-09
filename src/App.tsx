@@ -8,7 +8,6 @@ import { useUser } from "@clerk/clerk-react";
 import { useEffect, useRef } from "react";
 import { api } from "../convex/_generated/api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { CrosshairCursor } from "./components/CrosshairCursor";
 import Index from "./pages/Index";
 import Board from "./pages/Board";
 import Missions from "./pages/Missions";
@@ -117,7 +116,6 @@ function AuthenticatedRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <CrosshairCursor />
       <Toaster />
       <Sonner />
       <BrowserRouter>

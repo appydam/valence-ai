@@ -169,7 +169,6 @@
   }
 }
 
-/* ── Kill native cursor — must be after all @layer blocks to win the cascade ── */
 html, body, * {
-  cursor: none !important;
+  cursor: auto !important;
 }

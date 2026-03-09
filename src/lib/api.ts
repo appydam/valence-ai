@@ -1,4 +1,6 @@
-const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL as string;
+import { tenant } from "@/tenant";
+
+const CONVEX_SITE_URL = tenant.convexSiteUrl;
 
 /**
  * Get the Clerk JWT token for authenticating HTTP requests to Convex.

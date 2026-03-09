@@ -1,6 +1,6 @@
 import { AGENT_CONFIG, AgentName, TaskPriority } from "@/types/mission";
 import { getRelativeTime } from "@/lib/time";
-import { MessageSquare, Package } from "lucide-react";
+import { MessageSquare, Package, AlertTriangle, RotateCw } from "lucide-react";
 
 interface TaskData {
   _id: string;
@@ -10,18 +10,27 @@ interface TaskData {
   assignee?: AgentName;
   tags: string[];
   updatedAt: number;
+  lastAgentActivity?: number;
   deliverables: { name: string; type: string; content: string }[];
   iterationCount?: number;
   maxIterations?: number;
   dependsOn?: string[];
 }
 
-export function TaskCard({ task, onClick, commentCount = 0 }: { task: TaskData; onClick: () => void; commentCount?: number }) {
+const STUCK_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
+
+export function TaskCard({ task, onClick, commentCount = 0, onRetry }: { task: TaskData; onClick: () => void; commentCount?: number; onRetry?: (taskId: string) => void }) {
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
   const hasDeliverables = task.deliverables.length > 0;
   const isBlocked = task.status !== "done" && task.status !== "cancelled" && task.dependsOn && task.dependsOn.length > 0;
   const hasIterations = (task.iterationCount ?? 0) > 0;
   const maxIter = task.maxIterations ?? 3;
+
+  // Use lastAgentActivity (set by heartbeat) if available, otherwise fall back to updatedAt
+  const lastActivity = task.lastAgentActivity ?? task.updatedAt;
+  const isStuck =
+    (task.status === "assigned" || task.status === "in_progress") &&
+    Date.now() - lastActivity > STUCK_THRESHOLD_MS;
 
   return (
     <button
@@ -89,6 +98,22 @@ export function TaskCard({ task, onClick, commentCount = 0 }: { task: TaskData; 
           <span className="text-[10px]">{getRelativeTime(task.updatedAt)}</span>
         </div>
       </div>
+
+      {isStuck && (
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-amber-500/20">
+          <span className="flex items-center gap-1 text-[10px] text-amber-500 font-medium">
+            <AlertTriangle className="w-3 h-3" /> Delayed
+          </span>
+          {onRetry && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRetry(task._id); }}
+              className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-500 hover:bg-amber-500/25 transition-colors font-medium"
+            >
+              <RotateCw className="w-2.5 h-2.5" /> Retry
+            </button>
+          )}
+        </div>
+      )}
     </button>
   );
 }

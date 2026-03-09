@@ -33,6 +33,7 @@ import {
   Send,
   ChevronRight,
 } from "lucide-react";
+import { FileAttachButton } from "@/components/FileAttachButton";
 
 type AutopilotState = "input" | "loading" | "review" | "launched";
 
@@ -366,6 +367,8 @@ export default function Autopilot() {
   const [isRefining, setIsRefining] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [templateFilter, setTemplateFilter] = useState<string | null>(null);
+  const [attachmentContext, setAttachmentContext] = useState<string | null>(null);
+  const [attachmentName, setAttachmentName] = useState<string | null>(null);
 
   const decompose = useAction(api.missionAutopilot.decomposeMission);
   const launch = useMutation(api.missionAutopilotQueries.launchMission);
@@ -393,7 +396,11 @@ export default function Autopilot() {
     setError(null);
     setState("loading");
     try {
-      const result = await decompose({ goal: goal.trim(), userId });
+      const result = await decompose({
+        goal: goal.trim(),
+        userId,
+        context: attachmentContext ?? undefined,
+      });
       setPlan(result.plan as DecomposedPlan);
       setSessionId(result.sessionId as string);
       setState("review");
@@ -580,6 +587,19 @@ export default function Autopilot() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* File attachment */}
+                  <FileAttachButton
+                    variant="toolbar"
+                    attachedFileName={attachmentName}
+                    onSummaryReady={(summary, fileName) => {
+                      setAttachmentContext(summary);
+                      setAttachmentName(fileName);
+                    }}
+                    onClear={() => {
+                      setAttachmentContext(null);
+                      setAttachmentName(null);
+                    }}
+                  />
                   {/* Voice input */}
                   {voice.isAvailable && (
                     <button

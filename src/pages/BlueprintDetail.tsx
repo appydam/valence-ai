@@ -51,6 +51,7 @@ export default function BlueprintDetail() {
   const [expandedTool, setExpandedTool] = useState<string | null>(null);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [apiKey, setApiKey] = useState("");
+  const [shopName, setShopName] = useState("");
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; data?: any } | null>(null);
   const [showResponseData, setShowResponseData] = useState(false);
@@ -131,8 +132,19 @@ export default function BlueprintDetail() {
   const handleConnectOAuth = async () => {
     if (!blueprint) return;
 
+    // For Shopify, require a shop name to resolve the {shop} placeholder
+    const instanceParams: Record<string, string> | undefined =
+      blueprint.slug === "shopify" && shopName
+        ? { shop: shopName.replace(/\.myshopify\.com.*$/, "").trim() }
+        : undefined;
+
+    if (blueprint.slug === "shopify" && !shopName) {
+      toast({ title: "Shop name required", description: "Enter your Shopify store subdomain to continue.", variant: "destructive" });
+      return;
+    }
+
     try {
-      await connectOAuth(blueprint.slug);
+      await connectOAuth(blueprint.slug, instanceParams);
       toast({
         title: "Connected!",
         description: `${blueprint.name} is now available to agents`,
@@ -549,6 +561,26 @@ export default function BlueprintDetail() {
 
             {blueprint.authType === "oauth2" && isOAuthConfigured() && (
               <div className="space-y-3">
+                {blueprint.slug === "shopify" && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Shopify Store Subdomain
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        className="flex-1 px-3 py-2 border rounded-md text-sm"
+                        placeholder="your-store-name"
+                        value={shopName}
+                        onChange={(e) => setShopName(e.target.value)}
+                      />
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">.myshopify.com</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter just the subdomain (e.g. <code>valence-ai-test-store</code>)
+                    </p>
+                  </div>
+                )}
                 <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                   <p className="text-sm text-blue-900 dark:text-blue-100">
                     Click "Connect" below to open the OAuth authorization page in a popup window.
@@ -610,6 +642,7 @@ export default function BlueprintDetail() {
                 disabled={
                   isLoading ||
                   (blueprint.authType === "oauth2" && !isOAuthConfigured()) ||
+                  (blueprint.authType === "oauth2" && blueprint.slug === "shopify" && !shopName) ||
                   (blueprint.authType !== "oauth2" && !apiKey)
                 }
               >

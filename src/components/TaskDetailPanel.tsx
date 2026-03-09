@@ -8,7 +8,9 @@ import { Id } from "../../convex/_generated/dataModel";
 import { X, Check, Inbox, Trash2, MessageSquare, Package, ChevronDown, ChevronRight, AlertTriangle, Link2, XCircle, Plus, Search, Zap } from "lucide-react";
 import { ReasoningStream } from "@/components/ReasoningStream";
 
-const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_URL?.replace(".convex.cloud", ".convex.site") as string;
+import { tenant } from "@/tenant";
+
+const CONVEX_SITE_URL = tenant.convexSiteUrl;
 
 const statusOptions: TaskStatus[] = ["inbox", "assigned", "in_progress", "in_review", "done", "cancelled"];
 const priorityOptions: TaskPriority[] = ["low", "medium", "high", "urgent"];

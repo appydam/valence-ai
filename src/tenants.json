@@ -1,0 +1,15 @@
+{
+  "_comment": "Maps subdomain slug → Convex URLs. Add a new entry when onboarding a customer. Requires Vercel redeploy (~30s).",
+  "tenants": {
+    "localhost": {
+      "convexUrl": "https://beloved-squirrel-599.convex.cloud",
+      "convexSiteUrl": "https://beloved-squirrel-599.convex.site",
+      "clerkPublishableKey": "pk_test_b24tZmxhbWluZ28tMzcuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    }
+  },
+  "fallback": {
+    "convexUrl": "",
+    "convexSiteUrl": "",
+    "clerkPublishableKey": ""
+  }
+}

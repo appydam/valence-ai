@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { AgentName, AGENT_CONFIG, TaskPriority } from "@/types/mission";
 import { X, Search, Link2 } from "lucide-react";
+import { FileAttachButton } from "@/components/FileAttachButton";
 
 interface Mission {
   _id: string;
@@ -43,6 +44,10 @@ export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps)
   const [tagsInput, setTagsInput] = useState("");
   const [selectedMissionId, setSelectedMissionId] = useState<string>("");
 
+  // Attachment state
+  const [attachmentSummary, setAttachmentSummary] = useState<string | null>(null);
+  const [attachmentName, setAttachmentName] = useState<string | null>(null);
+
   // Dependency state
   const [selectedDeps, setSelectedDeps] = useState<Id<"tasks">[]>([]);
   const [showDepSearch, setShowDepSearch] = useState(false);
@@ -62,9 +67,12 @@ export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps)
 
   const handleCreate = () => {
     if (!title.trim()) return;
+    const fullDescription = attachmentSummary
+      ? `${description.trim()}\n\n---\nAttached context (${attachmentName ?? "file"}, summarized by Claude):\n${attachmentSummary}`
+      : description.trim();
     onCreate({
       title: title.trim(),
-      description: description.trim(),
+      description: fullDescription,
       priority,
       assignee: assignee || undefined,
       tags: tagsInput.split(",").map(t => t.trim()).filter(Boolean),
@@ -104,6 +112,21 @@ export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps)
             <label className="text-xs text-muted-foreground font-medium mb-1 block">Description</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe the task..." rows={3}
               className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground border-0 outline-none focus:ring-1 focus:ring-primary resize-none" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground font-medium mb-1 block">Context File <span className="text-muted-foreground/50 font-normal">(optional)</span></label>
+            <FileAttachButton
+              variant="block"
+              attachedFileName={attachmentName}
+              onSummaryReady={(summary, fileName) => {
+                setAttachmentSummary(summary);
+                setAttachmentName(fileName);
+              }}
+              onClear={() => {
+                setAttachmentSummary(null);
+                setAttachmentName(null);
+              }}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
