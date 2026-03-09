@@ -833,9 +833,48 @@ function FeatureBlock({
 }
 
 // ─── Feature visuals ─────────────────────────────────────────────────────────
+const TEAM_CAROUSEL_SLIDES = [
+  {
+    src: "/screenshots/agents_task.png",
+    alt: "Task Detail — AlgoHouse Revenue Engine",
+    label: "Task Detail",
+    caption: "Deliverables injected into downstream context",
+  },
+  {
+    src: "/screenshots/mission_board2.png",
+    alt: "Mission Board — agent task coordination",
+    label: "Mission Board",
+    caption: "Task dependency graph with automatic chain reactions",
+  },
+  {
+    src: "/screenshots/autopilot.png",
+    alt: "Autopilot — autonomous agent execution",
+    label: "Autopilot Mode",
+    caption: "Agents work simultaneously, hands-free",
+  },
+];
+
 function TaskScreenshotVisual() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const [active, setActive] = useState(0);
+  const [direction, setDirection] = useState(1);
+
+  const go = (idx: number) => {
+    setDirection(idx > active ? 1 : -1);
+    setActive(idx);
+  };
+
+  // Auto-advance every 3.5 s
+  useEffect(() => {
+    const t = setInterval(() => {
+      setDirection(1);
+      setActive((p) => (p + 1) % TEAM_CAROUSEL_SLIDES.length);
+    }, 3500);
+    return () => clearInterval(t);
+  }, []);
+
+  const slide = TEAM_CAROUSEL_SLIDES[active];
 
   return (
     <motion.div
@@ -845,38 +884,121 @@ function TaskScreenshotVisual() {
       animate={isInView ? { opacity: 1, x: 0 } : {}}
       transition={{ duration: 0.7, type: "spring", stiffness: 80, damping: 18 }}
     >
-      {/* Glow */}
+      {/* Ambient glow */}
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse at 50% 50%, hsl(38 92% 50% / 0.12) 0%, transparent 70%)",
-          filter: "blur(30px)",
-          transform: "scale(1.1)",
+          background: "radial-gradient(ellipse at 50% 50%, hsl(38 92% 50% / 0.14) 0%, transparent 70%)",
+          filter: "blur(32px)",
+          transform: "scale(1.15)",
         }}
       />
 
+      {/* Browser chrome + slide */}
       <div
         className="relative rounded-xl overflow-hidden"
         style={{
-          border: "1px solid hsl(38 92% 50% / 0.2)",
-          boxShadow: "0 0 0 1px hsl(var(--border) / 0.4), 0 24px 60px hsl(240 33% 3% / 0.8), 0 0 40px hsl(38 92% 50% / 0.06)",
+          border: "1px solid hsl(38 92% 50% / 0.22)",
+          boxShadow:
+            "0 0 0 1px hsl(var(--border) / 0.4), 0 24px 60px hsl(240 33% 3% / 0.85), 0 0 40px hsl(38 92% 50% / 0.07)",
         }}
       >
-        {/* Browser chrome */}
+        {/* Fake browser bar */}
         <div
-          className="flex items-center gap-2 px-3 py-2"
+          className="flex items-center gap-2 px-3 py-2 select-none"
           style={{ background: "hsl(240 25% 5%)", borderBottom: "1px solid hsl(var(--border) / 0.4)" }}
         >
           <div className="w-2 h-2 rounded-full bg-red-500/60" />
           <div className="w-2 h-2 rounded-full bg-yellow-500/60" />
           <div className="w-2 h-2 rounded-full bg-green-500/60" />
-          <span className="ml-2 text-[10px] text-muted-foreground/40 font-mono">Task Detail — AlgoHouse Revenue Engine</span>
+          <span className="ml-2 text-[10px] text-muted-foreground/40 font-mono">{slide.label}</span>
         </div>
-        <img
-          src="/screenshots/agents_task.png"
-          alt="Valence AI Task Detail"
-          className="w-full block"
-        />
+
+        {/* Sliding image */}
+        <div className="relative overflow-hidden" style={{ aspectRatio: "16/9" }}>
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.img
+              key={active}
+              src={slide.src}
+              alt={slide.alt}
+              custom={direction}
+              variants={{
+                enter: (d: number) => ({ opacity: 0, x: d * 40 }),
+                center: { opacity: 1, x: 0 },
+                exit: (d: number) => ({ opacity: 0, x: d * -40 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </AnimatePresence>
+
+          {/* Prev arrow */}
+          <motion.button
+            onClick={() => go((active - 1 + TEAM_CAROUSEL_SLIDES.length) % TEAM_CAROUSEL_SLIDES.length)}
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.92 }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center"
+            style={{
+              width: 36, height: 36,
+              background: "hsl(240 25% 6% / 0.85)",
+              border: "1px solid hsl(38 92% 50% / 0.35)",
+              borderRadius: "50%",
+              backdropFilter: "blur(8px)",
+              boxShadow: "0 0 14px hsl(38 92% 50% / 0.25), inset 0 1px 0 hsl(38 92% 50% / 0.12)",
+              color: "hsl(38 92% 50%)",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </motion.button>
+
+          {/* Next arrow */}
+          <motion.button
+            onClick={() => go((active + 1) % TEAM_CAROUSEL_SLIDES.length)}
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.92 }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center"
+            style={{
+              width: 36, height: 36,
+              background: "hsl(240 25% 6% / 0.85)",
+              border: "1px solid hsl(38 92% 50% / 0.35)",
+              borderRadius: "50%",
+              backdropFilter: "blur(8px)",
+              boxShadow: "0 0 14px hsl(38 92% 50% / 0.25), inset 0 1px 0 hsl(38 92% 50% / 0.12)",
+              color: "hsl(38 92% 50%)",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M5 2L10 7L5 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </motion.button>
+        </div>
+
+        {/* Dot nav + caption bar */}
+        <div
+          className="flex items-center justify-between px-4 py-2.5"
+          style={{ background: "hsl(240 25% 5%)", borderTop: "1px solid hsl(var(--border) / 0.3)" }}
+        >
+          <span className="text-[11px] text-muted-foreground/60 font-mono truncate pr-3">{slide.caption}</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {TEAM_CAROUSEL_SLIDES.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => go(i)}
+                className="rounded-full transition-all duration-300"
+                style={{
+                  width: i === active ? 18 : 6,
+                  height: 6,
+                  background: i === active ? "hsl(38 92% 50%)" : "hsl(var(--border) / 0.6)",
+                }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Floating annotation */}
