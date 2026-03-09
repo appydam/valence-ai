@@ -58,7 +58,7 @@ async function callBedrock(prompt: string): Promise<string> {
 
   const body = JSON.stringify({
     anthropic_version: "bedrock-2023-05-31",
-    max_tokens: 4096,
+    max_tokens: 16384,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -157,47 +157,140 @@ export const decomposeMission = action({
 
     const integrationContext =
       connectedIntegrations.length > 0
-        ? `\nUSER'S CONNECTED INTEGRATIONS (available for agents to use): ${connectedIntegrations.join(", ")}`
-        : "\nNo integrations connected yet.";
+        ? `USER'S CONNECTED INTEGRATIONS (available for agents to use): ${connectedIntegrations.join(", ")}`
+        : "No integrations connected yet.";
 
-    const prompt = `You are the Mission Autopilot for an AI agent orchestration platform called Mission Control. Given a user's goal, decompose it into a structured task plan for execution by a squad of 4 AI agents.
+    const documentContext = args.context
+      ? `\n═══════════════════════════════════════════════════════
+ATTACHED DOCUMENT CONTEXT (treat this as ground truth — use specific details, names, numbers, and constraints from this document when writing task descriptions)
+═══════════════════════════════════════════════════════
+${args.context}
+═══════════════════════════════════════════════════════`
+      : "";
 
-AGENT ROSTER:
-- Kaze (🌀 Chief of Staff): Coordinates, delegates, reviews, approves work. Assign coordination and approval tasks.
-- Scout (🔭 Market Intelligence): Research, analysis, competitive intelligence, data gathering. Assign research and analysis tasks.
-- Forge (🔨 Engineer): Code, prototypes, automation, technical implementation, infrastructure. Assign building and technical tasks.
-- Ghost (👻 Content & Distribution): Writing, social media, outreach, documentation, content creation. Assign content and communication tasks.
+    const prompt = `You are the Mission Autopilot for Mission Control — an AI agent orchestration platform. Your job is to decompose a user's goal into a **detailed, production-ready task plan** that a squad of 4 AI agents can execute autonomously without human clarification.
 
-NOTE: Do NOT assign tasks to Sentinel (QA reviewer). Sentinel auto-triggers on task review.
+The quality of your decomposition directly determines mission success. Vague plans fail. Detailed plans succeed.
+
+═══════════════════════════════════════════════════════
+AGENT ROSTER & CAPABILITIES
+═══════════════════════════════════════════════════════
+
+KAZE 🌀 (Chief of Staff)
+  Role: Coordination, delegation, QA review, final approval, strategy definition
+  Best for: Defining ICPs/rubrics/criteria, reviewing deliverables, approving launches, writing briefs
+  Session limits: Lightweight — can read multiple deliverables
+  IMPORTANT: Kaze should get 1-2 tasks max: an upfront strategy/criteria task and a final review/approval task
+
+SCOUT 🔭 (Market Intelligence)
+  Role: Web research, competitive analysis, data gathering, lead sourcing, trend tracking
+  Best for: Finding companies/people, analyzing competitors, scraping public data, market sizing
+  Session limits: Max 5 web fetches per task, max 2 prior deliverables to read, 1 research topic per task
+  SPLIT RULE: If research needs >3 topics OR >5 URLs → split into multiple Scout tasks
+
+FORGE 🔨 (Engineer)
+  Role: Code, prototypes, automation, API integrations, dashboards, infrastructure
+  Best for: Building tools, writing scripts, API calls, data pipelines, deploying apps
+  Session limits: Max 1 build per task, max 1 spec/design to read, 1 feature or 1 repo per task
+  SPLIT RULE: If task needs both backend AND frontend → 2 tasks. If needs research + build → Scout first, then Forge with dependency
+
+GHOST 👻 (Content & Distribution)
+  Role: Copywriting, email drafts, social media, blog posts, outreach messages, documentation
+  Best for: Cold emails, LinkedIn messages, Twitter threads, blog posts, landing page copy
+  Session limits: Max 1 prior deliverable to read, 1 content piece per task
+  SPLIT RULE: If needs to read research AND write long-form → split into (1) compress/summarize task, (2) write task with dependency
+
+DO NOT assign tasks to Sentinel — it auto-triggers for QA review.
 ${integrationContext}
+${documentContext}
 
-CONSTRAINTS:
-- Create 3-8 tasks (prefer 4-6 for most goals)
-- Each task assigned to exactly one agent: Kaze, Scout, Forge, or Ghost
-- Use dependsOnIndex (0-based array indices) to express task ordering
-- Tasks with no dependencies run in parallel
-- Set priority: urgent/high/medium/low based on goal urgency
-- Include requiredIntegrations only for tasks needing specific APIs
-- estimatedMinutes should be realistic (15-120 min per task)
-- Kaze usually gets a final coordination/review task that depends on all others
+═══════════════════════════════════════════════════════
+DECOMPOSITION RULES
+═══════════════════════════════════════════════════════
 
-USER'S GOAL: ${args.goal}${args.context ? `\n\nADDITIONAL CONTEXT: ${args.context}` : ""}
+TASK COUNT:
+- Match task count to goal complexity. Simple goals: 4-6 tasks. Complex goals: 8-15 tasks. Ambitious multi-phase goals: 15-25 tasks.
+- NEVER compress a complex goal into fewer tasks just to be concise. More granular = higher success rate.
+- Each task should be completable in a single agent session (15-90 minutes). If a task would take >90 min, split it.
 
-Return ONLY valid JSON matching this exact schema (no markdown, no explanation):
+TASK DESCRIPTIONS (this is critical):
+- Every description must be a **complete brief** — the agent has NO context beyond what you write.
+- Include: (1) exactly what to do, (2) specific inputs/sources to use, (3) expected output format, (4) quality bar / success criteria.
+- Use concrete numbers: "Find 50 companies" not "Find companies". "Write 3 email variants" not "Write emails".
+- Specify output format: "Deliver as structured JSON with fields: name, url, score, reasoning" or "Post as markdown deliverable with H2 sections".
+- End every description with: "Post all results to Mission Control as a task deliverable."
+
+DEPENDENCY GRAPH:
+- Use dependsOnIndex (0-based) to create a proper execution DAG.
+- Tasks with no dependencies run in parallel — maximize parallelism where possible.
+- Research → Synthesis → Creation → Review is the typical flow.
+- Multiple Scout tasks can run in parallel (e.g., researching different competitor sets).
+- Ghost tasks should almost always depend on Scout/Forge output — Ghost doesn't do research.
+
+THE COMPRESSION PATTERN (for synthesis tasks):
+When an agent needs to consume output from 2+ prior tasks:
+  Task A: "Read deliverables from Tasks X, Y, Z. Write a compressed 10-bullet summary. Post as deliverable." (3-4 turns)
+  Task B: "Using the summary from Task A, write the full [output]." (depends on Task A)
+Never ask one agent to read 3+ deliverables AND produce final output in the same task.
+
+PRIORITY ASSIGNMENT:
+- urgent: Blocking tasks that gate everything else (e.g., ICP definition, architecture decisions)
+- high: Core mission tasks (the main research/build/write work)
+- medium: Enhancement tasks (dashboards, tracking, secondary outputs)
+- low: Nice-to-haves (documentation, cleanup)
+
+TAGGING:
+- Use specific tags: ["research", "leads", "outbound"], ["engineering", "api", "automation"], ["content", "email", "copywriting"]
+- Tags help agents understand task category at a glance
+
+═══════════════════════════════════════════════════════
+EXAMPLE: Complex goal decomposed well
+═══════════════════════════════════════════════════════
+
+Goal: "Find 50 AI startup founders, research them deeply, write personalized cold emails, and set up Gmail drafts with follow-ups"
+
+Good decomposition (9 tasks):
+1. Kaze: "Define ICP & scoring rubric" — no deps (urgent, 25min)
+2. Scout: "Source 50 leads from LinkedIn/Twitter/GitHub matching ICP" — depends on [0] (high, 75min)
+3. Scout: "Enrich top 30 with intent signals (job posts, funding, tech stack)" — depends on [1] (high, 60min)
+4. Scout: "Deep-research top 20 — personal hooks, recent posts, pain points" — depends on [2] (high, 50min)
+5. Ghost: "Write 20 personalized cold emails with 3 subject line variants each" — depends on [3] (high, 70min)
+6. Ghost: "Write LinkedIn connection requests + follow-ups for top 10" — depends on [3] (medium, 40min)
+7. Forge: "Create Gmail drafts + 3-touch follow-up sequences" — depends on [4] (high, 45min)
+8. Forge: "Build lead tracking dashboard, deploy to Vercel" — depends on [6] (medium, 90min)
+9. Kaze: "Final QA — review all emails, approve top 15 for send" — depends on [6, 7] (urgent, 30min)
+
+Notice: Scout tasks are chained (each narrows the funnel), Ghost tasks run in parallel after research, Forge tasks are separate (email automation ≠ dashboard), Kaze bookends the mission.
+
+═══════════════════════════════════════════════════════
+YOUR TASK
+═══════════════════════════════════════════════════════
+
+USER'S GOAL: ${args.goal}
+
+Analyze this goal carefully. Think about:
+1. What research is needed? How many separate research threads?
+2. What needs to be built/automated?
+3. What content needs to be written? What inputs does the writer need?
+4. Where can tasks run in parallel vs. where are there hard dependencies?
+5. Are any tasks too large for a single agent session? Split them.
+6. Does the final output need a QA/approval gate?
+
+Return ONLY valid JSON (no markdown fences, no explanation) matching this schema:
 {
-  "missionTitle": "Short mission title",
-  "missionDescription": "1-2 sentence description of the mission",
-  "estimatedDuration": "e.g. 2-3 hours",
+  "missionTitle": "Concise but descriptive mission title",
+  "missionDescription": "2-3 sentence description covering the full scope and expected end-state",
+  "estimatedDuration": "e.g. 4-6 hours",
   "tasks": [
     {
-      "title": "Task title",
-      "description": "Detailed description of what the agent should do",
-      "priority": "medium",
+      "title": "Specific actionable task title",
+      "description": "Complete agent brief: what to do, inputs, output format, success criteria. Post all results to Mission Control as a task deliverable.",
+      "priority": "high",
       "assignee": "Scout",
-      "tags": ["research"],
+      "tags": ["research", "leads"],
       "dependsOnIndex": [],
       "requiredIntegrations": [],
-      "estimatedMinutes": 30
+      "estimatedMinutes": 60
     }
   ]
 }`;
@@ -224,8 +317,8 @@ Return ONLY valid JSON matching this exact schema (no markdown, no explanation):
     if (!plan.missionTitle || !plan.tasks || plan.tasks.length === 0) {
       throw new Error("Invalid plan: missing title or tasks");
     }
-    if (plan.tasks.length > 10) {
-      throw new Error("Plan has too many tasks (max 10)");
+    if (plan.tasks.length > 30) {
+      throw new Error("Plan has too many tasks (max 30)");
     }
 
     for (let i = 0; i < plan.tasks.length; i++) {
@@ -298,21 +391,38 @@ export const refinePlan = action({
 
     const currentPlan = JSON.parse(session.plan);
 
-    const prompt = `You are refining a mission plan based on user feedback. Here is the current plan:
+    const prompt = `You are the Mission Autopilot refining an existing task plan based on user feedback.
 
+═══════════════════════════════════════════════════════
+CURRENT PLAN
+═══════════════════════════════════════════════════════
 ${JSON.stringify(currentPlan, null, 2)}
 
-USER FEEDBACK: ${args.feedback}
+═══════════════════════════════════════════════════════
+USER FEEDBACK
+═══════════════════════════════════════════════════════
+${args.feedback}
 
-AGENTS AVAILABLE:
-- Kaze (🌀 Chief of Staff): Coordination, delegation, reviews
-- Scout (🔭 Market Intelligence): Research, analysis
-- Forge (🔨 Engineer): Code, technical tasks
-- Ghost (👻 Content): Writing, social media, outreach
+═══════════════════════════════════════════════════════
+AGENT ROSTER & SESSION LIMITS
+═══════════════════════════════════════════════════════
+- Kaze 🌀 (Chief of Staff): Coordination, strategy, QA. 1-2 tasks max (upfront + final).
+- Scout 🔭 (Market Intelligence): Research, analysis. Max 5 web fetches, 1 topic per task. Split if >3 topics.
+- Forge 🔨 (Engineer): Code, automation. Max 1 build per task. Split backend/frontend.
+- Ghost 👻 (Content): Writing, outreach. Max 1 deliverable input, 1 content piece per task.
 
-Apply the user's feedback to update the plan. You can add, remove, modify, or reorder tasks. Keep dependsOnIndex references valid after any changes.
+═══════════════════════════════════════════════════════
+REFINEMENT RULES
+═══════════════════════════════════════════════════════
+- Apply the user's feedback precisely. They may want: more tasks, fewer tasks, different agents, changed scope, reordered phases, added details.
+- If the user says "more detailed" or "break it down more" → split large tasks into smaller, more specific ones.
+- If the user says "add more tasks" → expand coverage areas, add research threads, add content variants, add QA gates.
+- After ANY task additions/removals/reordering, you MUST recompute ALL dependsOnIndex values so they reference correct 0-based indices.
+- Every task description must be a complete agent brief: what to do, inputs, output format, success criteria, ending with "Post all results to Mission Control as a task deliverable."
+- Maintain the quality bar: concrete numbers, specific outputs, clear success criteria.
+- Task count should match complexity: simple goals 4-6, complex 8-15, ambitious 15-25. Max 30.
 
-Return ONLY the updated plan as valid JSON (same schema as before, no markdown):
+Return ONLY the updated plan as valid JSON (no markdown fences, no explanation):
 {
   "missionTitle": "...",
   "missionDescription": "...",

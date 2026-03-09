@@ -35,8 +35,16 @@ export const startOAuth = action({
   args: {
     blueprintSlug: v.string(),
     userId: v.string(),
+    instanceParams: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    // Helper to replace {param} placeholders in URLs (e.g. {shop} for Shopify)
+    const resolveUrl = (url: string) => {
+      if (!args.instanceParams) return url;
+      return url.replace(/\{(\w+)\}/g, (_: string, key: string) =>
+        args.instanceParams[key] !== undefined ? String(args.instanceParams[key]) : `{${key}}`
+      );
+    };
     const blueprint = await ctx.runQuery(api.blueprints.getBySlug, {
       slug: args.blueprintSlug,
     });
@@ -75,12 +83,16 @@ export const startOAuth = action({
       blueprintSlug: args.blueprintSlug,
       userId: args.userId,
       codeVerifier,
+      instanceParams: args.instanceParams ? JSON.stringify(args.instanceParams) : undefined,
       expiresAt: Date.now() + 10 * 60 * 1000,
     });
 
     // Build callback URL - use CONVEX_SITE_URL env var
     const convexSiteUrl = process.env.CONVEX_SITE_URL || "https://beloved-squirrel-599.convex.site";
     const redirectUri = `${convexSiteUrl}/api/integrations/oauth/callback`;
+
+    // Resolve {placeholders} in authorizeUrl (e.g. {shop} for Shopify)
+    const resolvedAuthorizeUrl = resolveUrl(authConfig.authorizeUrl);
 
     // Build authorization URL
     const params = new URLSearchParams({
@@ -119,7 +131,7 @@ export const startOAuth = action({
       scopeSuffix = `&scope=${scopeString}`;
     }
 
-    const authorizeUrl = `${authConfig.authorizeUrl}?${params.toString()}${scopeSuffix}`;
+    const authorizeUrl = `${resolvedAuthorizeUrl}?${params.toString()}${scopeSuffix}`;
 
     return { authorizeUrl };
   },
@@ -146,7 +158,14 @@ export const handleOAuthCallback = action({
       throw new Error("Authorization expired - please try connecting again");
     }
 
-    const { blueprintSlug, userId, codeVerifier } = stateRecord;
+    const { blueprintSlug, userId, codeVerifier, instanceParams: instanceParamsJson } = stateRecord;
+    const instanceParams = instanceParamsJson ? JSON.parse(instanceParamsJson) : undefined;
+    const resolveCallbackUrl = (url: string) => {
+      if (!instanceParams) return url;
+      return url.replace(/\{(\w+)\}/g, (_: string, key: string) =>
+        instanceParams[key] !== undefined ? String(instanceParams[key]) : `{${key}}`
+      );
+    };
 
     // Clean up used state token
     await ctx.runMutation(api.connections.deleteOAuthState, { token: args.state });
@@ -174,8 +193,8 @@ export const handleOAuthCallback = action({
     // Resolve client secret from environment variable if it's a reference
     const clientSecret = resolveClientSecret(authConfig.clientSecret);
 
-    // Use the token URL from config directly — no provider-specific corrections
-    const tokenUrl = authConfig.tokenUrl;
+    // Use the token URL from config, resolving {placeholders} (e.g. {shop} for Shopify)
+    const tokenUrl = resolveCallbackUrl(authConfig.tokenUrl);
 
     // Build token exchange request — auth method is config-driven
     const headers: Record<string, string> = {

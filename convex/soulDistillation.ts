@@ -192,9 +192,8 @@ export const distillAgent = internalAction({
     triggeredBy: v.string(),
   },
   handler: async (ctx, args): Promise<{ ok: boolean; versionId?: string; error?: string }> => {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return { ok: false, error: "ANTHROPIC_API_KEY not set" };
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      return { ok: false, error: "AWS credentials not set" };
     }
 
     // Create job record
@@ -271,28 +270,12 @@ TASK:
 
 Return ONLY the updated SOUL file content. No explanation, no markdown code blocks, just the raw file content.`;
 
-      // Call Claude
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 8192,
-          messages: [{ role: "user", content: prompt }],
-        }),
+      // Call Claude via Bedrock
+      const newContent = await ctx.runAction(internal.bedrockCall.invoke, {
+        prompt,
+        model: "us.anthropic.claude-sonnet-4-6-v1",
+        maxTokens: 8192,
       });
-
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`Claude API error ${response.status}: ${err}`);
-      }
-
-      const claudeResult = await response.json();
-      const newContent: string = claudeResult.content?.[0]?.text ?? "";
 
       if (!newContent || newContent.length < 100) {
         throw new Error("Claude returned empty or too-short SOUL content");
@@ -305,28 +288,11 @@ Return ONLY the updated SOUL file content. No explanation, no markdown code bloc
       // Generate change log via second Claude call (cheap)
       let changeLog = "Automated distillation of recent agent memories.";
       try {
-        const changeLogRes = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens: 256,
-            messages: [
-              {
-                role: "user",
-                content: `Summarize in 2-3 bullet points what changed between these two SOUL files for ${args.agentName}:\n\nOLD:\n${currentSoul.content.slice(0, 2000)}\n\nNEW:\n${newContent.slice(0, 2000)}\n\nReturn only bullet points, no preamble.`,
-              },
-            ],
-          }),
-        });
-        if (changeLogRes.ok) {
-          const clRes = await changeLogRes.json();
-          changeLog = clRes.content?.[0]?.text ?? changeLog;
-        }
+        changeLog = (await ctx.runAction(internal.bedrockCall.invoke, {
+          prompt: `Summarize in 2-3 bullet points what changed between these two SOUL files for ${args.agentName}:\n\nOLD:\n${currentSoul.content.slice(0, 2000)}\n\nNEW:\n${newContent.slice(0, 2000)}\n\nReturn only bullet points, no preamble.`,
+          model: "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+          maxTokens: 256,
+        })) || changeLog;
       } catch {
         // Non-fatal — use default changelog
       }

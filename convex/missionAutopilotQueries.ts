@@ -161,14 +161,16 @@ export const launchMission = mutation({
         agentsToWake.add(subtask.assignee);
       }
     }
+    let wakeupIndex = 0;
     for (const agentName of agentsToWake) {
       const idx = plan.tasks.findIndex((s) => s.assignee === agentName);
       if (idx >= 0) {
-        await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+        await ctx.scheduler.runAfter(wakeupIndex * 30_000, internal.agentWakeup.triggerWakeup, {
           agentName,
           taskId: createdIds[idx] as string,
           reason: "task_delegated",
         });
+        wakeupIndex++;
       }
     }
 

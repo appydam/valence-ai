@@ -103,9 +103,8 @@ export const extractFromTask = internalAction({
     trigger: v.union(v.literal("task_completed"), v.literal("task_rejected")),
   },
   handler: async (ctx, args) => {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      console.log("[MemoryExtraction] No ANTHROPIC_API_KEY, skipping");
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      console.log("[MemoryExtraction] No AWS credentials, skipping");
       return;
     }
 
@@ -208,28 +207,11 @@ Each memory object must have exactly these fields:
 }`;
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 1024,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-
-      if (!response.ok) {
-        const err = await response.text();
-        console.error(`[MemoryExtraction] Claude API error ${response.status}: ${err}`);
-        return;
-      }
-
-      const result = await response.json();
-      const text: string = result.content?.[0]?.text ?? "[]";
+      const text = (await ctx.runAction(internal.bedrockCall.invoke, {
+        prompt,
+        model: "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+        maxTokens: 1024,
+      })) || "[]";
 
       // Parse JSON — handle possible markdown code blocks
       let memories: Array<{
