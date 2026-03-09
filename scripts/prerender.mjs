@@ -174,10 +174,26 @@ async function main() {
 
   const server = await startServer();
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-  });
+  let browser;
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    });
+  } catch (err) {
+    server.close();
+    const isChromeMissing =
+      err.message?.includes("Failed to launch") ||
+      err.message?.includes("libnspr4") ||
+      err.message?.includes("Code: 127") ||
+      err.message?.includes("cannot open shared object");
+    if (isChromeMissing) {
+      console.warn("\n⚠️  Puppeteer could not launch Chrome (missing system libraries).");
+      console.warn("   Pre-rendering skipped — pages will be served as SPA fallback.\n");
+      return;
+    }
+    throw err;
+  }
 
   const results = { success: 0, failed: 0 };
 
@@ -209,6 +225,22 @@ async function main() {
 }
 
 main().catch((err) => {
+  // Puppeteer requires system Chrome libraries (libnspr4.so etc.) that may not
+  // be present in all CI/CD environments (e.g. Vercel Linux build containers).
+  // In that case, skip pre-rendering gracefully — pages still work as SPA fallback.
+  const isChromeMissing =
+    err.message?.includes("Failed to launch") ||
+    err.message?.includes("libnspr4") ||
+    err.message?.includes("Code: 127") ||
+    err.message?.includes("cannot open shared object");
+
+  if (isChromeMissing) {
+    console.warn("\n⚠️  Puppeteer could not launch Chrome (missing system libraries).");
+    console.warn("   Pre-rendering skipped — pages will be served as SPA fallback.");
+    console.warn("   To enable pre-rendering, run this build in an environment with Chrome installed.\n");
+    process.exit(0); // Non-fatal: let the Vercel build succeed
+  }
+
   console.error("Pre-render failed:", err);
   process.exit(1);
 });
