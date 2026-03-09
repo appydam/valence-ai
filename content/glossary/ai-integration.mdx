@@ -1,0 +1,46 @@
+---
+title: "AI Integration"
+slug: "ai-integration"
+description: "AI integrations are the connections between AI agent systems and external business tools — CRM, email, project management, databases — that allow agents to read data, take action, and deliver results within the tools your team already uses."
+category: "technical"
+relatedTerms: ["ai-agent", "ai-workforce", "webhook-triggers", "enterprise-ai"]
+---
+
+**AI integrations** are the connections between AI agent platforms and external business tools and services — CRM systems, email platforms, project management tools, databases, communication channels, analytics platforms, and more. Integrations are what give AI agents the ability to take real action in your business systems rather than just generating text for humans to act on.
+
+An AI agent without integrations is a reasoning engine with no hands. Integrations are what make AI agents operational.
+
+## Integration Types
+
+### API-Based Integrations (Standard)
+Most modern business tools expose REST APIs — programmatic interfaces that allow software to read and write data. API integrations are the most reliable type, maintained by the tool vendor, and documented for consistent behavior.
+
+A CRM integration (HubSpot, Salesforce) allows agents to query contacts, update fields, create tasks, and trigger automation. A communication integration (Slack, Gmail) allows agents to post results, send drafts, and receive triggers. An analytics integration (Google Analytics) allows agents to pull performance data for reporting.
+
+### Webhook-Based Integrations (Event-Driven)
+Webhooks allow external services to push events to the AI platform when something happens — new form submission, payment received, ticket created. This enables real-time agent triggering rather than polling for changes.
+
+Webhooks are the trigger mechanism: "when X happens in System Y, start AI workflow Z immediately."
+
+### OAuth Authentication
+Most user-authorized integrations use OAuth 2.0 — the user grants permission and the platform receives access tokens. OAuth scopes allow integration access to be limited to only the specific data types and operations the agent needs (read-only access to contacts, write access only to specific fields).
+
+## Integration Quality Considerations
+
+**Depth:** Does the integration cover the operations agents need? A shallow integration that only reads basic records misses the write, trigger, and reporting operations that complete the workflow.
+
+**Reliability:** Does the integration handle rate limits gracefully? Does it retry on transient failures? Production agents run continuously and need integrations that recover from transient errors without failing the workflow.
+
+**Maintenance:** Does the platform update integrations as external APIs evolve? When Salesforce releases API v56, does the integration update automatically?
+
+## The Integration Ecosystem
+
+The breadth of a platform's integration ecosystem directly determines which workflows can be automated. Valence AI's 100+ integrations cover the core enterprise tech stack: CRM (HubSpot, Salesforce), project management (Jira, Asana, Linear, Notion), communication (Slack, Gmail, Outlook), code (GitHub, GitLab), data (Google Sheets, Airtable), analytics (Google Analytics, Mixpanel), and more.
+
+The more deeply integrated the platform, the more workflows can run end-to-end through AI agents — reducing human copy-paste coordination between systems.
+
+## Related Terms
+
+- [AI Agent](/glossary/ai-agent)
+- [Webhook Triggers](/glossary/webhook-triggers)
+- [AI Workforce](/glossary/ai-workforce)

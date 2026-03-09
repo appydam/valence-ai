@@ -1,9 +1,16 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEOHead
+        title="Privacy Policy | Valence AI"
+        description="Valence AI privacy policy. Learn how we collect, use, and protect your data."
+        canonical="/privacy"
+        noIndex={true}
+      />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link
           to="/landing"

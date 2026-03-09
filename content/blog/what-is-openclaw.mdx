@@ -1,0 +1,178 @@
+---
+title: "What Is OpenClaw? The Agent Runtime Powering Valence AI"
+slug: "what-is-openclaw"
+description: "OpenClaw is Anthropic's open-source AI agent runtime — the execution environment that lets Claude operate with persistent tools, memory, and multi-turn sessions on a self-hosted server. Here's how it works and why it matters."
+date: "2026-03-10"
+modified: "2026-03-10"
+author: "Arpit Dhamija"
+category: "technical"
+tags: ["OpenClaw", "AI agent runtime", "Anthropic", "autonomous AI", "Claude agents"]
+readTime: "10 min"
+---
+
+**OpenClaw** is an open-source AI agent runtime developed by Anthropic — the execution environment that lets Claude operate as a persistent, tool-using agent on a self-hosted server. It's the infrastructure layer beneath autonomous AI agents: where sessions live, where tools are registered, where agent personalities are defined, and where multi-turn reasoning happens across extended workflows.
+
+Valence AI's five-agent workforce — Kaze, Scout, Forge, Ghost, and Sentinel — all run on OpenClaw. Understanding what OpenClaw does explains why Valence AI agents are reliably autonomous rather than just impressively demo-able.
+
+## The Problem OpenClaw Solves
+
+Running Claude via API gives you one thing: a stateless request-response loop. You send a message, you get a reply, the conversation ends. There's no persistent agent, no tool infrastructure, no session management, no ongoing process that can execute a 20-step workflow over 15 minutes.
+
+To deploy Claude as an actual autonomous agent — one that researches 20 companies in parallel, writes personalized emails based on that research, updates your CRM, and posts results to Slack — you need a runtime: a server process that manages agent sessions, registers tools, routes API calls, and keeps agents alive across the turns of a complex workflow.
+
+That's what OpenClaw provides.
+
+## What OpenClaw Actually Does
+
+### Session Management
+
+OpenClaw runs Claude as a persistent session — not a single API call, but a stateful process that maintains conversation context across many turns. Each agent session is configured with:
+
+- **maxTurns:** Maximum tool-use turns before the session wraps up (20-30 for most agents)
+- **timeout:** Maximum session duration in seconds (300-600 depending on task complexity)
+- **context window management:** Intelligent compression when sessions approach context limits
+
+When Kaze (Valence AI's orchestrator) picks up a new mission, it opens an OpenClaw session. That session persists through task decomposition, tool calls to check the task queue, delegation to other agents, and final delivery — all in one coherent agentic loop.
+
+### Tool Registration and Execution
+
+OpenClaw provides a structured tool system — the equivalent of a toolbelt for each agent. Tools are defined as skills: typed function signatures with descriptions that Claude uses to decide when and how to call them.
+
+Valence AI's mission-control skill set, registered via OpenClaw, includes:
+- Task queue operations (claim task, update status, post deliverable)
+- Memory read/write (retrieve relevant past missions, write new memories)
+- Integration calls (HubSpot, GitHub, Slack, Google Workspace)
+- Heartbeat and status reporting
+- Cross-agent coordination (wake another agent, check agent status)
+
+OpenClaw handles the serialization/deserialization of tool calls, error handling for failed API calls, and retry logic — so agents can call tools reliably without implementing retry infrastructure themselves.
+
+### SOUL Files — Agent Personality and Instructions
+
+OpenClaw introduces a powerful concept: **SOUL files**. A SOUL file is a structured Markdown document that defines an agent's identity, capabilities, decision-making principles, quality standards, and operational rules. Think of it as a combination of a system prompt and an operating manual — but human-readable, version-controlled, and deployable like code.
+
+Each Valence AI agent has a SOUL file:
+
+```
+~/.openclaw/workspace/SOUL.md           # Kaze (orchestrator)
+~/.openclaw/workspace/agents/scout/SOUL.md    # Scout (researcher)
+~/.openclaw/workspace/agents/forge/SOUL.md    # Forge (builder)
+~/.openclaw/workspace/agents/ghost/SOUL.md    # Ghost (writer)
+~/.openclaw/workspace/agents/sentinel/SOUL.md # Sentinel (monitor)
+```
+
+A SOUL file specifies:
+- The agent's role and responsibilities
+- What tools it can use and when
+- Quality standards for its outputs
+- Decision-making rules (when to escalate, when to retry, when to stop)
+- Communication style and output formats
+- Hard constraints (what it must never do)
+
+SOUL files are the reason Valence AI's agents behave consistently across thousands of missions. The instructions aren't buried in code — they're readable, auditable documents that define agent behavior explicitly.
+
+### Multi-Agent Architecture
+
+OpenClaw manages multiple agent processes simultaneously. In Valence AI's deployment:
+
+```
+openclaw gateway start
+```
+
+This starts the gateway that coordinates all five agents. Each agent is configured independently:
+
+```json
+{
+  "kaze": {
+    "model": "anthropic/claude-opus-4-6",
+    "session": { "maxTurns": 30, "timeout": 600 }
+  },
+  "scout": {
+    "model": "anthropic/claude-sonnet-4-6",
+    "session": { "maxTurns": 20, "timeout": 300 }
+  },
+  "forge": {
+    "model": "anthropic/claude-sonnet-4-6",
+    "session": { "maxTurns": 20, "timeout": 300 }
+  }
+}
+```
+
+The gateway handles agent lifecycle — starting, stopping, monitoring health, and recovering crashed sessions. When a session ends (either naturally or due to timeout), the gateway can restart the agent and resume from the last checkpoint.
+
+## The OpenClaw + Valence AI Stack
+
+OpenClaw provides the runtime layer. Valence AI (Mission Control) provides the coordination and enterprise layers on top:
+
+```
+┌─────────────────────────────────────────────────┐
+│           Valence AI Mission Control             │
+│  Task orchestration, quality review, memory,    │
+│  integrations, dashboard, billing, API          │
+├─────────────────────────────────────────────────┤
+│                  OpenClaw Runtime                │
+│  Session management, tool execution,            │
+│  SOUL files, multi-agent gateway                │
+├─────────────────────────────────────────────────┤
+│               Anthropic Claude API               │
+│  claude-opus-4-6 (Kaze), claude-sonnet-4-6     │
+│  (Scout, Forge, Ghost, Sentinel)                │
+└─────────────────────────────────────────────────┘
+```
+
+**OpenClaw handles:** Session lifecycle, tool registration, skill execution, agent process management, SOUL file loading, context compression.
+
+**Valence AI adds:** The task queue (what missions agents work on), the integration engine (100+ business tool connections), episodic memory (mission history and accumulated knowledge), quality review loops (Sentinel's automated QA), the dashboard (real-time visibility for human teams), and the webhook/scheduling trigger system.
+
+The combination produces something neither provides alone: a reliable autonomous AI workforce that connects to your business tools, maintains memory across thousands of missions, and improves over time.
+
+## Why OpenClaw Matters for Production Reliability
+
+The difference between an AI agent that works in a demo and one that runs business operations comes down to runtime reliability. Key OpenClaw features that enable production use:
+
+**Session recovery:** When a session crashes mid-execution (API rate limit, network error, context overflow), OpenClaw has mechanisms to detect the failure and recover. Valence AI's crash playbook extends this with session file management and agent wakeup protocols.
+
+**Turn budgeting:** Setting `maxTurns: 20` on an agent session prevents runaway loops where agents continue calling tools indefinitely. Agents are designed to hard-stop before the limit, post partial results, and hand off cleanly.
+
+**Heartbeat monitoring:** OpenClaw tracks session liveness. Valence AI's wakeup server monitors agents and triggers restarts when sessions stall — preventing the "agent silently stopped working" failure mode.
+
+**Isolated agent processes:** Each agent (Kaze, Scout, Forge, Ghost, Sentinel) runs as an independent process. A crash in one agent doesn't cascade to others. Sentinel can continue reviewing while Scout's session recovers.
+
+## Deploying OpenClaw
+
+OpenClaw runs on any server with Node.js:
+
+```bash
+npm install -g @anthropic/openclaw@latest
+openclaw gateway start
+```
+
+Valence AI deploys on AWS Lightsail (Ubuntu 22.04) with OpenClaw running as a persistent service. The on-premise guide enables enterprise customers to run the full agent stack on their own infrastructure — keeping all data within their private environment.
+
+This is a significant differentiator from cloud-only AI platforms: because OpenClaw is self-hostable, Valence AI can offer dedicated private infrastructure per enterprise customer. No shared compute, no data commingling, full data residency control.
+
+## Frequently Asked Questions
+
+### Is OpenClaw open source?
+
+Yes — OpenClaw is released by Anthropic under an open-source license. Developers can inspect the runtime, build on it, and self-host it. Valence AI is an enterprise platform built on top of OpenClaw.
+
+### Does OpenClaw only work with Claude?
+
+OpenClaw is designed for Anthropic's Claude models (claude-opus-4-6 for Kaze, claude-sonnet-4-6 for Scout/Forge/Ghost/Sentinel). It's optimized for Claude's tool use format and extended thinking capabilities.
+
+### How is OpenClaw different from LangChain or CrewAI?
+
+LangChain and CrewAI are Python frameworks for building agent workflows — libraries you import and code around. OpenClaw is a runtime — a server process you deploy that manages agent sessions, tool execution, and multi-agent coordination. The distinction is build vs. deploy: frameworks help you build; OpenClaw is what you deploy the built system on.
+
+### Can I use OpenClaw without Valence AI?
+
+Yes. OpenClaw is a standalone runtime — you can use it to run any Claude-powered agent system with persistent sessions and tools. Valence AI is one enterprise product built on OpenClaw; others can build different products or custom agents on the same runtime.
+
+---
+
+OpenClaw is the production-grade foundation that makes autonomous AI agents reliable enough for real business operations — not just demos. Valence AI's five-agent workforce runs on OpenClaw because it provides the session management, tool infrastructure, and agent process isolation that enterprise AI deployments require.
+
+[See Valence AI's agent architecture →](/landing)
+
+[Read: The 5 Types of AI Agents →](/blog/types-of-ai-agents)

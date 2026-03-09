@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { motion, useInView, useReducedMotion, AnimatePresence } from "framer-motion";
 import { useParams, Link } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
+import { howToSchema, breadcrumbSchema, faqSchema } from "@/lib/structuredData";
 import { PilotModal } from "@/components/landing/PilotModal";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroParticleField } from "@/components/landing/HeroParticleField";
@@ -185,8 +187,49 @@ export default function UseCasePage() {
 
   const relatedCases = [...related, ...otherRelated];
 
+  const useCaseFaqs = [
+    {
+      question: `How does Valence AI automate ${useCase.title}?`,
+      answer: `Valence AI orchestrates ${useCase.steps.length} specialized AI agents to handle ${useCase.title.toLowerCase()}. ${useCase.painPoint} Our agents use tools like ${useCase.steps.flatMap((s) => s.tools.slice(0, 2).map((t) => t.label)).slice(0, 4).join(", ")} to execute each step autonomously, saving an average of ${useCase.hoursSaved}.`,
+    },
+    {
+      question: `What integrations are used for ${useCase.title}?`,
+      answer: `This workflow uses ${allIntegrations.slice(0, 6).map((t) => t.label).join(", ")}${allIntegrations.length > 6 ? ` and ${allIntegrations.length - 6} more` : ""}. All integrations connect via OAuth or API keys and are managed from the Valence AI integration hub.`,
+    },
+    {
+      question: `What results can I expect from AI-powered ${useCase.categoryLabel} automation?`,
+      answer: `Teams using Valence AI for ${useCase.title.toLowerCase()} typically save ${useCase.hoursSaved} per week. ${useCase.roi.slice(0, 2).join(". ")}.`,
+    },
+    {
+      question: "Can I customize this workflow for my business?",
+      answer: "Yes. Every workflow in Valence AI is fully customizable. You can adjust which agents are involved, which integrations are used, what quality criteria agents must meet, and how results are delivered. Enterprise clients get white-glove onboarding to configure custom workflows from scratch.",
+    },
+  ];
+
+  const howToJsonLd = howToSchema({
+    name: useCase.title,
+    description: useCase.painPoint,
+    steps: useCase.steps.map((s) => ({
+      name: `${s.agent}: ${s.action}`,
+      text: s.detail,
+    })),
+  });
+
+  const breadcrumbJsonLd = breadcrumbSchema([
+    { name: "Home", url: "/landing" },
+    { name: "Use Cases", url: "/use-cases" },
+    { name: useCase.categoryLabel, url: `/use-cases?category=${useCase.category}` },
+    { name: useCase.title, url: `/use-cases/${useCase.slug}` },
+  ]);
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <SEOHead
+        title={`${useCase.title} — AI Automation for ${useCase.categoryLabel} | Valence AI`}
+        description={`${useCase.painPoint.slice(0, 130)}. Valence AI agents automate this in ${useCase.hoursSaved}. ${useCase.metric}`}
+        canonical={`/use-cases/${useCase.slug}`}
+        jsonLd={[howToJsonLd, breadcrumbJsonLd, faqSchema(useCaseFaqs)]}
+      />
       <PilotModal open={pilotOpen} onClose={() => setPilotOpen(false)} />
 
       <LandingNav

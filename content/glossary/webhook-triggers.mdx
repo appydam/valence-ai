@@ -1,0 +1,58 @@
+---
+title: "Webhook Triggers"
+slug: "webhook-triggers"
+description: "Webhook triggers are real-time event notifications that external systems send to AI agent platforms when something happens — enabling agents to start workflows immediately in response to events like new leads, form submissions, or payment receipts."
+category: "technical"
+relatedTerms: ["ai-integration", "ai-agent", "ai-workforce", "agentic-ai"]
+---
+
+**Webhook triggers** are real-time HTTP notifications that external systems send to an AI agent platform when a specific event occurs. Rather than an agent periodically checking for changes (polling), the external system proactively notifies the agent platform the moment an event happens — enabling immediate, event-driven workflow initiation.
+
+Webhooks are how AI agents respond to the world in real time: a new lead fills out a form → webhook fires → research agent starts immediately → enriched profile and first-touch email delivered before the lead has moved on.
+
+## How Webhooks Work
+
+1. **Configuration:** You configure the external system (HubSpot, Stripe, GitHub) to send an HTTP POST request to a specific URL when a defined event occurs.
+
+2. **Event firing:** When the event occurs (new contact created, payment received, PR opened), the external system sends a JSON payload to the configured webhook URL.
+
+3. **Agent trigger:** The AI agent platform receives the webhook, validates the payload, and initiates the configured workflow — often starting within seconds of the triggering event.
+
+4. **Workflow execution:** The agent workflow runs: researching, drafting, updating systems, notifying stakeholders.
+
+## Common Webhook Trigger Use Cases
+
+**CRM webhooks:** New lead created → research agent investigates → writing agent drafts outreach → CRM updated before sales team arrives in the morning
+
+**Form submission webhooks:** Demo request received → AI researches the prospect → personalized meeting prep brief delivered to sales rep within minutes
+
+**Support ticket webhooks:** New high-priority ticket opened → AI researches similar past issues, suggests resolution approach → ticket routed with context
+
+**Payment webhooks:** New customer subscription → AI initiates onboarding workflow → welcome email drafted, CRM updated, onboarding tasks created
+
+**Code repository webhooks:** Pull request opened → AI reviews code against standards, summarizes changes, checks test coverage → review comment posted automatically
+
+## Webhooks vs. Scheduled Triggers vs. Manual Missions
+
+**Webhook triggers:** Event-driven, real-time. Best for workflows that should start immediately when something happens.
+
+**Scheduled triggers:** Time-based (run this workflow every Monday at 8am). Best for recurring, periodic workflows (weekly reports, daily competitive monitoring).
+
+**Manual missions:** Human-initiated on demand. Best for ad-hoc, non-recurring needs or complex missions requiring human-defined scope.
+
+Production AI workforce platforms support all three trigger types, allowing teams to configure the appropriate trigger for each workflow type.
+
+## Webhook Security
+
+Webhooks are incoming HTTP requests — which creates a security consideration: how does the agent platform verify that the request is genuine and not spoofed by a malicious actor?
+
+Production webhook implementations include:
+- **Signature verification:** The sending system signs each webhook payload with a shared secret. The receiving platform verifies the signature before processing.
+- **HTTPS only:** All webhook endpoints accept connections only over encrypted HTTPS.
+- **IP allowlisting:** Some implementations restrict accepted webhook IPs to known sender ranges.
+
+## Related Terms
+
+- [AI Integration](/glossary/ai-integration)
+- [AI Agent](/glossary/ai-agent)
+- [Agentic AI](/glossary/agentic-ai)

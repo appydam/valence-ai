@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { motion, useInView, useReducedMotion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
+import { organizationSchema, softwareApplicationSchema, faqSchema } from "@/lib/structuredData";
 import { PilotModal } from "@/components/landing/PilotModal";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroParticleField } from "@/components/landing/HeroParticleField";
@@ -1949,8 +1951,29 @@ export default function Landing() {
   const navigate = useNavigate();
   const [pilotOpen, setPilotOpen] = useState(false);
 
+  const landingFaqs = [
+    { question: "What is Valence AI?", answer: "Valence AI is an autonomous AI workforce platform that lets you deploy five specialized AI agents — Kaze (orchestrator), Scout (researcher), Forge (builder), Ghost (writer), and Sentinel (monitor) — that work together as a team to execute complex business workflows. Unlike a chatbot or a single-agent tool, Valence orchestrates multiple AI workers in parallel, with persistent memory, 100+ integrations, quality review gates, and real-time monitoring, all from one command center." },
+    { question: "How does autonomous AI workforce orchestration work?", answer: "When you submit a mission in natural language, Kaze (the orchestrator) decomposes it into tasks and assigns them to the right specialist agents. Scout researches and gathers information, Forge writes code or builds automations, Ghost handles content and outreach, and Sentinel monitors quality and system health. Agents communicate through a shared task queue, pass deliverables for review, and iterate until the mission is complete — with no manual handoffs required." },
+    { question: "What can AI agents do that chatbots can't?", answer: "Chatbots respond to single prompts and have no memory between sessions. AI agents can execute multi-step workflows autonomously, use real tools (APIs, browsers, databases), maintain persistent memory across sessions, coordinate with other agents, handle errors and retry logic, and complete tasks that take hours rather than seconds. Valence AI agents act more like specialized employees than question-answering bots." },
+    { question: "How many integrations does Valence AI support?", answer: "Valence AI supports 100+ integrations out of the box, including Salesforce, HubSpot, Slack, GitHub, Notion, Google Sheets, Gmail, Jira, Google Analytics, Google Calendar, Stripe, Shopify, LinkedIn, Twitter, and more. Enterprise plans include unlimited custom integrations. All integrations use OAuth or API key authentication and are managed from a central integration hub." },
+    { question: "Is Valence AI safe for enterprise use?", answer: "Yes. Valence AI runs on dedicated private infrastructure — your data never mixes with other tenants. All agent actions are logged with full audit trails. Sentinel, the monitoring agent, reviews deliverables before they go out and flags anomalies in real-time. Enterprise plans include on-premise and VPC deployment options, role-based access controls, and custom SLAs." },
+    { question: "How is Valence AI different from Zapier or Make?", answer: "Zapier and Make automate simple if-this-then-that workflows triggered by predefined conditions. Valence AI agents reason about tasks, make decisions, handle edge cases, use natural language, and can generate entirely new workflows on the fly — not just follow pre-built templates. An AI agent can research a prospect, draft a personalized email, send it via Gmail, log it in HubSpot, and schedule a follow-up — all from a single natural language instruction." },
+    { question: "Can I deploy Valence AI on my own infrastructure?", answer: "Yes. Enterprise and Enterprise+ plans support on-premise and VPC deployment. Your agents run entirely within your infrastructure, keeping sensitive data within your security perimeter. We provide full deployment scripts, documentation, and dedicated setup support." },
+    { question: "What does an AI employee actually do all day?", answer: "Your AI workforce handles research (competitor analysis, lead enrichment, market intelligence), content creation (blog posts, emails, social media, reports), development work (code review, bug fixes, automation scripts), CRM hygiene (data cleaning, logging, follow-up scheduling), analytics (performance reports, trend summaries), and monitoring (uptime checks, anomaly detection). Each task is assigned to the most appropriate specialist agent based on skills and current workload." },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <SEOHead
+        title="Valence AI — Deploy Your Autonomous AI Workforce"
+        description="Five specialized AI agents. 100+ integrations. Multi-step workflows that research, build, write, and monitor — all orchestrated from one command center. Deploy your AI workforce today."
+        canonical="/landing"
+        jsonLd={[
+          organizationSchema(),
+          softwareApplicationSchema(),
+          faqSchema(landingFaqs),
+        ]}
+      />
       <PilotModal open={pilotOpen} onClose={() => setPilotOpen(false)} />
       <LandingNav onPilotClick={() => setPilotOpen(true)} />
 
@@ -2655,6 +2678,33 @@ export default function Landing() {
         </RevealSection>
       </section>
 
+      {/* ── FAQ ── */}
+      <section className="px-6 pb-24 pt-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Frequently Asked Questions</h2>
+            <p className="text-sm text-muted-foreground">Everything you need to know about Valence AI and autonomous AI workforces.</p>
+          </div>
+          <div className="space-y-3">
+            {landingFaqs.map((faq, i) => (
+              <details
+                key={i}
+                className="group rounded-xl border border-border/40 overflow-hidden"
+                style={{ background: "hsl(240 20% 6% / 0.5)" }}
+              >
+                <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer text-sm font-medium text-foreground select-none list-none">
+                  {faq.question}
+                  <span className="text-muted-foreground group-open:rotate-180 transition-transform duration-200 flex-shrink-0">▾</span>
+                </summary>
+                <div className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
+                  {faq.answer}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── FOOTER ── */}
       <footer
         className="py-8 px-6 border-t border-border/40"
@@ -2667,17 +2717,29 @@ export default function Landing() {
             <span>·</span>
             <span>Command center for autonomous AI workforces</span>
           </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground/60 font-mono">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground/60 font-mono justify-center sm:justify-end">
             <Link to="/pricing" className="hover:text-muted-foreground transition-colors">
               Pricing
             </Link>
             <span>·</span>
+            <Link to="/blog" className="hover:text-muted-foreground transition-colors">
+              Blog
+            </Link>
+            <span>·</span>
+            <Link to="/compare" className="hover:text-muted-foreground transition-colors">
+              Compare
+            </Link>
+            <span>·</span>
+            <Link to="/glossary" className="hover:text-muted-foreground transition-colors">
+              Glossary
+            </Link>
+            <span>·</span>
             <Link to="/privacy" className="hover:text-muted-foreground transition-colors">
-              Privacy Policy
+              Privacy
             </Link>
             <span>·</span>
             <Link to="/terms" className="hover:text-muted-foreground transition-colors">
-              Terms of Service
+              Terms
             </Link>
             <span>·</span>
             <a href="mailto:arpit@valenceai.co" className="hover:text-muted-foreground transition-colors">

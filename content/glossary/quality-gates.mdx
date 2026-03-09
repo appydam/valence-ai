@@ -1,0 +1,51 @@
+---
+title: "Quality Gates"
+slug: "quality-gates"
+description: "Quality gates are review checkpoints in AI agent workflows where a monitor agent evaluates output against defined criteria before it proceeds to the next stage — catching errors at the point of origin rather than in the final deliverable."
+category: "technical"
+relatedTerms: ["multi-agent-orchestration", "ai-agent", "human-in-the-loop", "ai-orchestrator"]
+---
+
+**Quality gates** are review checkpoints in multi-agent AI workflows where output is evaluated against defined quality criteria before proceeding to the next stage. Rather than reviewing only final output, quality gates check intermediate deliverables at each major handoff — when research passes to writing, when a draft passes to delivery. Errors are caught and corrected at the point of origin, not discovered in the finished product.
+
+## Why Quality Gates Matter
+
+Without quality gates, AI agent workflows suffer from error propagation: a mistake made early in a workflow (a hallucinated fact, a misunderstood requirement, an incomplete research pass) propagates through every subsequent step. The writing agent drafts from bad research. The delivery agent sends a document built on wrong assumptions. The error compounds.
+
+Quality gates break this propagation. A monitor agent reviews research output before it reaches the writing agent. An error discovered at the research stage requires only re-running the research step — not rebuilding the entire workflow.
+
+## Quality Gate Implementation
+
+**Define criteria before deployment:** What does "acceptable" research look like? What data points must be present? What formats must the output follow? What are the most common failure modes to check for?
+
+**Implement at every major handoff:**
+- Research → Writing: Are all required data points present? Are sources cited? Are there obvious hallucinations?
+- Draft → Delivery: Does the output meet the brief? Is the format correct? Is the tone appropriate?
+- System action → Completion: Did the action succeed? Was data written correctly?
+
+**Feedback specificity:** Review failures must include specific, actionable feedback — not just "this isn't good enough" but "the email references a funding round that isn't mentioned in the research. Verify and correct."
+
+**Escalation path:** After N failed review cycles (typically 3), quality gates should escalate to a human reviewer rather than continuing to loop. Infinite retry loops are a failure mode.
+
+## Quality Gates in Valence AI
+
+In Valence AI's architecture, the Sentinel agent is the dedicated quality gate executor. Sentinel receives completed deliverables from Scout (research), Forge (builds), and Ghost (writing), reviews against defined criteria, and either approves for delivery or returns to the producing agent with specific revision feedback.
+
+This creates a systematic review cycle: produce → review → revise if needed → review again → approve. Human stakeholders receive approved deliverables, not first drafts.
+
+## Quality Gates vs. Human Review
+
+Quality gates (automated AI review) and human review are complementary, not alternatives.
+
+Quality gates catch the systematic, definable errors: missing required fields, format violations, obvious factual errors, length requirements. They run instantly and at scale.
+
+Human review catches the judgment-dependent issues: strategic fit, relationship sensitivity, nuance and tone that requires cultural context. Human review is preserved for what humans actually need to evaluate.
+
+The combination — quality gates filtering for definable criteria, humans reviewing for judgment — produces the best outcome: high automation with appropriate human oversight.
+
+## Related Terms
+
+- [Multi-Agent Orchestration](/glossary/multi-agent-orchestration)
+- [Human-in-the-Loop](/glossary/human-in-the-loop)
+- [AI Orchestrator](/glossary/ai-orchestrator)
+- [AI Agent](/glossary/ai-agent)

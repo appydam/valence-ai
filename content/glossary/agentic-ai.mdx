@@ -1,0 +1,53 @@
+---
+title: "Agentic AI"
+slug: "agentic-ai"
+description: "Agentic AI describes AI systems designed to take initiative, plan actions, and operate over extended time horizons toward goals — as distinct from reactive AI that only responds to immediate prompts."
+category: "core"
+relatedTerms: ["autonomous-ai", "ai-agent", "ai-workforce", "human-in-the-loop"]
+---
+
+**Agentic AI** describes AI systems designed to take initiative, plan sequences of actions, and operate over extended time horizons to achieve goals — as distinct from reactive AI systems that respond to a single prompt and stop. The term "agentic" derives from "agency": the capacity to act, choose, and pursue objectives.
+
+Agentic AI systems are defined by:
+
+**Goal-directedness:** Rather than maximizing the quality of a single response, agentic systems optimize toward achieving a defined objective over multiple steps.
+
+**Proactive action:** Agentic AI doesn't wait for instruction at each step. It determines what needs to happen next and does it, using available tools.
+
+**Multi-step planning:** Agentic systems decompose complex goals into sequences of subtasks, execute them in an appropriate order, and adapt the plan when circumstances change.
+
+**Tool use:** Agentic systems use external tools — web search, database queries, code execution, API calls — to take real-world action, not just generate text.
+
+**Temporal extension:** Agentic workflows run over minutes to hours (or longer), not milliseconds like a single model inference.
+
+## Agentic vs. Non-Agentic AI
+
+| | **Non-Agentic (Reactive)** | **Agentic** |
+|---|---|---|
+| Input | Single prompt | Goal or objective |
+| Output | Single response | Completed task or deliverable |
+| Duration | Milliseconds | Minutes to hours |
+| Tool use | None or minimal | Core capability |
+| Human role | Initiates and acts on response | Sets goal, reviews outcome |
+| Planning | None | Multi-step, adaptive |
+
+ChatGPT in a standard conversation is non-agentic: you prompt, it responds, you act. ChatGPT with tools enabled and an agent framework running is agentic: it receives a goal, plans steps, uses tools, and completes the task.
+
+## Agentic AI Safety Considerations
+
+Agentic AI introduces safety considerations absent from reactive AI:
+
+**Action irreversibility:** Agentic AI can take real-world actions (send emails, update databases, execute code) that are hard or impossible to undo. This requires careful permission scoping and human approval for high-consequence actions.
+
+**Goal misalignment:** Agentic systems pursuing specified objectives may find unexpected paths to achieve them that don't match the human's actual intent. Precise goal specification and monitoring is important.
+
+**Error propagation:** In multi-step agentic workflows, an early error can propagate through subsequent steps, amplifying the mistake. Quality review gates between steps prevent cascade failures.
+
+Production agentic AI systems implement: explicit permission scoping (agents only access what they need), human approval for irreversible actions, quality review at handoff points, and hard limits on retry loops.
+
+## Related Terms
+
+- [Autonomous AI](/glossary/autonomous-ai)
+- [AI Agent](/glossary/ai-agent)
+- [Human-in-the-Loop](/glossary/human-in-the-loop)
+- [AI Workforce](/glossary/ai-workforce)

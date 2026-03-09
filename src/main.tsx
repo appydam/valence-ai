@@ -4,6 +4,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Analytics } from "@vercel/analytics/react";
 import * as Sentry from "@sentry/react";
+import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import { tenant } from "./tenant";
@@ -25,10 +26,12 @@ if (sentryDsn) {
 const convex = new ConvexReactClient(tenant.convexUrl);
 
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={tenant.clerkPublishableKey}>
-    <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-      <App />
-      <Analytics />
-    </ConvexProviderWithClerk>
-  </ClerkProvider>
+  <HelmetProvider>
+    <ClerkProvider publishableKey={tenant.clerkPublishableKey}>
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <App />
+        <Analytics />
+      </ConvexProviderWithClerk>
+    </ClerkProvider>
+  </HelmetProvider>
 );

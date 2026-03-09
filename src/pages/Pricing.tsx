@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
+import { SEOHead } from "@/components/SEOHead";
+import { softwareApplicationSchema, faqSchema } from "@/lib/structuredData";
 import {
   Check, Users, Sparkles, Cpu, Server, Bot, Plug, Shield,
   Building2, Crown, ArrowRight, Brain, Webhook,
@@ -549,8 +551,16 @@ export default function Pricing() {
 
   const [pilotOpen, setPilotOpen] = useState(false);
 
+  const pricingFaqSchema = faqSchema(faqs.map((f) => ({ question: f.q, answer: f.a })));
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <SEOHead
+        title="Pricing — Autonomous AI Workforce Platform | Valence AI"
+        description="Business and Enterprise plans for deploying autonomous AI agents. Dedicated private infrastructure, 100+ integrations, 5 specialized agents. Starting at $2,499/mo. 2-week pilot available."
+        canonical="/pricing"
+        jsonLd={[softwareApplicationSchema(), pricingFaqSchema]}
+      />
       <PilotModal open={pilotOpen} onClose={() => setPilotOpen(false)} />
       <LandingNav onPilotClick={() => setPilotOpen(true)} />
 

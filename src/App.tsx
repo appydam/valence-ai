@@ -36,6 +36,13 @@ import Docs from "./pages/Docs";
 import WarRoom from "./pages/WarRoom";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import BlogIndex from "./pages/BlogIndex";
+import BlogPost from "./pages/BlogPost";
+import ComparisonPage from "./pages/ComparisonPage";
+import CompareIndex from "./pages/CompareIndex";
+import IntegrationPage from "./pages/IntegrationPage";
+import GlossaryIndex from "./pages/GlossaryIndex";
+import GlossaryTerm from "./pages/GlossaryTerm";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +133,17 @@ const App = () => (
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/use-cases/:slug" element={<UseCasePage />} />
+          {/* Blog */}
+          <Route path="/blog" element={<BlogIndex />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          {/* Comparisons */}
+          <Route path="/compare" element={<CompareIndex />} />
+          <Route path="/compare/:slug" element={<ComparisonPage />} />
+          {/* Integrations (public SEO pages — separate from authenticated /integrations) */}
+          <Route path="/integrations/i/:slug" element={<IntegrationPage />} />
+          {/* Glossary */}
+          <Route path="/glossary" element={<GlossaryIndex />} />
+          <Route path="/glossary/:term" element={<GlossaryTerm />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dev/login" element={<Login />} />
           {/* Everything else goes through auth */}

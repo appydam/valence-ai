@@ -1,0 +1,52 @@
+---
+title: "Human-in-the-Loop"
+slug: "human-in-the-loop"
+description: "Human-in-the-loop (HITL) is an AI deployment model where human review and approval is incorporated at defined points in an automated workflow — ensuring human judgment is applied where it adds the most value while maintaining AI efficiency for routine execution."
+category: "technical"
+relatedTerms: ["quality-gates", "agentic-ai", "autonomous-ai", "ai-agent"]
+---
+
+**Human-in-the-loop (HITL)** is an AI deployment model where human review, judgment, or approval is incorporated at defined checkpoints in an otherwise automated AI workflow. Rather than fully autonomous AI (no human involvement) or fully manual (human does everything), HITL applies human judgment specifically where it adds the most value — high-stakes decisions, sensitive communications, genuinely ambiguous situations — while delegating routine execution to AI agents.
+
+In 2026, human-in-the-loop is the standard best practice for enterprise AI agent deployment. Fully unsupervised AI is not appropriate for consequential business outputs at current AI reliability levels. Fully manual is increasingly unnecessary for high-volume routine tasks. HITL threads the needle: AI efficiency with human quality assurance.
+
+## Where to Place Humans in the Loop
+
+Not all HITL checkpoints are created equal. The placement of human review determines the balance between autonomy and oversight:
+
+**Final output review (always):** Humans should review final deliverables before they reach external stakeholders — customers, prospects, the public. This catches errors that AI quality gates miss and applies relationship context that AI agents don't have.
+
+**High-stakes action approval:** Before irreversible actions — sending a mass email campaign, deleting database records, executing financial transactions — human approval should be required. The cost of a mistake exceeds the value of the automation time savings.
+
+**Exception handling:** When AI agents encounter genuinely ambiguous situations they weren't configured to handle, escalating to a human for direction is better than having the agent attempt to resolve it independently. Clear escalation paths are a HITL feature, not a failure.
+
+**Quality sampling:** As trust in AI output builds, full review of every output becomes unnecessary. A sampling approach — reviewing 20% of outputs — maintains oversight at lower overhead, catching systematic issues without blocking all output.
+
+## HITL vs. Full Automation
+
+The right level of automation depends on three factors:
+
+**Consequence of error:** For low-consequence outputs (internal research summaries, draft documents), automated delivery is appropriate. For high-consequence outputs (customer communications, financial records), human review is warranted.
+
+**Consistency of AI quality:** Workflows where AI quality is consistently high (>95% acceptable without significant rework) can reduce HITL to sampling. Workflows with higher error rates require more HITL.
+
+**Reversibility of actions:** Reversible actions (creating a draft, adding a tag) can be automated without human approval. Irreversible actions (sending an email, deleting a record) should require human approval.
+
+## Configuring HITL in Practice
+
+Enterprise AI agent platforms allow configuring which workflows require human approval and which deliver automatically:
+
+**Required approval:** Output queued for human review; agent pauses and notifies stakeholder. Human approves or provides feedback for revision. Agent continues.
+
+**Auto-deliver with notification:** Output delivered to destination automatically; human notified so they can review and override if needed. Lower friction, higher trust required.
+
+**Sampling review:** All outputs delivered automatically; a random sample (configurable %) is flagged for human review to monitor quality trends.
+
+Most deployments start with required approval for all outputs, then selectively move to auto-deliver or sampling as quality is validated.
+
+## Related Terms
+
+- [Quality Gates](/glossary/quality-gates)
+- [Agentic AI](/glossary/agentic-ai)
+- [Autonomous AI](/glossary/autonomous-ai)
+- [AI Agent](/glossary/ai-agent)

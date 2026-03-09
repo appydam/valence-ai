@@ -1,9 +1,16 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { SEOHead } from "@/components/SEOHead";
 
 export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SEOHead
+        title="Terms of Service | Valence AI"
+        description="Valence AI terms of service. Review the terms and conditions for using the Valence AI autonomous AI workforce platform."
+        canonical="/terms"
+        noIndex={true}
+      />
       <div className="max-w-3xl mx-auto px-6 py-16">
         <Link
           to="/landing"
