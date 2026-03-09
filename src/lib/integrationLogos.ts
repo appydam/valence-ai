@@ -110,14 +110,14 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "slack":              LOGO_SLACK,
   "notion":             si("notion", "ffffff"),
   "gmail":              si("gmail", "EA4335"),
-  "google-calendar":    si("googlecalendar", "4285F4"),
+  "google-calendar":    "https://cdn.brandfetch.io/id6O2oGzv-/theme/dark/idMX2_OMSc.svg?c=1bxid64Mup7aczewSAYMX&t=1755572706253",
   "google-sheets":      si("googlesheets", "34A853"),
 
   // CRM & Sales
   "salesforce":         "https://cdn.brandfetch.io/idVE84WdIN/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1667559911541",
   "hubspot":            si("hubspot", "FF7A59"),
-  "gong":               LOGO_GONG,
-  "pipedrive":          "https://cdn.brandfetch.io/idZG_U1qqs/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1668515967517",
+  "gong":               "https://cdn.brandfetch.io/idHyhmcKvT/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1690987848205",
+  "pipedrive":          "https://cdn.brandfetch.io/idZG_U1qqs/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1667601678560",
 
   // Payments
   "stripe-api":         "https://cdn.brandfetch.io/idxAg10C0L/w/480/h/480/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1761194563315",
@@ -154,10 +154,10 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "mindtickle":         "https://cdn.brandfetch.io/idJheAuto1/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1702595441572",
 
   // Payments
-  "razorpay":           si("razorpay", "0C2451"),
+  "razorpay":           "https://cdn.brandfetch.io/idHc4m3b7C/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1668516398215",
 
   // Dev Tools
-  "vercel":             si("vercel", "ffffff"),
+  "vercel":             "https://cdn.brandfetch.io/idDpCfN4VD/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1759982710627",
 
   // Marketing
   "mailchimp":          si("mailchimp", "FFE01B"),
@@ -171,7 +171,7 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "twitter-x":          si("x", "ffffff"),
   "tiktok":             si("tiktok", "ffffff"),
   "youtube":            si("youtube", "FF0000"),
-  "reddit":             si("reddit", "FF4500"),
+  "reddit":             "https://cdn.brandfetch.io/idkKwm0IT0/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1768324678544",
 
   // E-commerce
   "aftership":          si("aftership", "ffffff"),
@@ -185,7 +185,7 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
 
   // Productivity
   "airtable":           "https://cdn.brandfetch.io/iddsnRzkxS/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1675163448780",
-  "typeform":           "https://cdn.brandfetch.io/idPkJ70vyb/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1699355444200",
+  "typeform":           "https://cdn.brandfetch.io/idPkJ70vyb/theme/light/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1699355445242",
 
   // Sales & Outreach
   "lagrowthmachine":    svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#231932"/><line x1="32" y1="14" x2="32" y2="50" stroke="#3DC778" stroke-width="7" stroke-linecap="round"/><line x1="14" y1="32" x2="50" y2="32" stroke="#3DC778" stroke-width="7" stroke-linecap="round"/><line x1="18" y1="18" x2="46" y2="46" stroke="#3DC778" stroke-width="7" stroke-linecap="round"/><line x1="46" y1="18" x2="18" y2="46" stroke="#3DC778" stroke-width="7" stroke-linecap="round"/></svg>`),
@@ -194,4 +194,55 @@ export const BLUEPRINT_LOGOS: Record<string, string> = {
   "salesloft":          "https://cdn.brandfetch.io/idLO9lFZj5/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1667568420757",
   "instantly":          "https://cdn.brandfetch.io/idlwotiiZv/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1770028826605",
   "smartlead":          "https://cdn.brandfetch.io/idO61Knu2T/w/301/h/301/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1766562082415",
+
+  // New integrations (2026-03-08)
+
+  // Klaviyo: brand black bg, white "K" wordmark style
+  "klaviyo":            "https://cdn.brandfetch.io/idOL_ClNhe/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1668515694769",
+
+  // DocuSign: brand yellow/gold envelope shape
+  "docusign":           "https://cdn.brandfetch.io/idZbuqxRqz/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1714487076473",
+
+  // Freshdesk: brand green with support headset icon
+  "freshdesk":          "https://cdn.brandfetch.io/idNbcF9oi-/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1772478685264",
+
+  // GitLab: official fox/tanuki — simpleicons slug is "gitlab"
+  "gitlab":             "https://cdn.brandfetch.io/idw382nG0m/theme/dark/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1740997511848",
+
+  // Google Drive: official tri-color logo
+  "google-drive":       "https://cdn.brandfetch.io/id6O2oGzv-/theme/dark/idncaAgFGT.svg?c=1bxid64Mup7aczewSAYMX&t=1755572716016",
+
+  // Lever: teal with "L" lever/bar icon
+  "lever":              "https://cdn.brandfetch.io/id6lPO7l84/idyh5-ICnP.svg?c=1bxid64Mup7aczewSAYMX&t=1646263350145",
+
+  // ActiveCampaign: brand blue with lightning bolt
+  "activecampaign":     "https://cdn.brandfetch.io/idrxWbUzLf/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1719412306387",
+
+  // Copper CRM: copper/orange with pipe icon
+  "copper":             "https://cdn.brandfetch.io/idu9yKg5gS/w/383/h/383/theme/dark/icon.png?c=1bxid64Mup7aczewSAYMX&t=1668516034478",
+
+  // Close CRM: green with checkmark/close icon
+  "close":              "https://cdn.brandfetch.io/id2K-M_V2y/w/1152/h/1152/theme/dark/symbol.png?c=1bxid64Mup7aczewSAYMX&t=1720167201927",
+
+  // Asana — simpleicons has it
+  "asana":              si("asana", "F06A6A"),
+
+  // Microsoft Teams: purple with "T" chat bubble
+  "microsoft-teams":    svg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#6264A7"/><rect x="18" y="22" width="28" height="6" rx="3" fill="#fff"/><rect x="29" y="22" width="6" height="20" rx="3" fill="#fff"/><circle cx="46" cy="20" r="6" fill="#A9BCDB"/></svg>`),
+
+  // QuickBooks — simpleicons has it
+  "quickbooks":         si("quickbooks", "2CA01C"),
+
+  // Xero — simpleicons has it
+  "xero":               "https://cdn.brandfetch.io/idvAAbnIRW/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1667577419075",
+
+  // Brex — simpleicons has it
+  "brex":               si("brex", "FF5B00"),
+
+  // Ramp: red-orange with upward arrow (ramp shape)
+  "ramp":               "https://cdn.brandfetch.io/idWQ_FWEk6/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1684837840694",
+
+  // Zoho suite
+  "zoho-workspace":     "https://cdn.brandfetch.io/idssig0_jY/theme/dark/id0C7_joRD.svg?c=1bxid64Mup7aczewSAYMX&t=1687855850731",
+  "zoho-crm":           "https://cdn.brandfetch.io/idssig0_jY/theme/dark/id0C7_joRD.svg?c=1bxid64Mup7aczewSAYMX&t=1687855850731",
 };

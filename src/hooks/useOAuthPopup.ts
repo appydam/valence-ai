@@ -2,14 +2,15 @@ import { useState, useCallback } from "react";
 import { apiPost } from "@/lib/api";
 import { useCurrentUserId } from "./useCurrentUserId";
 
-const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL as string;
+// CONVEX_SITE_URL is no longer used directly in this file (apiPost handles it via tenant config)
+// but kept for reference — OAuth popup origin check uses "convex.site" string match
 
 export function useOAuthPopup() {
   const userId = useCurrentUserId();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const openOAuth = useCallback(async (blueprintSlug: string) => {
+  const openOAuth = useCallback(async (blueprintSlug: string, instanceParams?: Record<string, string>) => {
     setIsConnecting(true);
     setError(null);
 
@@ -18,6 +19,7 @@ export function useOAuthPopup() {
       const response = await apiPost("/api/integrations/oauth/start", {
         blueprintSlug,
         userId,
+        ...(instanceParams ? { instanceParams } : {}),
       });
 
       if (response.error) {

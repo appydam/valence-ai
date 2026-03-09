@@ -35,10 +35,10 @@ export function useIntegrationEngine() {
     }
   }, [userId]);
 
-  const connectOAuth = useCallback(async (blueprintSlug: string) => {
+  const connectOAuth = useCallback(async (blueprintSlug: string, instanceParams?: Record<string, string>) => {
     setError(null);
     try {
-      await openOAuth(blueprintSlug);
+      await openOAuth(blueprintSlug, instanceParams);
     } catch (err: any) {
       setError(err.message || "OAuth connection failed");
       throw err;

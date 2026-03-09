@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink, Info } from "lucide-react";
 
-const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL as string;
+import { tenant } from "@/tenant";
+
+const CONVEX_SITE_URL = tenant.convexSiteUrl;
 
 interface Blueprint {
   slug: string;
