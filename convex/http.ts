@@ -115,11 +115,11 @@ http.route({
             depsToEnrich.map(async (depId: any) => {
               const dep = await ctx.runQuery(api.tasks.getById, { id: depId });
               if (!dep) return null;
-              // Truncate deliverable content in dependency context
-              const truncatedDeliverables = dep.deliverables?.slice(0, 2).map((d: any) => ({
+              // Include deliverable content in dependency context (raised 2000→8000 chars to prevent agents falsely claiming data is missing)
+              const truncatedDeliverables = dep.deliverables?.slice(0, 3).map((d: any) => ({
                 name: d.name,
                 type: d.type,
-                content: d.content?.length > 2000 ? d.content.slice(0, 2000) + "..." : d.content,
+                content: d.content?.length > 8000 ? d.content.slice(0, 8000) + "...[truncated]" : d.content,
               }));
               return { title: dep.title, status: dep.status, deliverables: truncatedDeliverables };
             })
@@ -1585,14 +1585,14 @@ http.route({
   path: "/api/integrations/oauth/start",
   method: "POST",
   handler: authenticatedHandler(async (ctx, request, auth) => {
-    const { blueprintSlug } = await request.json();
+    const { blueprintSlug, instanceParams } = await request.json();
     if (!blueprintSlug) {
       return new Response(JSON.stringify({ error: "blueprintSlug required" }), {
         status: 400, headers: corsHeaders(request),
       });
     }
     // Use authenticated userId instead of client-provided
-    const result = await ctx.runAction(api.connectionActions.startOAuth, { blueprintSlug, userId: auth.userId });
+    const result = await ctx.runAction(api.connectionActions.startOAuth, { blueprintSlug, userId: auth.userId, instanceParams });
     return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
   }),
 });

@@ -106,10 +106,12 @@ export function buildRequest(args: BuildRequestArgs): BuiltRequest {
     }
 
     if (value !== undefined && value !== null) {
-      resolvedPath = resolvedPath.replace(
-        `{${param.name}}`,
-        encodeURIComponent(String(value))
-      );
+      const strValue = String(value);
+      // Don't encode values that are full URLs (e.g. instanceUrl for Shopify)
+      const encoded = strValue.startsWith("https://") || strValue.startsWith("http://")
+        ? strValue
+        : encodeURIComponent(strValue);
+      resolvedPath = resolvedPath.replace(`{${param.name}}`, encoded);
     }
   }
 
@@ -247,14 +249,20 @@ function applyAuth(
 
   switch (blueprint.authType) {
     case "oauth2": {
-      // Normalize token type — some providers return non-standard values:
-      //   HubSpot → "bearer" (lowercase) → fix to "Bearer"
-      //   Slack   → "bot"               → fix to "Bearer"
-      const rawType = credentials.tokenType || "Bearer";
-      const tokenType = /^(bearer|bot)$/i.test(rawType) ? "Bearer" : rawType;
-      headers["Authorization"] = `${tokenType} ${
-        credentials.accessToken || credentials.token
-      }`;
+      const token = credentials.accessToken || credentials.token;
+      // Config-driven: some providers need a custom header (e.g. Shopify uses X-Shopify-Access-Token)
+      if (authConfig.authHeaderName) {
+        const prefix = authConfig.authHeaderPrefix || "";
+        headers[authConfig.authHeaderName] = `${prefix}${token}`;
+      } else {
+        // Default: Authorization: Bearer <token>
+        // Normalize token type — some providers return non-standard values:
+        //   HubSpot → "bearer" (lowercase) → fix to "Bearer"
+        //   Slack   → "bot"               → fix to "Bearer"
+        const rawType = credentials.tokenType || "Bearer";
+        const tokenType = /^(bearer|bot)$/i.test(rawType) ? "Bearer" : rawType;
+        headers["Authorization"] = `${tokenType} ${token}`;
+      }
       break;
     }
 

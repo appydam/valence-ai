@@ -815,13 +815,15 @@ export const delegateTask = mutation({
         agentsToWake.add(subtask.assignee);
       }
     }
+    let wakeupIndex = 0;
     for (const agentName of agentsToWake) {
       const agentTask = createdIds[args.subtasks.findIndex((s) => s.assignee === agentName)];
-      await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+      await ctx.scheduler.runAfter(wakeupIndex * 30_000, internal.agentWakeup.triggerWakeup, {
         agentName,
         taskId: agentTask as string,
         reason: "task_delegated",
       });
+      wakeupIndex++;
     }
 
     // Post delegation summary comment on parent task

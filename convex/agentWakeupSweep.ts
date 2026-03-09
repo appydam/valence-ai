@@ -1,6 +1,8 @@
 import { internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 
+const STAGGER_INTERVAL_MS = 30_000; // 30 seconds between agent wakeups
+
 /**
  * Fallback sweep for stuck tasks.
  *
@@ -24,6 +26,7 @@ export const sweep = internalMutation({
 
     let wakeupCount = 0;
     let skippedCount = 0;
+    let wakeupIndex = 0;
 
     // --- Stuck "assigned" tasks ---
     const assignedTasks = await ctx.db
@@ -64,12 +67,13 @@ export const sweep = internalMutation({
           console.log(`[WakeupSweep] ${assignee} already active on task ${task._id}, skipping`);
           skippedCount++;
         } else {
-          console.log(`[WakeupSweep] Task ${task._id} stuck in assigned for ${assignee}, triggering wakeup`);
-          await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+          console.log(`[WakeupSweep] Task ${task._id} stuck in assigned for ${assignee}, triggering wakeup (stagger ${wakeupIndex * STAGGER_INTERVAL_MS}ms)`);
+          await ctx.scheduler.runAfter(wakeupIndex * STAGGER_INTERVAL_MS, internal.agentWakeup.triggerWakeup, {
             agentName: assignee,
             taskId: task._id as string,
             reason: "sweep_fallback",
           });
+          wakeupIndex++;
           wakeupCount++;
         }
       }
@@ -114,7 +118,7 @@ export const sweep = internalMutation({
           console.log(`[WakeupSweep] ${assignee} actively heartbeating after task update, skipping ${task._id}`);
           skippedCount++;
         } else {
-          console.log(`[WakeupSweep] Task ${task._id} stuck in in_progress for ${assignee} (>15min, agent silent), re-waking`);
+          console.log(`[WakeupSweep] Task ${task._id} stuck in in_progress for ${assignee} (>15min, agent silent), re-waking (stagger ${wakeupIndex * STAGGER_INTERVAL_MS}ms)`);
           await ctx.db.insert("comments", {
             taskId: task._id,
             author: "System",
@@ -122,11 +126,12 @@ export const sweep = internalMutation({
             mentions: [assignee],
             createdAt: now,
           });
-          await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+          await ctx.scheduler.runAfter(wakeupIndex * STAGGER_INTERVAL_MS, internal.agentWakeup.triggerWakeup, {
             agentName: assignee,
             taskId: task._id as string,
             reason: "sweep_stale_progress",
           });
+          wakeupIndex++;
           wakeupCount++;
         }
       }

@@ -1,5 +1,5 @@
 // v2 - includes Sentinel agent
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
@@ -183,5 +183,25 @@ export const resetStaleAgents = internalMutation({
     }
 
     return { resetCount };
+  },
+});
+
+/**
+ * Count agents genuinely active right now.
+ * Active = status "working" AND heartbeat within last 2 minutes.
+ * Used by triggerWakeup concurrency cap.
+ */
+export const countActiveAgents = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+    const agents = await ctx.db.query("agents").collect();
+    const activeAgents = agents.filter(
+      (a) => a.status === "working" && a.lastHeartbeat > twoMinutesAgo
+    );
+    return {
+      count: activeAgents.length,
+      activeNames: activeAgents.map((a) => a.name),
+    };
   },
 });

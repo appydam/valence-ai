@@ -2,7 +2,7 @@
 
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 /**
  * Agent Wakeup System
@@ -16,6 +16,8 @@ import { api } from "./_generated/api";
  *
  * Fallback: 10-minute sweep cron catches tasks if webhook fails entirely.
  */
+
+const MAX_CONCURRENT_AGENTS = 4;
 
 const AGENT_SLUGS: Record<string, string> = {
   Kaze: "kaze",
@@ -36,6 +38,21 @@ export const triggerWakeup = internalAction({
     if (!slug) {
       console.log(`[AgentWakeup] Unknown agent: ${args.agentName}, skipping`);
       return;
+    }
+
+    // Concurrency cap: skip wakeup if server already has enough agents running.
+    // Sentinel is exempt — QA reviews must never be blocked by the cap.
+    if (args.agentName !== "Sentinel") {
+      const { count, activeNames } = await ctx.runQuery(
+        internal.agents.countActiveAgents
+      );
+      if (count >= MAX_CONCURRENT_AGENTS) {
+        console.log(
+          `[AgentWakeup] Concurrency cap (${count}/${MAX_CONCURRENT_AGENTS} active: ${activeNames.join(", ")}). ` +
+          `Skipping ${args.agentName} for task ${args.taskId} — sweep retries in 2min.`
+        );
+        return;
+      }
     }
 
     const webhookUrl = process.env.AGENT_WAKEUP_WEBHOOK_URL;

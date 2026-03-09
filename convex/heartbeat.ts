@@ -81,6 +81,15 @@ export const beat = mutation({
         patch.serverMetrics = args.serverMetrics;
       }
       await ctx.db.patch(existing._id, patch);
+
+      // Touch lastAgentActivity on the current task so stuck detection knows the agent is alive
+      if (args.currentTaskId && (args.status === "working" || args.status === "online")) {
+        const task = await ctx.db.get(args.currentTaskId as any);
+        if (task && (task.status === "assigned" || task.status === "in_progress")) {
+          await ctx.db.patch(task._id, { lastAgentActivity: Date.now() });
+        }
+      }
+
       return { action: "updated", agentId: existing._id };
     } else {
       const defaults = AGENT_DEFAULTS[args.agentName];

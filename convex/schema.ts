@@ -96,6 +96,8 @@ export default defineSchema({
     // Integration requirements for agent-to-integration wiring
     requiredIntegrations: v.optional(v.array(v.string())), // Blueprint slugs required to complete this task
     requiredUserId: v.optional(v.string()), // Clerk user ID whose credentials should be used
+    // Agent activity: tracks when agent last touched this task (heartbeat, progress update, etc.)
+    lastAgentActivity: v.optional(v.number()),
     // Quality loop: iteration tracking for rejection/rework cycles
     iterationCount: v.optional(v.number()),    // How many times this task has been rejected and reworked
     maxIterations: v.optional(v.number()),     // Max allowed iterations before escalating to human (default 3)
@@ -300,6 +302,7 @@ export default defineSchema({
     blueprintSlug: v.string(),
     userId: v.string(),
     codeVerifier: v.optional(v.string()), // PKCE code_verifier (stored for token exchange)
+    instanceParams: v.optional(v.string()), // JSON-encoded {shop: "..."} etc for URL placeholder resolution
     expiresAt: v.number(),    // ms timestamp, 10-minute TTL
   }).index("by_token", ["token"]),
 
@@ -907,6 +910,68 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // ============================================================
+  // CUSTOMER PROVISIONING TRACKER (Admin Ops)
+  // ============================================================
+
+  customerProvisionings: defineTable({
+    // Customer identity
+    slug: v.string(),
+    companyName: v.string(),
+    domain: v.string(),
+    adminEmail: v.string(),
+    plan: v.union(v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
+
+    // Deployment model
+    deploymentModel: v.union(v.literal("cloud"), v.literal("onprem")),
+
+    // Collected info (pre-flight)
+    contactName: v.optional(v.string()),
+    contactRole: v.optional(v.string()),
+    anthropicKeyPreference: v.optional(v.union(v.literal("we_provide"), v.literal("customer_provides"))),
+    serverSize: v.optional(v.string()),
+    serverRegion: v.optional(v.string()),
+    notes: v.optional(v.string()),
+
+    // Infrastructure IDs (populated during provisioning)
+    convexProject: v.optional(v.string()),
+    convexUrl: v.optional(v.string()),
+    convexSiteUrl: v.optional(v.string()),
+    vercelProject: v.optional(v.string()),
+    lightsailIp: v.optional(v.string()),
+    lightsailInstance: v.optional(v.string()),
+    sshKeyPath: v.optional(v.string()),
+
+    // Step completion tracking
+    steps: v.array(v.object({
+      id: v.string(),
+      title: v.string(),
+      type: v.union(v.literal("auto"), v.literal("manual"), v.literal("semi")),
+      status: v.union(v.literal("pending"), v.literal("running"), v.literal("done"), v.literal("failed"), v.literal("skipped")),
+      completedAt: v.optional(v.number()),
+      failedReason: v.optional(v.string()),
+      output: v.optional(v.string()),
+    })),
+
+    // Overall status
+    status: v.union(
+      v.literal("preflight"),
+      v.literal("provisioning"),
+      v.literal("verifying"),
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("failed"),
+    ),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    createdBy: v.string(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_status", ["status"])
+    .index("by_created", ["createdAt"]),
 
   brandConfig: defineTable({
     companyName: v.string(),

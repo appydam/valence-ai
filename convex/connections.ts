@@ -182,6 +182,7 @@ export const saveOAuthState = mutation({
     blueprintSlug: v.string(),
     userId: v.string(),
     codeVerifier: v.optional(v.string()),
+    instanceParams: v.optional(v.string()),
     expiresAt: v.number(),
   },
   handler: async (ctx, args) => {
@@ -190,6 +191,7 @@ export const saveOAuthState = mutation({
       blueprintSlug: args.blueprintSlug,
       userId: args.userId,
       codeVerifier: args.codeVerifier,
+      instanceParams: args.instanceParams,
       expiresAt: args.expiresAt,
     });
   },
