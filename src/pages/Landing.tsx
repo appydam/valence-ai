@@ -2221,7 +2221,8 @@ export default function Landing() {
                 width="18"
                 height="18"
                 style={{ display: "inline", verticalAlign: "middle", filter: "brightness(0) saturate(100%) invert(62%) sepia(98%) saturate(400%) hue-rotate(330deg) brightness(105%)", marginBottom: "2px" }}
-              />
+              />{" "}
+              &amp; OpenClaw 🦞
             </motion.p>
           </RevealSection>
 
