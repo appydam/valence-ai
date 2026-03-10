@@ -1,246 +1,425 @@
 #!/usr/bin/env node
 /**
- * Build-time pre-renderer for usevalence.ai
+ * Build-time static HTML injector for usevalence.ai
  *
  * Problem: The app is a Vite SPA. Crawlers that don't execute JavaScript
  * (Perplexity, ChatGPT browse, some Googlebot passes) only see an empty
- * <div id="root">. This script renders each public route in a headless
- * browser after the build and saves the fully-rendered HTML to
- * dist/<route>/index.html so crawlers get the complete page.
+ * <div id="root">. This script copies dist/index.html to each public route's
+ * directory and injects per-route <title>, <meta description>, canonical URL,
+ * and meaningful <noscript> body text — so crawlers get useful content.
+ *
+ * Approach: Pure Node.js string injection — no headless browser, no Chrome
+ * dependencies. Works on Vercel, GitHub Actions, and any CI environment.
  *
  * Usage: node scripts/prerender.mjs
  * Runs after: vite build
- * Requires: dist/ to exist, puppeteer installed
  */
 
-import puppeteer from "puppeteer";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { createServer } from "http";
-import { createReadStream } from "fs";
-import { lookup } from "node:dns/promises";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(__dirname, "../dist");
-const PORT = 5188; // Arbitrary port for local static server
+const BASE_URL = "https://usevalence.ai";
 
-// ── Routes to pre-render ──────────────────────────────────────────────────────
-const USE_CASE_SLUGS = [
-  "case-study-pipeline", "competitive-intel-radar", "competitor-price-response",
-  "client-reporting-autopilot", "month-end-close-prep", "incident-response-autopilot",
-  "regulatory-change-tracker", "win-back-dead-deals", "seo-content-engine",
-  "upsell-signal-detection", "vendor-renewal-autopilot", "meeting-to-action-autopilot",
-  "performance-review-autopilot", "inventory-restock-forecasting", "review-ugc-harvester",
-  "client-audit-strategy", "expense-anomaly-detection", "release-notes-autopilot",
-  "contract-review-risk-flagging", "sales-lead-enrichment-outbound", "sales-crm-hygiene",
-  "cs-qbr-health-automation", "cs-onboarding-orchestration", "marketing-cross-channel-reporting",
-  "content-repurpose-distribute", "support-ticket-intelligence", "revops-pipeline-hygiene",
-  "finance-month-end-close", "ops-data-sync-reporting", "flash-sale-launch-autopilot",
-  "agency-client-performance-narrative", "dead-pipeline-revival-sprint",
+// ── Use-case metadata (slug → title + description) ───────────────────────────
+const USE_CASES = [
+  { slug: "case-study-pipeline", title: "Turn Every Closed Deal Into a Case Study", category: "Marketing", desc: "Automate case study creation with AI agents. Detect closed deals, pull data from Salesforce and Gong, draft multi-format content, and distribute — all without manual effort." },
+  { slug: "competitive-intel-radar", title: "Competitive Intelligence Radar", category: "Marketing", desc: "Monitor competitors automatically. AI agents track pricing changes, product launches, and market moves across the web and surface actionable intel to your team." },
+  { slug: "competitor-price-response", title: "Competitor Price Response Autopilot", category: "Sales", desc: "Respond to competitor pricing changes faster. AI agents detect price moves, analyze impact, and draft response recommendations before your sales team loses a deal." },
+  { slug: "client-reporting-autopilot", title: "Client Reporting Autopilot", category: "Agency", desc: "Generate client performance reports automatically. AI agents pull data from Google Analytics, ads, and CRM, then produce polished reports on schedule." },
+  { slug: "month-end-close-prep", title: "Month-End Close Preparation", category: "Finance", desc: "Accelerate month-end close with AI automation. Agents reconcile accounts, flag anomalies, and prepare close packages — cutting manual work by 80%." },
+  { slug: "incident-response-autopilot", title: "Incident Response Autopilot", category: "DevOps", desc: "Automate incident detection and response. AI agents monitor alerts, triage incidents, notify stakeholders, and create post-mortems automatically." },
+  { slug: "regulatory-change-tracker", title: "Regulatory Change Tracker", category: "Legal", desc: "Track regulatory changes that affect your business. AI agents monitor compliance databases, flag relevant updates, and draft impact summaries for legal review." },
+  { slug: "win-back-dead-deals", title: "Win Back Dead Deals", category: "Sales", desc: "Revive dead pipeline with AI-powered outreach. Agents analyze lost deals, identify re-engagement triggers, and craft personalized win-back sequences." },
+  { slug: "seo-content-engine", title: "SEO Content Engine", category: "Marketing", desc: "Scale SEO content production with AI agents. Research keywords, draft optimized articles, and publish at scale — without a large content team." },
+  { slug: "upsell-signal-detection", title: "Upsell Signal Detection", category: "Customer Success", desc: "Detect upsell opportunities before customers ask. AI agents monitor usage patterns, support tickets, and engagement signals to surface expansion revenue." },
+  { slug: "vendor-renewal-autopilot", title: "Vendor Renewal Autopilot", category: "Operations", desc: "Never miss a vendor renewal. AI agents track contract dates, benchmark pricing, prepare negotiation briefs, and alert the right stakeholders automatically." },
+  { slug: "meeting-to-action-autopilot", title: "Meeting to Action Autopilot", category: "Operations", desc: "Convert meetings into action items automatically. AI agents transcribe calls, extract decisions, create tasks in your project management tools, and follow up on blockers." },
+  { slug: "performance-review-autopilot", title: "Performance Review Autopilot", category: "HR", desc: "Streamline performance reviews with AI automation. Agents collect peer feedback, aggregate metrics, and draft review documents — saving HR teams weeks of manual work." },
+  { slug: "inventory-restock-forecasting", title: "Inventory Restock Forecasting", category: "E-commerce", desc: "Predict inventory needs before stockouts happen. AI agents analyze sales velocity, seasonal trends, and supplier lead times to generate restock recommendations." },
+  { slug: "review-ugc-harvester", title: "Review and UGC Harvester", category: "E-commerce", desc: "Collect and repurpose customer reviews and UGC automatically. AI agents harvest reviews, identify top content, and reformat it for ads, landing pages, and social." },
+  { slug: "client-audit-strategy", title: "Client Audit and Strategy", category: "Agency", desc: "Deliver comprehensive client audits in hours, not weeks. AI agents audit websites, ad accounts, and performance data, then generate strategic recommendations." },
+  { slug: "expense-anomaly-detection", title: "Expense Anomaly Detection", category: "Finance", desc: "Catch expense fraud and policy violations automatically. AI agents analyze expense reports, flag anomalies, and alert finance teams before reimbursement." },
+  { slug: "release-notes-autopilot", title: "Release Notes Autopilot", category: "DevOps", desc: "Generate release notes automatically from commits and PRs. AI agents summarize changes, format for different audiences, and distribute to customers and internal teams." },
+  { slug: "contract-review-risk-flagging", title: "Contract Review and Risk Flagging", category: "Legal", desc: "Speed up contract review with AI agents. Automatically identify risky clauses, missing terms, and non-standard language — before legal spends hours reading." },
+  { slug: "sales-lead-enrichment-outbound", title: "Sales Lead Enrichment and Outbound", category: "Sales", desc: "Enrich leads and launch outbound sequences automatically. AI agents research prospects, personalize messaging, and load sequences into your sales tools." },
+  { slug: "sales-crm-hygiene", title: "Sales CRM Hygiene", category: "Sales", desc: "Keep your CRM clean automatically. AI agents detect stale deals, missing fields, and duplicates, then update records to maintain data quality across your pipeline." },
+  { slug: "cs-qbr-health-automation", title: "CS QBR Health Automation", category: "Customer Success", desc: "Automate QBR preparation for customer success teams. AI agents pull account health data, usage metrics, and support history, then draft QBR decks automatically." },
+  { slug: "cs-onboarding-orchestration", title: "CS Onboarding Orchestration", category: "Customer Success", desc: "Orchestrate customer onboarding with AI agents. Automate kickoff prep, task assignment, milestone tracking, and stakeholder communication across your tech stack." },
+  { slug: "marketing-cross-channel-reporting", title: "Marketing Cross-Channel Reporting", category: "Marketing", desc: "Unify marketing performance across channels automatically. AI agents pull data from Google Analytics, Meta Ads, and LinkedIn, then generate consolidated reports." },
+  { slug: "content-repurpose-distribute", title: "Content Repurpose and Distribute", category: "Marketing", desc: "Turn one piece of content into ten automatically. AI agents repurpose blog posts, webinars, and reports into LinkedIn posts, tweets, email snippets, and more." },
+  { slug: "support-ticket-intelligence", title: "Support Ticket Intelligence", category: "Customer Success", desc: "Extract product insights from support tickets automatically. AI agents classify tickets, identify patterns, and surface actionable product feedback to your team." },
+  { slug: "revops-pipeline-hygiene", title: "RevOps Pipeline Hygiene", category: "Operations", desc: "Maintain pipeline accuracy automatically. AI agents audit deal stages, flag stale opportunities, and enforce CRM hygiene rules across your entire revenue org." },
+  { slug: "finance-month-end-close", title: "Finance Month-End Close", category: "Finance", desc: "Accelerate financial close with AI automation. Agents reconcile transactions, generate journal entries, and prepare close packages — reducing close time by days." },
+  { slug: "ops-data-sync-reporting", title: "Ops Data Sync and Reporting", category: "Operations", desc: "Keep operational data in sync automatically. AI agents reconcile data across systems, flag discrepancies, and generate operational reports on schedule." },
+  { slug: "flash-sale-launch-autopilot", title: "Flash Sale Launch Autopilot", category: "E-commerce", desc: "Launch flash sales without manual coordination. AI agents set up discount codes, update inventory alerts, prep email campaigns, and monitor performance in real time." },
+  { slug: "agency-client-performance-narrative", title: "Agency Client Performance Narrative", category: "Agency", desc: "Generate client performance narratives automatically. AI agents analyze campaign data, identify wins and opportunities, and draft compelling narratives for client reviews." },
+  { slug: "dead-pipeline-revival-sprint", title: "Dead Pipeline Revival Sprint", category: "Sales", desc: "Revive dormant deals with AI-powered sprint campaigns. Agents identify stalled opportunities, research re-engagement angles, and launch personalized outreach sequences." },
 ];
 
-const COMPARISON_SLUGS = [
-  "valence-vs-lindy", "valence-vs-zapier", "valence-vs-make",
-  "valence-vs-crewai", "valence-vs-autogpt", "valence-vs-perplexity-computer",
-  "valence-vs-claude-cowork", "valence-vs-microsoft-copilot",
+// ── Integration metadata (slug → name + description) ─────────────────────────
+const INTEGRATIONS = [
+  { slug: "salesforce", name: "Salesforce", desc: "AI agents that read and write Salesforce CRM records — sync contacts, update deals, create accounts, and run pipeline hygiene workflows automatically." },
+  { slug: "hubspot", name: "HubSpot", desc: "Connect Valence AI to HubSpot. Agents update contact records, log activities, create deals, and trigger workflows based on real business events." },
+  { slug: "dynamics365-sales", name: "Microsoft Dynamics 365", desc: "Integrate Valence AI with Microsoft Dynamics 365 Sales for automated CRM updates, pipeline management, and cross-system data sync." },
+  { slug: "pipedrive", name: "Pipedrive", desc: "AI agents that manage your Pipedrive pipeline — update deal stages, enrich contacts, log notes, and run hygiene checks automatically." },
+  { slug: "zoho-crm", name: "Zoho CRM", desc: "Connect Valence AI to Zoho CRM for automated lead management, deal updates, and cross-system synchronization." },
+  { slug: "close", name: "Close CRM", desc: "Integrate Valence AI with Close CRM for automated lead management, call workflows, and sales activity tracking." },
+  { slug: "zendesk-sell", name: "Zendesk Sell", desc: "AI agents that manage Zendesk Sell deals, contacts, and activities — automating sales workflows in the Zendesk ecosystem." },
+  { slug: "insightly", name: "Insightly", desc: "Connect Valence AI to Insightly for automated CRM updates, project management workflows, and relationship intelligence." },
+  { slug: "copper", name: "Copper CRM", desc: "Connect Valence AI to Copper CRM for automated contact management, deal tracking, and pipeline workflow automation." },
+  { slug: "keap", name: "Keap", desc: "AI agents that manage Keap contacts, automate follow-up sequences, and trigger marketing workflows based on business events." },
+  { slug: "freshsales", name: "Freshsales", desc: "Integrate Valence AI with Freshsales CRM for automated deal management, contact enrichment, and sales workflow automation." },
+  { slug: "google-drive", name: "Google Drive", desc: "AI agents that read, write, and organize Google Drive files — enabling document-driven workflows and automated file management." },
+  { slug: "dropbox", name: "Dropbox", desc: "Connect Valence AI to Dropbox for automated file management, document workflows, and cloud storage operations." },
+  { slug: "sharepoint", name: "SharePoint", desc: "AI agents that access SharePoint document libraries, manage files, and automate document-centric workflows in Microsoft 365." },
+  { slug: "box", name: "Box", desc: "Integrate Valence AI with Box for enterprise file management, automated document workflows, and secure content operations." },
+  { slug: "onedrive", name: "OneDrive", desc: "AI agents that manage OneDrive files, automate document creation, and sync files across Microsoft 365 workflows." },
+  { slug: "notion", name: "Notion", desc: "Connect Valence AI to Notion. Agents create pages, update databases, and sync knowledge across your Notion workspace automatically." },
+  { slug: "onenote", name: "OneNote", desc: "Connect Valence AI to OneNote for automated note creation, knowledge management, and Microsoft 365 document workflows." },
+  { slug: "confluence", name: "Confluence", desc: "AI agents that search, create, and update Confluence pages — keeping your team wiki current without manual documentation work." },
+  { slug: "google-docs", name: "Google Docs", desc: "AI agents that create and edit Google Docs — enabling document-driven workflows and automated content generation." },
+  { slug: "coda", name: "Coda", desc: "AI agents that read and write Coda docs and tables — enabling document-database hybrid workflows and automated content management." },
+  { slug: "quip", name: "Quip", desc: "Integrate Valence AI with Quip for automated document creation and Salesforce-connected workflow management." },
+  { slug: "slack", name: "Slack", desc: "Valence AI agents post updates, send alerts, and read Slack channels — keeping your team informed without manual status updates." },
+  { slug: "microsoft-teams", name: "Microsoft Teams", desc: "AI agents that post to Teams channels, send notifications, and surface insights directly inside Microsoft Teams." },
+  { slug: "zoom", name: "Zoom", desc: "AI agents that schedule Zoom meetings, process transcripts, and trigger workflows based on meeting outcomes." },
+  { slug: "whatsapp", name: "WhatsApp Business", desc: "Send WhatsApp messages via Business API from AI agent workflows — enabling automated customer communication at scale." },
+  { slug: "emarsys", name: "Emarsys", desc: "AI agents that manage Emarsys marketing automation workflows, campaign triggers, and customer engagement sequences." },
+  { slug: "outreach", name: "Outreach", desc: "AI agents that manage Outreach sequences, create prospects, and trigger sales engagement workflows based on CRM signals." },
+  { slug: "gong", name: "Gong", desc: "Connect Valence AI to Gong for call intelligence workflows — extract insights from recordings and trigger follow-up actions." },
+  { slug: "salesloft", name: "Salesloft", desc: "AI agents that manage Salesloft cadences, create people, and trigger sales engagement workflows automatically." },
+  { slug: "apollo", name: "Apollo.io", desc: "Integrate Valence AI with Apollo.io for automated lead research, contact enrichment, and outbound sequence management." },
+  { slug: "mindtickle", name: "MindTickle", desc: "Integrate Valence AI with MindTickle for automated sales readiness workflows, training tracking, and rep performance management." },
+  { slug: "lagrowthmachine", name: "La Growth Machine", desc: "AI agents that manage La Growth Machine campaigns, sequences, and multi-channel outreach workflows." },
+  { slug: "clay", name: "Clay", desc: "Connect Valence AI to Clay for automated data enrichment, lead research, and outbound workflow management." },
+  { slug: "instantly", name: "Instantly", desc: "AI agents that manage Instantly campaigns, add leads, and automate cold email outreach workflows at scale." },
+  { slug: "smartlead", name: "Smartlead", desc: "Integrate Valence AI with Smartlead for automated cold email campaign management and agency outreach workflows." },
+  { slug: "jira", name: "Jira", desc: "Valence AI agents create Jira issues, update ticket status, and manage sprint workflows — keeping your engineering backlog clean and current." },
+  { slug: "asana", name: "Asana", desc: "AI agents that create Asana tasks, update project status, and manage team workflows — keeping projects on track without manual updates." },
+  { slug: "trello", name: "Trello", desc: "Connect Valence AI to Trello. Agents create cards, move tasks across boards, and manage project workflows automatically." },
+  { slug: "monday", name: "Monday.com", desc: "AI agents that update Monday.com items, trigger automations, and keep team boards current without manual data entry." },
+  { slug: "azure-devops", name: "Azure DevOps", desc: "AI agents that manage Azure DevOps work items, pipelines, and repositories — automating engineering workflows in Microsoft's DevOps platform." },
+  { slug: "clickup", name: "ClickUp", desc: "Integrate Valence AI with ClickUp for automated task creation, status updates, and project management workflows." },
+  { slug: "linear", name: "Linear", desc: "AI agents that create and update Linear issues, manage engineering backlogs, and automate development workflow triggers." },
+  { slug: "github", name: "GitHub", desc: "AI agents that create issues, open PRs, review code, and manage GitHub repositories — automating developer workflows end to end." },
+  { slug: "vercel", name: "Vercel", desc: "Integrate Valence AI with Vercel for automated deployment workflows, environment management, and deployment monitoring." },
+  { slug: "productboard", name: "Productboard", desc: "Connect Valence AI to Productboard for automated feature request triage, roadmap updates, and product feedback workflows." },
+  { slug: "hive", name: "Hive", desc: "Connect Valence AI to Hive for automated action management, project tracking, and team workflow orchestration." },
+  { slug: "shortcut", name: "Shortcut", desc: "AI agents that create Shortcut stories, manage epics, and automate engineering project workflows." },
+  { slug: "todoist", name: "Todoist", desc: "Integrate Valence AI with Todoist for automated task creation, project management, and productivity workflow orchestration." },
+  { slug: "airtable", name: "Airtable", desc: "Valence AI agents read and write Airtable records — enabling database-driven workflows and automated data management." },
+  { slug: "gmail", name: "Gmail", desc: "AI agents that draft Gmail messages, organize inbox, and trigger email workflows based on business events — without manual email management." },
+  { slug: "outlook", name: "Microsoft Outlook", desc: "AI agents that draft Outlook emails, manage inbox, and trigger email workflows inside Microsoft 365." },
+  { slug: "sendgrid", name: "SendGrid", desc: "Send transactional and marketing emails from AI agent workflows using SendGrid's email delivery infrastructure." },
+  { slug: "mailchimp", name: "Mailchimp", desc: "Connect Valence AI to Mailchimp for automated campaign creation, audience management, and email performance reporting." },
+  { slug: "klaviyo", name: "Klaviyo", desc: "AI agents that manage Klaviyo flows, sync audience segments, and trigger email campaigns based on customer behavior." },
+  { slug: "google-analytics", name: "Google Analytics", desc: "Pull Google Analytics data automatically. AI agents generate performance reports, surface insights, and trigger workflows based on traffic and conversion metrics." },
+  { slug: "google-ads", name: "Google Ads", desc: "AI agents that monitor Google Ads performance, generate reports, and surface optimization recommendations automatically." },
+  { slug: "meta-ads", name: "Meta Ads", desc: "Connect Valence AI to Meta Ads Manager for automated performance reporting, budget alerts, and campaign optimization workflows." },
+  { slug: "linkedin-ads", name: "LinkedIn Ads", desc: "AI agents that track LinkedIn Ads performance, generate reports, and trigger workflows based on campaign metrics." },
+  { slug: "google-calendar", name: "Google Calendar", desc: "AI agents that schedule meetings, manage calendar events, and coordinate scheduling workflows inside Google Calendar." },
+  { slug: "calendly", name: "Calendly", desc: "AI agents that trigger workflows from Calendly bookings — automate prep, follow-up, and scheduling-based business processes." },
+  { slug: "stripe", name: "Stripe", desc: "Connect Valence AI to Stripe for payment-triggered workflows — automate upsell outreach, renewal alerts, and revenue reporting." },
+  { slug: "shopify", name: "Shopify", desc: "AI agents that manage Shopify orders, update product listings, trigger marketing workflows, and monitor e-commerce performance." },
+  { slug: "woocommerce", name: "WooCommerce", desc: "AI agents that manage WooCommerce orders, update product data, and automate e-commerce workflows on WordPress." },
+  { slug: "bigcommerce", name: "BigCommerce", desc: "Connect Valence AI to BigCommerce for automated order management, inventory workflows, and e-commerce reporting." },
+  { slug: "twitter", name: "Twitter / X", desc: "Automate Twitter content creation and scheduling with AI agents. Draft posts, monitor mentions, and manage social presence without manual effort." },
+  { slug: "linkedin", name: "LinkedIn", desc: "AI agents that draft LinkedIn posts, track engagement, and run LinkedIn-based outreach campaigns automatically." },
+  { slug: "instagram", name: "Instagram", desc: "Connect Valence AI to Instagram for automated content scheduling, engagement monitoring, and social media reporting." },
+  { slug: "youtube", name: "YouTube", desc: "AI agents that manage YouTube content, track video performance, and automate content distribution workflows." },
+  { slug: "zapier", name: "Zapier", desc: "Connect Valence AI to Zapier to trigger Zaps from AI agent outputs and feed Zapier workflow results back into agent missions." },
+  { slug: "make", name: "Make (Integromat)", desc: "Integrate Valence AI with Make for advanced automation — trigger Make scenarios from agent actions and process results within AI workflows." },
+  { slug: "sentry", name: "Sentry", desc: "Connect Valence AI to Sentry for automated error triage, incident routing, and engineering alert management." },
+  { slug: "datadog", name: "Datadog", desc: "Valence AI agents monitor Datadog alerts, correlate incidents, and trigger automated response workflows when anomalies are detected." },
+  { slug: "pagerduty", name: "PagerDuty", desc: "AI agents that manage PagerDuty incidents, trigger escalations, and automate on-call response workflows." },
+  { slug: "tableau", name: "Tableau", desc: "Integrate Valence AI with Tableau for automated data visualization updates and BI-driven workflow triggers." },
+  { slug: "looker", name: "Looker", desc: "Connect Valence AI to Looker for automated report generation and data-driven workflow orchestration." },
+  { slug: "powerbi", name: "Power BI", desc: "AI agents that pull Power BI data, generate performance summaries, and trigger business intelligence workflows." },
+  { slug: "servicenow", name: "ServiceNow", desc: "Integrate Valence AI with ServiceNow for automated incident management, ITSM workflows, and enterprise service automation." },
+  { slug: "freshdesk", name: "Freshdesk", desc: "AI agents that manage Freshdesk tickets, categorize support requests, and surface product insights from customer conversations." },
+  { slug: "zendesk", name: "Zendesk", desc: "Integrate Valence AI with Zendesk for automated ticket triage, response drafting, and support intelligence workflows." },
+  { slug: "bamboohr", name: "BambooHR", desc: "Integrate Valence AI with BambooHR for automated onboarding workflows, performance review prep, and HR data management." },
+  { slug: "workday", name: "Workday", desc: "Connect Valence AI to Workday for automated HR workflows — performance reviews, headcount reporting, and organizational data sync." },
+  { slug: "rippling", name: "Rippling", desc: "AI agents that integrate with Rippling for employee lifecycle automation, payroll triggers, and HR workflow orchestration." },
+  { slug: "quickbooks", name: "QuickBooks", desc: "Valence AI agents connect to QuickBooks for automated expense tracking, invoice management, and financial reporting workflows." },
+  { slug: "xero", name: "Xero", desc: "Integrate Valence AI with Xero for automated accounting workflows — reconciliation, invoice creation, and financial close automation." },
+  { slug: "figma", name: "Figma", desc: "Connect Valence AI to Figma for design workflow automation — extract asset metadata, trigger design reviews, and sync design system updates." },
+  { slug: "webflow", name: "Webflow", desc: "Integrate Valence AI with Webflow for automated CMS updates, content publishing workflows, and website management." },
+  { slug: "twilio", name: "Twilio", desc: "AI agents that send SMS and WhatsApp messages via Twilio — enabling automated outreach and notification workflows." },
+  { slug: "intercom", name: "Intercom", desc: "AI agents that read Intercom conversations, extract customer signals, and trigger workflows based on support data." },
+  { slug: "google-search-console", name: "Google Search Console", desc: "Connect Valence AI to Google Search Console for automated SEO reporting, keyword tracking, and search performance workflows." },
+  { slug: "semrush", name: "SEMrush", desc: "AI agents that pull SEMrush data for automated SEO analysis, keyword research, and competitive intelligence workflows." },
+  { slug: "ahrefs", name: "Ahrefs", desc: "Integrate Valence AI with Ahrefs for automated backlink monitoring, SEO reporting, and content opportunity identification." },
+  { slug: "hubspot-marketing", name: "HubSpot Marketing", desc: "Connect Valence AI to HubSpot Marketing for automated campaign creation, lead nurturing, and marketing performance reporting." },
+  { slug: "marketo", name: "Marketo", desc: "AI agents that manage Marketo campaigns, sync lead data, and trigger marketing automation workflows based on business signals." },
+  { slug: "pardot", name: "Pardot", desc: "Integrate Valence AI with Salesforce Pardot for automated B2B marketing workflows, lead scoring, and campaign management." },
+  { slug: "docusign", name: "DocuSign", desc: "AI agents that trigger DocuSign envelopes, track signature status, and automate contract workflow management." },
+  { slug: "hellosign", name: "HelloSign", desc: "Connect Valence AI to HelloSign for automated document signing workflows triggered by business events." },
+  { slug: "razorpay", name: "Razorpay", desc: "Connect Valence AI to Razorpay for payment-triggered workflows, subscription management, and revenue reporting automation." },
+  { slug: "braintree", name: "Braintree", desc: "AI agents that monitor Braintree transactions, trigger payment workflows, and automate revenue operations." },
+  { slug: "anthropic", name: "Anthropic Claude", desc: "Valence AI is built on Anthropic's Claude models — powering intelligent reasoning, writing, and decision-making across all five agents." },
+  { slug: "openai", name: "OpenAI", desc: "Integrate OpenAI models into Valence AI workflows for specialized language processing and AI-powered task execution." },
+  { slug: "aws", name: "Amazon Web Services", desc: "Connect Valence AI to AWS for cloud infrastructure automation, S3 file management, and cloud resource monitoring." },
+  { slug: "gcp", name: "Google Cloud Platform", desc: "Integrate Valence AI with GCP for automated cloud workflows, BigQuery reporting, and Google Cloud resource management." },
+  { slug: "azure", name: "Microsoft Azure", desc: "AI agents that manage Azure resources, trigger cloud workflows, and automate infrastructure operations on Microsoft Azure." },
+  { slug: "postgresql", name: "PostgreSQL", desc: "Valence AI agents query and write to PostgreSQL databases — enabling data-driven workflows and automated database operations." },
+  { slug: "mysql", name: "MySQL", desc: "Connect Valence AI to MySQL for automated data queries, reporting workflows, and database-driven decision making." },
+  { slug: "mongodb", name: "MongoDB", desc: "AI agents that read and write MongoDB collections — enabling document-database workflows and automated data management." },
+  { slug: "redis", name: "Redis", desc: "Integrate Valence AI with Redis for high-speed data caching, session management, and real-time workflow triggers." },
 ];
 
-const GLOSSARY_SLUGS = [
-  "ai-agent", "autonomous-ai", "ai-workforce", "multi-agent-orchestration",
-  "ai-employee", "ai-worker", "agentic-ai", "agent-memory", "quality-gates",
-  "task-decomposition", "ai-integration", "webhook-triggers", "ai-orchestrator",
-  "human-in-the-loop", "enterprise-ai",
+// ── Glossary metadata ─────────────────────────────────────────────────────────
+const GLOSSARY = [
+  { slug: "ai-agent", term: "AI Agent", desc: "An AI agent is an autonomous software system that perceives its environment, makes decisions, and takes actions to achieve specific goals without continuous human instruction." },
+  { slug: "autonomous-ai", term: "Autonomous AI", desc: "Autonomous AI refers to AI systems that operate independently, making decisions and executing multi-step tasks without requiring human approval at each step." },
+  { slug: "ai-workforce", term: "AI Workforce", desc: "An AI workforce is a coordinated team of AI agents that collectively handle business functions — research, writing, coding, and system updates — like a digital team of employees." },
+  { slug: "multi-agent-orchestration", term: "Multi-Agent Orchestration", desc: "Multi-agent orchestration is the coordination of multiple AI agents working together on complex tasks, with an orchestrator delegating work and managing agent outputs." },
+  { slug: "ai-employee", term: "AI Employee", desc: "An AI employee is an autonomous AI agent assigned to perform ongoing business functions — not just answer questions, but execute real workflows across software systems." },
+  { slug: "ai-worker", term: "AI Worker", desc: "An AI worker is an AI agent that executes specific business tasks autonomously — research, content creation, CRM updates, code — as part of a larger AI workforce." },
+  { slug: "agentic-ai", term: "Agentic AI", desc: "Agentic AI describes AI systems that take initiative, plan multi-step actions, use tools, and pursue goals autonomously — as opposed to reactive chatbots." },
+  { slug: "agent-memory", term: "Agent Memory", desc: "Agent memory refers to an AI agent's ability to store and recall information across sessions — enabling contextual continuity in long-running business workflows." },
+  { slug: "quality-gates", term: "Quality Gates", desc: "Quality gates in AI agent systems are automated checkpoints that validate outputs against defined criteria before they reach humans or downstream systems." },
+  { slug: "task-decomposition", term: "Task Decomposition", desc: "Task decomposition is the process of breaking complex goals into subtasks that can be assigned to specialized AI agents or executed in a defined sequence." },
+  { slug: "ai-integration", term: "AI Integration", desc: "AI integration connects AI agents to external software systems — CRMs, project management tools, databases — enabling agents to read and write real business data." },
+  { slug: "webhook-triggers", term: "Webhook Triggers", desc: "Webhook triggers allow AI agents to start workflows automatically in response to real-time events from external systems — a deal closed, a ticket opened, a payment received." },
+  { slug: "ai-orchestrator", term: "AI Orchestrator", desc: "An AI orchestrator is the coordinating agent in a multi-agent system — it receives goals, plans execution, delegates to specialist agents, and synthesizes results." },
+  { slug: "human-in-the-loop", term: "Human-in-the-Loop", desc: "Human-in-the-loop AI systems incorporate human approval or review at defined checkpoints, balancing autonomous execution with human oversight for high-stakes actions." },
+  { slug: "enterprise-ai", term: "Enterprise AI", desc: "Enterprise AI refers to AI systems designed for business-scale deployment — with security, compliance, multi-system integration, and governance requirements met." },
 ];
 
-// Read blog slugs from manifest if it exists
-let blogSlugs = [];
+// ── Comparison metadata ───────────────────────────────────────────────────────
+const COMPARISONS = [
+  { slug: "valence-vs-lindy", title: "Valence AI vs Lindy AI", desc: "Compare Valence AI and Lindy AI. Valence is a five-agent autonomous workforce for enterprise teams. Lindy is a single-agent assistant focused on individual productivity." },
+  { slug: "valence-vs-zapier", title: "Valence AI vs Zapier", desc: "Compare Valence AI and Zapier. Valence AI executes autonomous multi-step missions with AI reasoning. Zapier is a no-code automation platform for rule-based workflow triggers." },
+  { slug: "valence-vs-make", title: "Valence AI vs Make", desc: "Compare Valence AI and Make (Integromat). Valence runs AI-powered autonomous missions. Make is a visual workflow automation tool for structured data pipelines." },
+  { slug: "valence-vs-crewai", title: "Valence AI vs CrewAI", desc: "Compare Valence AI and CrewAI. Valence is a managed enterprise platform with hosted agents. CrewAI is an open-source Python framework for building custom multi-agent systems." },
+  { slug: "valence-vs-autogpt", title: "Valence AI vs AutoGPT", desc: "Compare Valence AI and AutoGPT. Valence provides production-ready autonomous agents with enterprise integrations. AutoGPT is an experimental open-source autonomous agent framework." },
+  { slug: "valence-vs-perplexity-computer", title: "Valence AI vs Perplexity Computer", desc: "Compare Valence AI and Perplexity Computer. Valence is an enterprise AI workforce platform. Perplexity Computer is an AI-powered browser-based computer use agent for research tasks." },
+  { slug: "valence-vs-claude-cowork", title: "Valence AI vs Claude Cowork", desc: "Compare Valence AI and Claude Cowork. Valence is a multi-agent platform for enterprise teams. Claude Cowork is Anthropic's desktop computer use agent for individual knowledge workers." },
+  { slug: "valence-vs-microsoft-copilot", title: "Valence AI vs Microsoft Copilot Cowork", desc: "Compare Valence AI and Microsoft Copilot Cowork. Valence is a stack-agnostic autonomous AI workforce. Copilot Cowork is Microsoft's agentic capability layer inside Microsoft 365." },
+];
+
+// ── Blog metadata ─────────────────────────────────────────────────────────────
+let blogPosts = [];
 const blogManifestPath = path.join(__dirname, "../content/blog/manifest.json");
 if (fs.existsSync(blogManifestPath)) {
   try {
-    blogSlugs = JSON.parse(fs.readFileSync(blogManifestPath, "utf8")).map((p) => p.slug);
-  } catch (e) { /* no manifest yet */ }
+    blogPosts = JSON.parse(fs.readFileSync(blogManifestPath, "utf8"));
+  } catch (e) { /* no manifest */ }
 }
 
-// Integration slugs — top 50 most valuable for pre-rendering
-const TOP_INTEGRATION_SLUGS = [
-  "salesforce", "hubspot", "slack", "github", "notion", "google-sheets",
-  "gmail", "jira", "google-analytics", "google-calendar", "stripe", "shopify",
-  "linkedin", "twitter", "zapier", "make", "monday", "asana", "trello",
-  "clickup", "linear", "airtable", "figma", "webflow", "intercom",
-  "zendesk", "freshdesk", "mailchimp", "klaviyo", "sendgrid",
-  "google-drive", "dropbox", "onedrive", "confluence", "notion",
-  "pipedrive", "zoho-crm", "close", "apollo", "outreach",
-  "tableau", "looker", "powerbi", "datadog", "sentry",
-  "twilio", "docusign", "quickbooks", "xero", "razorpay",
+// ── Static pages ──────────────────────────────────────────────────────────────
+const STATIC_PAGES = [
+  {
+    route: "/landing",
+    title: "Valence AI — Autonomous AI Workforce Platform",
+    desc: "Deploy a five-agent autonomous AI workforce. Valence AI executes research, writing, coding, and system updates across 100+ integrations — all from a single command.",
+    h1: "Valence AI — Autonomous AI Workforce Platform",
+    body: `<p>Valence AI is an autonomous AI workforce platform. Deploy five specialized AI agents that work together to execute complex business missions across your entire tech stack.</p>
+<h2>The Five Agents</h2>
+<ul>
+  <li><strong>Kaze</strong> — The orchestrator. Receives missions, plans execution, delegates to specialist agents.</li>
+  <li><strong>Scout</strong> — The researcher. Monitors markets, competitors, and synthesizes intelligence briefs.</li>
+  <li><strong>Forge</strong> — The builder. Writes production code, manages GitHub, builds automations.</li>
+  <li><strong>Ghost</strong> — The writer. Drafts emails, blog posts, LinkedIn content, and reports.</li>
+  <li><strong>Sentinel</strong> — The monitor. Audits outputs, flags anomalies, enforces quality standards.</li>
+</ul>
+<h2>100+ Integrations</h2>
+<p>Salesforce, HubSpot, GitHub, Jira, Slack, Google Workspace, Notion, Stripe, Shopify, and 90+ more.</p>
+<h2>Use Cases</h2>
+<p>Sales automation, marketing content, customer success, financial close, DevOps, legal compliance, and more.</p>`,
+  },
+  {
+    route: "/pricing",
+    title: "Pricing — Valence AI",
+    desc: "Valence AI pricing. Team subscription starting at $2,499/month. Deploy an autonomous AI workforce across unlimited missions and 100+ integrations.",
+    h1: "Valence AI Pricing",
+    body: `<p>Valence AI offers a team subscription starting at $2,499/month — deploy your autonomous AI workforce with five specialized agents, unlimited missions, and 100+ integrations.</p>`,
+  },
+  {
+    route: "/blog",
+    title: "Blog — Valence AI",
+    desc: "AI agent insights, autonomous AI guides, and enterprise automation deep-dives from the Valence AI team.",
+    h1: "Valence AI Blog",
+    body: `<p>Guides, research, and insights on autonomous AI, AI agents, enterprise AI deployment, and AI workforce strategy.</p>`,
+  },
+  {
+    route: "/compare",
+    title: "Valence AI vs Competitors — Comparison Guide",
+    desc: "Compare Valence AI to Lindy, Zapier, Make, CrewAI, AutoGPT, Perplexity Computer, Claude Cowork, and Microsoft Copilot Cowork.",
+    h1: "Valence AI Comparisons",
+    body: `<p>See how Valence AI compares to leading AI agent platforms, automation tools, and enterprise AI solutions.</p>`,
+  },
+  {
+    route: "/glossary",
+    title: "AI Agent Glossary — Valence AI",
+    desc: "Definitions for AI agent terminology: AI agent, autonomous AI, AI workforce, multi-agent orchestration, agentic AI, and more.",
+    h1: "AI Agent Glossary",
+    body: `<p>Plain-language definitions for autonomous AI, AI agents, multi-agent orchestration, and enterprise AI terminology.</p>`,
+  },
+  {
+    route: "/privacy",
+    title: "Privacy Policy — Valence AI",
+    desc: "Valence AI privacy policy.",
+    h1: "Privacy Policy",
+    body: `<p>Read the Valence AI privacy policy at usevalence.ai/privacy.</p>`,
+  },
+  {
+    route: "/terms",
+    title: "Terms of Service — Valence AI",
+    desc: "Valence AI terms of service.",
+    h1: "Terms of Service",
+    body: `<p>Read the Valence AI terms of service at usevalence.ai/terms.</p>`,
+  },
 ];
 
-const routes = [
-  "/landing",
-  "/pricing",
-  "/privacy",
-  "/terms",
-  "/blog",
-  "/compare",
-  "/glossary",
-  ...USE_CASE_SLUGS.map((s) => `/use-cases/${s}`),
-  ...COMPARISON_SLUGS.map((s) => `/compare/${s}`),
-  ...GLOSSARY_SLUGS.map((s) => `/glossary/${s}`),
-  ...blogSlugs.map((s) => `/blog/${s}`),
-  ...TOP_INTEGRATION_SLUGS.map((s) => `/integrations/i/${s}`),
+// ── Build all route configs ───────────────────────────────────────────────────
+const allRoutes = [
+  ...STATIC_PAGES,
+  ...USE_CASES.map((uc) => ({
+    route: `/use-cases/${uc.slug}`,
+    title: `${uc.title} — AI Automation for ${uc.category} | Valence AI`,
+    desc: uc.desc,
+    h1: uc.title,
+    body: `<p>${uc.desc}</p><p>Powered by Valence AI autonomous agents — Kaze orchestrates, Scout researches, Ghost writes, Forge updates your systems, and Sentinel reviews every deliverable.</p><p><a href="${BASE_URL}/landing">Learn more about Valence AI</a></p>`,
+  })),
+  ...INTEGRATIONS.map((int) => ({
+    route: `/integrations/i/${int.slug}`,
+    title: `${int.name} Integration — Valence AI`,
+    desc: int.desc,
+    h1: `Valence AI + ${int.name}`,
+    body: `<p>${int.desc}</p><p>Connect ${int.name} to Valence AI's autonomous agent workforce and automate workflows across your entire business stack.</p><p><a href="${BASE_URL}/landing">Learn more about Valence AI</a></p>`,
+  })),
+  ...COMPARISONS.map((c) => ({
+    route: `/compare/${c.slug}`,
+    title: `${c.title} | Valence AI`,
+    desc: c.desc,
+    h1: c.title,
+    body: `<p>${c.desc}</p><p><a href="${BASE_URL}/landing">Learn more about Valence AI</a> | <a href="${BASE_URL}/compare">See all comparisons</a></p>`,
+  })),
+  ...GLOSSARY.map((g) => ({
+    route: `/glossary/${g.slug}`,
+    title: `${g.term} — Definition | Valence AI Glossary`,
+    desc: g.desc,
+    h1: g.term,
+    body: `<p>${g.desc}</p><p><a href="${BASE_URL}/glossary">Browse the full AI agent glossary</a></p>`,
+  })),
+  ...blogPosts.map((p) => ({
+    route: `/blog/${p.slug}`,
+    title: `${p.title} | Valence AI`,
+    desc: p.description,
+    h1: p.title,
+    body: `<p>${p.description}</p><p><a href="${BASE_URL}/blog">Read more on the Valence AI blog</a></p>`,
+  })),
 ];
 
-// ── Simple static file server ─────────────────────────────────────────────────
-function startServer() {
-  return new Promise((resolve) => {
-    const server = createServer((req, res) => {
-      let filePath = path.join(distDir, req.url === "/" ? "/index.html" : req.url);
-
-      // Strip query strings
-      filePath = filePath.split("?")[0];
-
-      // If directory or no extension, serve index.html (SPA fallback)
-      if (!path.extname(filePath) || fs.existsSync(filePath) === false) {
-        const dirIndex = path.join(filePath, "index.html");
-        if (fs.existsSync(dirIndex)) {
-          filePath = dirIndex;
-        } else {
-          filePath = path.join(distDir, "index.html");
-        }
-      }
-
-      if (!fs.existsSync(filePath)) {
-        res.writeHead(404);
-        res.end("Not found");
-        return;
-      }
-
-      const ext = path.extname(filePath).toLowerCase();
-      const contentTypes = {
-        ".html": "text/html; charset=utf-8",
-        ".js": "application/javascript",
-        ".css": "text/css",
-        ".svg": "image/svg+xml",
-        ".png": "image/png",
-        ".ico": "image/x-icon",
-        ".json": "application/json",
-      };
-
-      res.writeHead(200, { "Content-Type": contentTypes[ext] || "application/octet-stream" });
-      createReadStream(filePath).pipe(res);
-    });
-
-    server.listen(PORT, () => resolve(server));
-  });
+// ── HTML injection ────────────────────────────────────────────────────────────
+function escapeAttr(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
-// ── Pre-render a single route ─────────────────────────────────────────────────
-async function renderRoute(browser, route) {
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 800 });
+function buildHtml(template, { route, title, desc, h1, body }) {
+  const canonical = `${BASE_URL}${route}`;
+  const safeTitle = escapeAttr(title);
+  const safeDesc = escapeAttr(desc);
 
-  // Suppress console noise
-  page.on("console", () => {});
-  page.on("pageerror", () => {});
+  let html = template;
 
-  try {
-    await page.goto(`http://localhost:${PORT}${route}`, {
-      waitUntil: "networkidle0",
-      timeout: 30000,
-    });
+  // Replace <title>
+  html = html.replace(/<title>[^<]*<\/title>/, `<title>${safeTitle}</title>`);
 
-    // Wait for React to render content
-    await page.waitForSelector("#root > *", { timeout: 10000 }).catch(() => {});
-    await new Promise((r) => setTimeout(r, 1500));
+  // Replace description
+  html = html.replace(
+    /<meta name="description"[^>]*>/,
+    `<meta name="description" content="${safeDesc}" />`
+  );
 
-    const html = await page.content();
-
-    // Save to dist/<route>/index.html
-    const outDir = path.join(distDir, route === "/" ? "" : route);
-    fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(path.join(outDir, "index.html"), html, "utf8");
-
-    return { route, success: true };
-  } catch (err) {
-    return { route, success: false, error: err.message };
-  } finally {
-    await page.close();
+  // Add/replace canonical
+  if (html.includes('<link rel="canonical"')) {
+    html = html.replace(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${canonical}" />`);
+  } else {
+    html = html.replace("</head>", `  <link rel="canonical" href="${canonical}" />\n</head>`);
   }
+
+  // Replace OG tags
+  html = html.replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${safeTitle}" />`);
+  html = html.replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${safeDesc}" />`);
+  html = html.replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${canonical}" />`);
+  html = html.replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${safeTitle}" />`);
+  html = html.replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${safeDesc}" />`);
+
+  // Inject rich static content into noscript (what Perplexity/ChatGPT Browse sees)
+  const nav = route !== "/landing"
+    ? `<a href="${BASE_URL}/landing" style="color:#4f46e5;">Valence AI</a> &rsaquo; ${escapeAttr(h1)}`
+    : `<a href="${BASE_URL}/landing" style="color:#4f46e5;">Valence AI</a>`;
+
+  const staticContent = `
+      <div style="max-width:800px;margin:60px auto;padding:0 24px;font-family:system-ui,sans-serif;color:#1a202c;line-height:1.6;">
+        <nav style="margin-bottom:24px;font-size:14px;color:#718096;">${nav}</nav>
+        <h1 style="font-size:2rem;font-weight:700;margin-bottom:16px;color:#1a202c;">${escapeAttr(h1)}</h1>
+        ${body}
+        <hr style="margin:40px 0;border:none;border-top:1px solid #e2e8f0;" />
+        <p style="font-size:13px;color:#718096;">
+          <a href="${BASE_URL}/landing" style="color:#4f46e5;">Valence AI</a> &mdash;
+          Autonomous AI Workforce Platform &mdash;
+          <a href="${BASE_URL}/pricing" style="color:#4f46e5;">Pricing</a> &mdash;
+          <a href="${BASE_URL}/blog" style="color:#4f46e5;">Blog</a> &mdash;
+          <a href="${BASE_URL}/glossary" style="color:#4f46e5;">Glossary</a> &mdash;
+          <a href="${BASE_URL}/compare" style="color:#4f46e5;">Comparisons</a>
+        </p>
+      </div>`;
+
+  html = html.replace(/<noscript>[\s\S]*?<\/noscript>/, `<noscript>${staticContent}\n    </noscript>`);
+
+  return html;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-async function main() {
-  console.log(`\n🕷️  Pre-rendering ${routes.length} routes...\n`);
-
-  const server = await startServer();
-
-  let browser;
-  try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    });
-  } catch (err) {
-    server.close();
-    const isChromeMissing =
-      err.message?.includes("Failed to launch") ||
-      err.message?.includes("libnspr4") ||
-      err.message?.includes("Code: 127") ||
-      err.message?.includes("cannot open shared object");
-    if (isChromeMissing) {
-      console.warn("\n⚠️  Puppeteer could not launch Chrome (missing system libraries).");
-      console.warn("   Pre-rendering skipped — pages will be served as SPA fallback.\n");
-      return;
-    }
-    throw err;
+function main() {
+  if (!fs.existsSync(distDir)) {
+    console.error("dist/ directory not found. Run vite build first.");
+    process.exit(1);
   }
 
-  const results = { success: 0, failed: 0 };
+  const templatePath = path.join(distDir, "index.html");
+  if (!fs.existsSync(templatePath)) {
+    console.error("dist/index.html not found.");
+    process.exit(1);
+  }
 
-  // Process in batches of 5 to avoid overwhelming the server
-  const batchSize = 5;
-  for (let i = 0; i < routes.length; i += batchSize) {
-    const batch = routes.slice(i, i + batchSize);
-    const batchResults = await Promise.all(batch.map((r) => renderRoute(browser, r)));
+  const template = fs.readFileSync(templatePath, "utf8");
+  console.log(`\n🔧 Injecting static HTML for ${allRoutes.length} routes...\n`);
 
-    batchResults.forEach((r) => {
-      if (r.success) {
-        results.success++;
-        console.log(`  ✅ ${r.route}`);
-      } else {
-        results.failed++;
-        console.log(`  ⚠️  ${r.route} — ${r.error}`);
+  let success = 0;
+  let failed = 0;
+
+  for (const routeConfig of allRoutes) {
+    try {
+      const outDir = path.join(distDir, routeConfig.route);
+      fs.mkdirSync(outDir, { recursive: true });
+      const html = buildHtml(template, routeConfig);
+      fs.writeFileSync(path.join(outDir, "index.html"), html, "utf8");
+      success++;
+      // Log first 10 and every 25th to show progress without flooding console
+      if (success <= 10 || success % 25 === 0) {
+        console.log(`  ✅ ${routeConfig.route}`);
       }
-    });
+    } catch (err) {
+      failed++;
+      console.log(`  ⚠️  ${routeConfig.route} — ${err.message}`);
+    }
   }
 
-  await browser.close();
-  server.close();
-
-  console.log(`\n✅ Pre-rendering complete: ${results.success} succeeded, ${results.failed} failed\n`);
-
-  if (results.failed > 0) {
-    console.log("ℹ️  Failed routes will still work as SPA fallback — crawlers will see the pre-rendered HTML for successful routes.");
-  }
+  console.log(`\n✅ Static HTML injection complete: ${success} succeeded, ${failed} failed`);
+  console.log(`   Each route now has a pre-rendered index.html with correct meta tags.`);
+  console.log(`   Crawlers (Perplexity, ChatGPT Browse, Googlebot) will see full HTML content.\n`);
 }
 
-main().catch((err) => {
-  // Puppeteer requires system Chrome libraries (libnspr4.so etc.) that may not
-  // be present in all CI/CD environments (e.g. Vercel Linux build containers).
-  // In that case, skip pre-rendering gracefully — pages still work as SPA fallback.
-  const isChromeMissing =
-    err.message?.includes("Failed to launch") ||
-    err.message?.includes("libnspr4") ||
-    err.message?.includes("Code: 127") ||
-    err.message?.includes("cannot open shared object");
-
-  if (isChromeMissing) {
-    console.warn("\n⚠️  Puppeteer could not launch Chrome (missing system libraries).");
-    console.warn("   Pre-rendering skipped — pages will be served as SPA fallback.");
-    console.warn("   To enable pre-rendering, run this build in an environment with Chrome installed.\n");
-    process.exit(0); // Non-fatal: let the Vercel build succeed
-  }
-
-  console.error("Pre-render failed:", err);
-  process.exit(1);
-});
+main();

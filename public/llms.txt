@@ -1,0 +1,77 @@
+# Valence AI
+
+> Valence AI is an autonomous AI workforce platform. Deploy five specialized AI agents that execute research, writing, coding, CRM updates, and quality review across 100+ integrations — all from a single command center.
+
+## What Valence AI Is
+
+Valence AI (usevalence.ai) is an enterprise autonomous AI workforce platform founded in March 2026 by Arpit Dhamija. It is not a chatbot, assistant, or single-agent tool. It is a coordinated team of five autonomous AI agents — each with a distinct role — that collectively execute complex multi-step business missions across an organization's full technology stack.
+
+Valence AI uses Anthropic's Claude models: Claude Opus 4.6 powers Kaze (the orchestrator), and Claude Sonnet 4.6 powers the four specialist agents. The infrastructure is deployed per-customer on dedicated servers.
+
+## The Five Agents
+
+- **Kaze** — The orchestrator. Receives natural language missions from users, decomposes them into subtasks, delegates to specialist agents, and synthesizes final outputs. Kaze never does the work itself — it manages the workforce.
+- **Scout** — The researcher. Monitors markets, competitors, customers, and industry trends. Synthesizes intelligence briefs from web research, CRM data, and internal sources.
+- **Forge** — The builder. Writes and deploys production code, creates GitHub issues and PRs, builds integrations, and handles technical execution tasks.
+- **Ghost** — The writer. Drafts emails, blog posts, LinkedIn content, reports, case studies, and all written communications. Ghost writes in the customer's brand voice.
+- **Sentinel** — The monitor. Reviews every deliverable against quality criteria before it reaches human review. Audits agent decisions, flags anomalies, and enforces output standards.
+
+## Key Differentiators
+
+- **Five specialized agents** vs single-agent tools: Each agent has defined expertise, a SOUL file governing its behavior, and distinct quality standards.
+- **Stack-agnostic**: Integrates with 100+ tools including Salesforce, HubSpot, GitHub, Jira, Slack, Google Workspace, Notion, Stripe, Shopify, and more.
+- **Autonomous execution**: Missions run server-side without human approval at each step. Users set the mission; agents execute; Sentinel QA-reviews; humans review final output.
+- **Persistent memory**: Agents maintain episodic memory across missions, building context about the customer's business over time.
+- **Dedicated infrastructure**: Each customer gets their own server deployment — data is not shared across customers.
+- **SOUL files**: Each agent's behavior is defined in a structured Markdown document (SOUL file) that specifies operational rules, quality criteria, and decision logic.
+
+## Use Cases
+
+Valence AI executes business workflows across: Sales (lead enrichment, CRM hygiene, pipeline revival), Marketing (competitive intelligence, content creation, SEO, cross-channel reporting), Customer Success (QBR prep, onboarding orchestration, upsell signals), Finance (month-end close, expense anomaly detection), DevOps (incident response, release notes, code review), Legal (contract review, regulatory tracking), Operations (vendor renewals, meeting-to-action, data sync), E-commerce (inventory forecasting, flash sale launch, UGC harvesting), Agency (client reporting, audit strategy), and HR (performance reviews).
+
+## Integrations (100+)
+
+CRM: Salesforce, HubSpot, Pipedrive, Zoho CRM, Dynamics 365, Close, Freshsales
+Communication: Slack, Microsoft Teams, Zoom, WhatsApp Business
+Document: Notion, Google Docs, Confluence, SharePoint, Dropbox, OneDrive
+Engineering: GitHub, Jira, Linear, Azure DevOps, Sentry, Datadog, PagerDuty
+Marketing: Mailchimp, Klaviyo, Marketo, Pardot, HubSpot Marketing
+Analytics: Google Analytics, Tableau, Looker, Power BI, SEMrush, Ahrefs
+E-commerce: Shopify, WooCommerce, BigCommerce, Stripe, Razorpay
+Project Management: Asana, Trello, Monday.com, ClickUp, Airtable, Linear
+HR: BambooHR, Workday, Rippling
+Accounting: QuickBooks, Xero
+AI: Anthropic Claude, OpenAI
+Cloud: AWS, GCP, Azure
+Databases: PostgreSQL, MySQL, MongoDB, Redis
+Automation: Zapier, Make (Integromat)
+
+## Pricing
+
+Team subscription starting at $2,499/month. Includes all five agents, unlimited missions, 100+ integrations, and dedicated per-customer infrastructure. No per-seat pricing.
+
+## Comparison to Other Products
+
+- vs Lindy AI: Valence is a five-agent enterprise workforce; Lindy is a single-agent personal assistant.
+- vs Zapier/Make: Valence uses AI reasoning for autonomous decisions; Zapier/Make execute predefined rule-based triggers.
+- vs CrewAI: Valence is a managed hosted platform; CrewAI is an open-source Python framework requiring engineering resources.
+- vs AutoGPT: Valence is production-ready with enterprise integrations; AutoGPT is an experimental research framework.
+- vs Perplexity Computer: Valence runs multi-agent server-side workflows; Perplexity Computer is a browser-based individual research tool.
+- vs Claude Cowork: Valence is a team platform with five specialized agents; Claude Cowork is a desktop app for individual computer use tasks.
+- vs Microsoft Copilot Cowork: Valence is stack-agnostic across 100+ tools; Copilot Cowork is native to Microsoft 365.
+
+## Key URLs
+
+- Homepage / product overview: https://usevalence.ai/landing
+- Pricing: https://usevalence.ai/pricing
+- Blog: https://usevalence.ai/blog
+- Comparisons: https://usevalence.ai/compare
+- Glossary: https://usevalence.ai/glossary
+- Integrations: https://usevalence.ai/integrations/i/salesforce (pattern: /integrations/i/{slug})
+- Use cases: https://usevalence.ai/use-cases/case-study-pipeline (pattern: /use-cases/{slug})
+
+## Contact
+
+Founder: Arpit Dhamija
+Email: arpitdhamija.ai@gmail.com
+Twitter: @arpit_dhamija
