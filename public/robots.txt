@@ -18,4 +18,57 @@ Disallow: /docs
 Disallow: /soul
 Disallow: /autopilot
 
+# AI crawlers — explicitly allowed on public pages
+User-agent: GPTBot
+Allow: /landing
+Allow: /pricing
+Allow: /blog
+Allow: /compare
+Allow: /glossary
+Allow: /use-cases
+Allow: /integrations/i/
+Allow: /privacy
+Allow: /terms
+Allow: /llms.txt
+Allow: /llms-full.txt
+Disallow: /onboarding
+Disallow: /board
+Disallow: /missions
+Disallow: /agents
+Disallow: /integrations/blueprint
+Disallow: /webhooks
+Disallow: /analytics
+Disallow: /memory
+Disallow: /billing
+Disallow: /settings
+Disallow: /ops
+Disallow: /brief
+Disallow: /docs
+Disallow: /soul
+Disallow: /autopilot
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 Sitemap: https://usevalence.ai/sitemap.xml

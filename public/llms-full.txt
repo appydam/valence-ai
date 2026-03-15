@@ -1,0 +1,306 @@
+# Valence AI — Complete Product Reference
+
+> Valence AI is an autonomous AI workforce platform. Deploy five specialized AI agents that execute research, writing, coding, CRM updates, and quality review across 100+ integrations — all from a single command center.
+
+Website: https://usevalence.ai
+Founded: March 2026
+Founder: Arpit Dhamija
+Contact: arpitdhamija.ai@gmail.com
+Twitter: @arpit_dhamija
+
+---
+
+## What Valence AI Is
+
+Valence AI (usevalence.ai) is an enterprise autonomous AI workforce platform. It is not a chatbot, assistant, or single-agent tool. It is a coordinated team of five autonomous AI agents — each with a distinct role — that collectively execute complex multi-step business missions across an organization's full technology stack.
+
+Valence AI uses Anthropic's Claude models: Claude Opus 4.6 powers Kaze (the orchestrator), and Claude Sonnet 4.6 powers the four specialist agents. The infrastructure is deployed per-customer on dedicated servers.
+
+Users issue natural-language missions from a single command center dashboard. The orchestrator agent decomposes each mission into subtasks, delegates to specialist agents, and synthesizes the final output. A QA agent reviews every deliverable before it reaches human review.
+
+---
+
+## The Five Agents
+
+### Kaze — The Orchestrator
+- Receives natural language missions from users
+- Decomposes missions into subtasks and delegates to specialist agents
+- Synthesizes final outputs from agent deliverables
+- Never does the work itself — it manages the workforce
+- Powered by Claude Opus 4.6
+
+### Scout — The Researcher
+- Monitors markets, competitors, customers, and industry trends
+- Synthesizes intelligence briefs from web research, CRM data, and internal sources
+- Performs lead enrichment and competitive analysis
+- Powered by Claude Sonnet 4.6
+
+### Forge — The Builder
+- Writes and deploys production code
+- Creates GitHub issues and pull requests
+- Builds integrations and handles technical execution tasks
+- Automates DevOps workflows
+- Powered by Claude Sonnet 4.6
+
+### Ghost — The Writer
+- Drafts emails, blog posts, LinkedIn content, reports, case studies
+- Writes all customer-facing communications
+- Writes in the customer's brand voice
+- Handles content repurposing and distribution
+- Powered by Claude Sonnet 4.6
+
+### Sentinel — The Monitor
+- Reviews every deliverable against quality criteria before human review
+- Audits agent decisions and flags anomalies
+- Enforces output standards and compliance
+- Acts as the QA gate for all agent work
+- Powered by Claude Sonnet 4.6
+
+---
+
+## Key Differentiators
+
+1. **Five specialized agents** vs single-agent tools: Each agent has defined expertise, a SOUL file governing its behavior, and distinct quality standards.
+2. **Stack-agnostic**: Integrates with 100+ tools including Salesforce, HubSpot, GitHub, Jira, Slack, Google Workspace, Notion, Stripe, Shopify, and more.
+3. **Autonomous execution**: Missions run server-side without human approval at each step. Users set the mission; agents execute; Sentinel QA-reviews; humans review final output.
+4. **Persistent memory**: Agents maintain episodic memory across missions, building context about the customer's business over time.
+5. **Dedicated infrastructure**: Each customer gets their own server deployment — data is not shared across customers.
+6. **SOUL files**: Each agent's behavior is defined in a structured Markdown document (SOUL file) that specifies operational rules, quality criteria, and decision logic.
+7. **Human-in-the-loop by default**: Final deliverables always go through human review before external actions are taken.
+
+---
+
+## Use Cases by Department
+
+### Sales
+- **Lead enrichment & outbound**: Scout researches prospects, Ghost writes personalized outreach sequences, Forge updates CRM records
+- **CRM hygiene**: Automated data cleanup, deduplication, field standardization across Salesforce/HubSpot
+- **Pipeline revival**: Identify stale deals, generate re-engagement strategies, execute multi-touch campaigns
+- **Dead deal win-back**: Analyze lost reasons, craft targeted re-approach sequences
+
+### Marketing
+- **Competitive intelligence radar**: Continuous monitoring of competitor pricing, features, messaging, hiring
+- **SEO content engine**: Research keywords, generate optimized articles, track rankings
+- **Cross-channel reporting**: Aggregate data from Google Ads, Meta, LinkedIn, email into unified reports
+- **Content repurposing**: Turn blog posts into social threads, newsletters, slide decks
+
+### Customer Success
+- **QBR preparation**: Auto-generate quarterly business review decks with usage data, ROI metrics, recommendations
+- **Onboarding orchestration**: Create personalized onboarding plans, track milestones, trigger follow-ups
+- **Upsell signal detection**: Monitor usage patterns and engagement to identify expansion opportunities
+- **Client reporting autopilot**: Scheduled performance reports with AI-generated narratives
+
+### Finance
+- **Month-end close prep**: Reconcile transactions, flag discrepancies, generate close checklists
+- **Expense anomaly detection**: Monitor spending patterns, flag unusual transactions, generate audit trails
+
+### DevOps / Engineering
+- **Incident response autopilot**: Detect issues, gather context, draft incident reports, coordinate response
+- **Release notes autopilot**: Auto-generate release notes from Git history, Jira tickets, PR descriptions
+- **Code review**: Automated PR review with quality and security checks
+
+### Legal / Compliance
+- **Contract review & risk flagging**: Analyze agreements, flag problematic clauses, suggest revisions
+- **Regulatory change tracker**: Monitor regulatory updates, assess impact, generate compliance briefs
+
+### Operations
+- **Vendor renewal autopilot**: Track contract dates, benchmark pricing, generate negotiation briefs
+- **Meeting-to-action autopilot**: Transcribe meetings, extract action items, create tasks in project management tools
+- **Data sync & reporting**: Keep data consistent across tools, generate cross-platform reports
+
+### E-commerce
+- **Inventory restock forecasting**: Predict demand, generate purchase orders, alert on low stock
+- **Flash sale launch autopilot**: Coordinate pricing, inventory, marketing, and support for promotions
+- **Review & UGC harvesting**: Aggregate customer reviews, extract insights, generate response templates
+
+### Agency
+- **Client performance narrative**: Generate client-ready performance reports with AI commentary
+- **Audit strategy**: Analyze client accounts and generate optimization recommendations
+
+### HR
+- **Performance review autopilot**: Gather 360 feedback, generate review drafts, track completion
+
+---
+
+## Integrations (100+)
+
+### CRM
+Salesforce, HubSpot, Pipedrive, Zoho CRM, Dynamics 365 Sales, Close, Zendesk Sell, Insightly, Copper, Keap, Freshsales
+
+### Communication
+Slack, Microsoft Teams, Zoom, WhatsApp Business
+
+### Documents & Knowledge
+Notion, Google Docs, Confluence, SharePoint, Dropbox, OneDrive, Box, OneNote, Coda, Quip
+
+### Email
+Gmail, Outlook, SendGrid, Mailchimp, Klaviyo
+
+### Engineering & DevOps
+GitHub, Jira, Linear, Azure DevOps, Sentry, Datadog, PagerDuty, Vercel
+
+### Project Management
+Asana, Trello, Monday.com, ClickUp, Airtable, Shortcut, Hive, Todoist, Productboard
+
+### Sales Engagement
+Outreach, Gong, SalesLoft, Apollo, Mindtickle, LaGrowthMachine, Clay, Instantly, Smartlead, Emarsys
+
+### Marketing & Analytics
+Google Analytics, Google Ads, Meta Ads, LinkedIn Ads, SEMrush, Ahrefs, Google Search Console, HubSpot Marketing, Marketo, Pardot, Tableau, Looker, Power BI
+
+### E-commerce & Payments
+Shopify, WooCommerce, BigCommerce, Stripe, Razorpay, Braintree
+
+### Scheduling
+Google Calendar, Calendly
+
+### Social Media
+Twitter/X, LinkedIn, Instagram, YouTube
+
+### Support
+Zendesk, Freshdesk, ServiceNow, Intercom
+
+### HR
+BambooHR, Workday, Rippling
+
+### Accounting
+QuickBooks, Xero
+
+### Legal
+DocuSign, HelloSign
+
+### Design
+Figma, Webflow
+
+### AI Providers
+Anthropic Claude, OpenAI
+
+### Cloud & Infrastructure
+AWS, GCP, Azure, PostgreSQL, MySQL, MongoDB, Redis
+
+### Automation
+Zapier, Make (Integromat)
+
+### Communication (Voice)
+Twilio
+
+---
+
+## Pricing
+
+### Business Plan — $2,499/month
+- All 5 AI agents (Kaze, Scout, Forge, Ghost, Sentinel)
+- Unlimited missions
+- 100+ integrations
+- Dedicated per-customer infrastructure
+- Persistent agent memory
+- Real-time analytics dashboard
+- Webhook triggers
+- Email and chat support
+- No per-seat pricing
+
+### Enterprise Plan — $5,999/month
+- Everything in Business
+- Custom SOUL file configuration
+- Priority support with dedicated account manager
+- Custom integrations
+- Advanced security and compliance features
+- On-premise deployment option
+- SLA guarantees
+
+---
+
+## How It Works
+
+1. **Connect your tools**: Link your CRM, communication, project management, and other tools through OAuth or API keys.
+2. **Issue a mission**: Describe what you need in natural language (e.g., "Research our top 50 churning accounts and draft personalized win-back emails for each").
+3. **Agents execute**: Kaze decomposes the mission, delegates subtasks to Scout, Forge, Ghost as needed. Agents work autonomously across your connected tools.
+4. **Quality review**: Sentinel reviews every deliverable against quality criteria before it reaches you.
+5. **Human approval**: Review final outputs in the Mission Control dashboard. Approve, edit, or request revisions.
+
+---
+
+## Technical Architecture
+
+- **Frontend**: React + TypeScript + Tailwind CSS + shadcn/ui
+- **Backend**: Convex (real-time database and serverless functions)
+- **Agent Runtime**: OpenClaw agent framework running on dedicated servers
+- **AI Models**: Anthropic Claude Opus 4.6 (orchestrator), Claude Sonnet 4.6 (specialist agents)
+- **Infrastructure**: Dedicated per-customer deployment on AWS
+- **Security**: AES-256-GCM encryption for stored credentials, OAuth 2.0 for integrations
+
+---
+
+## Comparison to Other Products
+
+### vs Lindy AI
+Valence is a five-agent enterprise workforce with dedicated infrastructure; Lindy is a single-agent personal assistant focused on individual productivity.
+
+### vs Zapier / Make
+Valence uses AI reasoning for autonomous decisions across multi-step workflows; Zapier and Make execute predefined rule-based triggers with no AI reasoning.
+
+### vs CrewAI
+Valence is a fully managed hosted platform with a dashboard and 100+ integrations; CrewAI is an open-source Python framework requiring engineering resources to deploy.
+
+### vs AutoGPT
+Valence is production-ready with enterprise integrations, quality gates, and persistent memory; AutoGPT is an experimental research framework.
+
+### vs Perplexity Computer
+Valence runs multi-agent server-side workflows across your entire tool stack; Perplexity Computer is a browser-based individual research tool.
+
+### vs Claude Cowork
+Valence is a team platform with five specialized agents and 100+ integrations; Claude Cowork is a desktop app for individual computer use tasks.
+
+### vs Microsoft Copilot
+Valence is stack-agnostic across 100+ tools from any vendor; Microsoft Copilot is native to Microsoft 365 and limited to the Microsoft ecosystem.
+
+---
+
+## Frequently Asked Questions
+
+**Q: What is Valence AI?**
+A: Valence AI is an autonomous AI workforce platform that deploys five specialized AI agents to execute business missions across 100+ tool integrations.
+
+**Q: How is Valence AI different from a chatbot?**
+A: Chatbots respond to queries one at a time. Valence AI executes complex multi-step missions autonomously — researching, writing, coding, and updating your tools without requiring step-by-step human guidance.
+
+**Q: What AI models does Valence AI use?**
+A: Valence AI uses Anthropic's Claude Opus 4.6 for the orchestrator agent (Kaze) and Claude Sonnet 4.6 for the four specialist agents (Scout, Forge, Ghost, Sentinel).
+
+**Q: Is my data shared with other customers?**
+A: No. Each customer gets their own dedicated server deployment. Your data is never shared across customers.
+
+**Q: How many integrations does Valence AI support?**
+A: Over 100, including Salesforce, HubSpot, GitHub, Jira, Slack, Google Workspace, Notion, Stripe, Shopify, and many more.
+
+**Q: Do I need technical skills to use Valence AI?**
+A: No. You issue missions in plain English. The AI agents handle the technical execution.
+
+**Q: How does quality control work?**
+A: Sentinel, the QA agent, reviews every deliverable against quality criteria before it reaches human review. You always have final approval.
+
+**Q: What does pricing look like?**
+A: The Business plan starts at $2,499/month with all five agents, unlimited missions, and 100+ integrations. Enterprise plans start at $5,999/month with custom configuration and on-premise options.
+
+**Q: Can I customize agent behavior?**
+A: Yes. Each agent's behavior is governed by a SOUL file — a structured document that defines operational rules, quality criteria, and decision logic. Enterprise customers can customize these files.
+
+**Q: What industries does Valence AI serve?**
+A: Valence AI serves any industry that uses digital tools for business operations, including SaaS, e-commerce, financial services, agencies, professional services, and more.
+
+---
+
+## Key URLs
+
+- Homepage: https://usevalence.ai/landing
+- Pricing: https://usevalence.ai/pricing
+- Blog: https://usevalence.ai/blog
+- Comparisons: https://usevalence.ai/compare
+- Glossary: https://usevalence.ai/glossary
+- Privacy Policy: https://usevalence.ai/privacy
+- Terms of Service: https://usevalence.ai/terms
+- Integration pages: https://usevalence.ai/integrations/i/{slug} (e.g., /integrations/i/salesforce)
+- Use case pages: https://usevalence.ai/use-cases/{slug} (e.g., /use-cases/case-study-pipeline)
+- LLM reference (this file): https://usevalence.ai/llms-full.txt
+- LLM summary: https://usevalence.ai/llms.txt
+- Sitemap: https://usevalence.ai/sitemap.xml
