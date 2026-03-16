@@ -583,6 +583,238 @@ function BrandingTab() {
 }
 
 /* ────────────────────────────────────────────
+ * BYOK (Bring Your Own Key) Tab
+ * ──────────────────────────────────────────── */
+
+const BYOK_PROVIDERS = [
+  {
+    id: "anthropic" as const,
+    name: "Anthropic (Claude)",
+    placeholder: "sk-ant-api03-...",
+    docsUrl: "https://console.anthropic.com/settings/keys",
+    color: "text-orange-500",
+    bgColor: "bg-orange-500/10",
+  },
+  {
+    id: "openai" as const,
+    name: "OpenAI (GPT)",
+    placeholder: "sk-...",
+    docsUrl: "https://platform.openai.com/api-keys",
+    color: "text-green-500",
+    bgColor: "bg-green-500/10",
+  },
+  {
+    id: "google" as const,
+    name: "Google (Gemini)",
+    placeholder: "AIza...",
+    docsUrl: "https://aistudio.google.com/app/apikey",
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+  },
+  {
+    id: "xai" as const,
+    name: "xAI (Grok)",
+    placeholder: "xai-...",
+    docsUrl: "https://console.x.ai/",
+    color: "text-gray-400",
+    bgColor: "bg-gray-500/10",
+  },
+];
+
+function BYOKTab() {
+  const byokKeys = useQuery(api.byokKeys.listByUser) ?? [];
+  const saveKey = useAction(api.byokKeysActions.saveEncrypted);
+  const validateKey = useAction(api.byokKeysActions.validateKey);
+  const removeKey = useMutation(api.byokKeys.remove);
+
+  const [editingProvider, setEditingProvider] = useState<string | null>(null);
+  const [keyInput, setKeyInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{ valid: boolean; error?: string } | null>(null);
+
+  const handleValidate = async (provider: string) => {
+    if (!keyInput.trim()) return;
+    setValidating(true);
+    setValidationResult(null);
+    try {
+      const result = await validateKey({ provider: provider as any, apiKey: keyInput.trim() });
+      setValidationResult(result);
+    } catch (err: any) {
+      setValidationResult({ valid: false, error: err.message });
+    }
+    setValidating(false);
+  };
+
+  const handleSave = async (provider: string) => {
+    if (!keyInput.trim()) return;
+    setSaving(true);
+    try {
+      await saveKey({ provider: provider as any, apiKey: keyInput.trim() });
+      setEditingProvider(null);
+      setKeyInput("");
+      setValidationResult(null);
+    } catch (err: any) {
+      alert(`Error saving key: ${err.message}`);
+    }
+    setSaving(false);
+  };
+
+  const handleRemove = async (keyId: any) => {
+    if (!confirm("Remove this API key?")) return;
+    try {
+      await removeKey({ id: keyId });
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Info callout */}
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+        <div className="flex items-start gap-3">
+          <Key className="w-5 h-5 text-emerald-500 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Bring Your Own Key (BYOK)</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Add your AI provider API key to power your agents. Your key is encrypted with AES-256-GCM and stored securely. AI costs go directly to your provider.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Provider cards */}
+      <div className="space-y-3">
+        {BYOK_PROVIDERS.map((provider) => {
+          const existingKey = byokKeys.find((k) => k.provider === provider.id);
+          const isEditing = editingProvider === provider.id;
+
+          return (
+            <div key={provider.id} className="rounded-lg border bg-card p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${provider.bgColor}`}>
+                    <Key className={`w-4 h-4 ${provider.color}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{provider.name}</p>
+                    {existingKey ? (
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs font-mono text-muted-foreground">{existingKey.displayPrefix}</span>
+                        {existingKey.validationStatus === "valid" && (
+                          <span className="flex items-center gap-1 text-[10px] text-green-500">
+                            <CheckCircle2 className="w-3 h-3" /> Valid
+                          </span>
+                        )}
+                        {existingKey.validationStatus === "invalid" && (
+                          <span className="flex items-center gap-1 text-[10px] text-red-500">
+                            <XCircle className="w-3 h-3" /> Invalid
+                          </span>
+                        )}
+                        {existingKey.validationStatus === "unknown" && (
+                          <span className="text-[10px] text-muted-foreground">Not validated</span>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground mt-0.5">Not configured</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a
+                    href={provider.docsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  >
+                    Get Key <ExternalLink className="w-3 h-3" />
+                  </a>
+                  {existingKey && !isEditing && (
+                    <button
+                      onClick={() => handleRemove(existingKey._id)}
+                      className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {!isEditing && (
+                    <button
+                      onClick={() => {
+                        setEditingProvider(provider.id);
+                        setKeyInput("");
+                        setValidationResult(null);
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      {existingKey ? "Update" : "Add Key"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Edit form */}
+              {isEditing && (
+                <div className="mt-4 space-y-3 border-t border-border pt-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">API Key</label>
+                    <input
+                      type="password"
+                      value={keyInput}
+                      onChange={(e) => setKeyInput(e.target.value)}
+                      placeholder={provider.placeholder}
+                      className="w-full px-3 py-2 rounded-lg border bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+
+                  {validationResult && (
+                    <div className={`rounded-lg p-2.5 text-xs ${
+                      validationResult.valid
+                        ? "bg-green-500/10 text-green-500"
+                        : "bg-red-500/10 text-red-500"
+                    }`}>
+                      {validationResult.valid ? "Key is valid" : `Invalid: ${validationResult.error}`}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleValidate(provider.id)}
+                      disabled={validating || !keyInput.trim()}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium border border-border hover:bg-surface-hover transition-colors disabled:opacity-50"
+                    >
+                      {validating ? "Validating..." : "Validate"}
+                    </button>
+                    <button
+                      onClick={() => handleSave(provider.id)}
+                      disabled={saving || !keyInput.trim()}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/80 transition-colors disabled:opacity-50"
+                    >
+                      {saving ? "Saving..." : "Save & Encrypt"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingProvider(null);
+                        setKeyInput("");
+                        setValidationResult(null);
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────
  * Audit Log Tab
  * ──────────────────────────────────────────── */
 function AuditLogTab() {
@@ -830,6 +1062,10 @@ const SettingsPage = () => {
             <TabsTrigger value="skills" className="gap-1.5">
               <Package className="w-3.5 h-3.5" />
               Skills
+            </TabsTrigger>
+            <TabsTrigger value="byok" className="gap-1.5">
+              <Key className="w-3.5 h-3.5" />
+              BYOK
             </TabsTrigger>
           </TabsList>
 
@@ -1277,6 +1513,11 @@ const SettingsPage = () => {
               </div>
             </div>
             </>)}
+          </TabsContent>
+
+          {/* ── BYOK Tab ── */}
+          <TabsContent value="byok">
+            <BYOKTab />
           </TabsContent>
         </Tabs>
       </div>
