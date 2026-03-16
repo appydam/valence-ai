@@ -43,6 +43,9 @@ import CompareIndex from "./pages/CompareIndex";
 import IntegrationPage from "./pages/IntegrationPage";
 import GlossaryIndex from "./pages/GlossaryIndex";
 import GlossaryTerm from "./pages/GlossaryTerm";
+import FileManager from "./pages/FileManager";
+import NewPlan from "./pages/NewPlan";
+import Vision from "./pages/Vision";
 
 const queryClient = new QueryClient();
 
@@ -111,6 +114,7 @@ function AuthenticatedRoutes() {
         <Route path="/soul/review/:versionId" element={<SoulReview />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/files" element={<FileManager />} />
         <Route path="/ops" element={<OperationsHub />} />
         <Route path="/brief" element={<MorningBrief />} />
         <Route path="/docs" element={<Docs />} />
@@ -144,6 +148,8 @@ const App = () => (
           {/* Glossary */}
           <Route path="/glossary" element={<GlossaryIndex />} />
           <Route path="/glossary/:term" element={<GlossaryTerm />} />
+          <Route path="/vision" element={<Vision />} />
+          <Route path="/newplan" element={<NewPlan />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dev/login" element={<Login />} />
           {/* Everything else goes through auth */}
