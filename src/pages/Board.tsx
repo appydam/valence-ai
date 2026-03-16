@@ -447,7 +447,10 @@ function MissionPlanView({ tasks, onTaskClick }: { tasks: any[]; onTaskClick: (i
                 .map((id: string) => taskMap.get(id)?.title)
                 .filter(Boolean)
                 .slice(0, 3);
-              const hasIterations = (task.iterationCount ?? 0) > 0;
+              const iterCount = task.iterationCount ?? 0;
+              const maxIter = task.maxIterations ?? 3;
+              const showIterBadge = iterCount > 0 && task.status !== "done" && task.status !== "cancelled";
+              const isMaxedOut = iterCount >= maxIter;
 
               return (
                 <button
@@ -465,10 +468,12 @@ function MissionPlanView({ tasks, onTaskClick }: { tasks: any[]; onTaskClick: (i
                     {/* Title */}
                     <span className="flex-1 text-sm font-medium text-foreground truncate">{task.title}</span>
 
-                    {/* Revision badge */}
-                    {hasIterations && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500 shrink-0">
-                        {task.iterationCount}/{task.maxIterations ?? 3}
+                    {/* Revision badge — only on active tasks */}
+                    {showIterBadge && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${
+                        isMaxedOut ? "bg-destructive/15 text-destructive" : "bg-amber-500/15 text-amber-500"
+                      }`}>
+                        Rev {iterCount}/{maxIter}
                       </span>
                     )}
 

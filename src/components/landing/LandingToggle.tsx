@@ -23,12 +23,16 @@ export function LandingToggle({ activeTab, onTabChange }: LandingToggleProps) {
         borderBottom: "1px solid hsl(var(--border) / 0.15)",
       }}
     >
-      <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-center">
+      <div className="max-w-6xl mx-auto px-6 flex flex-col items-center justify-center py-2 gap-1.5">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-primary/50">
+          What we offer
+        </span>
         <div
           className="relative flex items-center rounded-full p-1"
           style={{
-            background: "hsl(240 25% 8% / 0.9)",
-            border: "1px solid hsl(var(--border) / 0.3)",
+            background: "hsl(240 20% 10% / 0.95)",
+            border: "1px solid hsl(var(--border) / 0.4)",
+            boxShadow: "0 2px 12px hsl(240 33% 2% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.03)",
           }}
         >
           {TABS.map((tab) => {
@@ -40,8 +44,8 @@ export function LandingToggle({ activeTab, onTabChange }: LandingToggleProps) {
                 className="relative px-4 sm:px-5 py-1.5 text-xs sm:text-sm font-medium rounded-full transition-colors duration-200 whitespace-nowrap"
                 style={{
                   color: isActive
-                    ? "hsl(var(--foreground))"
-                    : "hsl(var(--muted-foreground) / 0.5)",
+                    ? "hsl(0 0% 100%)"
+                    : "hsl(0 0% 100% / 0.4)",
                 }}
               >
                 {isActive && (
@@ -50,8 +54,9 @@ export function LandingToggle({ activeTab, onTabChange }: LandingToggleProps) {
                     className="absolute inset-0 rounded-full"
                     style={{
                       background:
-                        "linear-gradient(135deg, hsl(217 91% 60% / 0.15), hsl(258 90% 66% / 0.1))",
-                      border: "1px solid hsl(217 91% 60% / 0.25)",
+                        "linear-gradient(135deg, hsl(217 91% 60% / 0.2), hsl(258 90% 66% / 0.15))",
+                      border: "1px solid hsl(217 91% 60% / 0.35)",
+                      boxShadow: "0 0 12px hsl(217 91% 60% / 0.1)",
                     }}
                     transition={{
                       type: "spring",

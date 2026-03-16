@@ -9,6 +9,7 @@ import {
   getUseCasesByCategory,
   type UseCaseCategory,
 } from "@/data/useCases";
+import type { LandingTab } from "@/hooks/useLandingTab";
 
 // ─── Mobile Menu ─────────────────────────────────────────────────────────────
 
@@ -16,10 +17,12 @@ function MobileMenu({
   open,
   onClose,
   onPilotClick,
+  activeTab,
 }: {
   open: boolean;
   onClose: () => void;
   onPilotClick: () => void;
+  activeTab?: LandingTab;
 }) {
   const navigate = useNavigate();
   const grouped = getUseCasesByCategory();
@@ -29,6 +32,29 @@ function MobileMenu({
     onClose();
     navigate(path);
   };
+
+  const handleScrollTo = (id: string) => {
+    onClose();
+    setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
+  // Tab-specific quick links for mobile
+  const tabQuickLinks: Record<LandingTab, { icon: string; label: string; action: () => void }[]> = {
+    "ai-department": [], // use cases mega-menu shown instead
+    "ai-workers": [
+      { icon: "👥", label: "Browse Roles", action: () => handleScrollTo("roles") },
+      { icon: "💰", label: "Cost Comparison", action: () => handleScrollTo("cost-comparison") },
+    ],
+    "ai-transformation": [
+      { icon: "🔍", label: "The SaaS Problem", action: () => handleScrollTo("pain-points") },
+      { icon: "🗺️", label: "Our Process", action: () => handleScrollTo("transformation-process") },
+      { icon: "✨", label: "Before & After", action: () => handleScrollTo("before-after") },
+    ],
+  };
+
+  const quickLinks = activeTab ? tabQuickLinks[activeTab] : [];
 
   return (
     <AnimatePresence>
@@ -76,84 +102,125 @@ function MobileMenu({
 
             {/* Nav items */}
             <div className="px-3 py-4 flex flex-col gap-1">
-              {/* Pricing */}
-              <button
-                onClick={() => handleNavigate("/pricing")}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left"
-              >
-                Pricing
-              </button>
+              {/* Pricing — only on AI Department + non-landing pages */}
+              {(!activeTab || activeTab === "ai-department") && (
+                <button
+                  onClick={() => handleNavigate("/pricing")}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left"
+                >
+                  Pricing
+                </button>
+              )}
 
-              {/* Use Cases — expandable categories */}
-              <div>
-                <div className="px-3 py-2 text-[10px] font-mono tracking-widest text-muted-foreground/50 mt-2">
-                  USE CASES
+              {/* Tab-specific quick links (AI Workers / Transformation) */}
+              {quickLinks.length > 0 && (
+                <div>
+                  <div className="px-3 py-2 text-[10px] font-mono tracking-widest text-muted-foreground/50 mt-2">
+                    {activeTab === "ai-workers" ? "AI WORKERS" : "TRANSFORMATION"}
+                  </div>
+                  {quickLinks.map((link) => (
+                    <button
+                      key={link.label}
+                      onClick={link.action}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+                    >
+                      <span className="text-base">{link.icon}</span>
+                      <span>{link.label}</span>
+                    </button>
+                  ))}
                 </div>
-                {CATEGORY_ORDER.map((cat) => {
-                  const cases = grouped[cat];
-                  if (cases.length === 0) return null;
-                  const isOpen = expandedCat === cat;
-                  return (
-                    <div key={cat}>
-                      <button
-                        onClick={() => setExpandedCat(isOpen ? null : cat)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-                      >
-                        <span className="text-base">{CATEGORY_ICONS[cat]}</span>
-                        <span>{CATEGORY_LABELS[cat]}</span>
-                        <span className="ml-auto text-xs opacity-40">{cases.length}</span>
-                        <svg
-                          className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
+              )}
 
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
+              {/* Use Cases — only on AI Department or when no tab is set */}
+              {(!activeTab || activeTab === "ai-department") && (
+                <div>
+                  <div className="px-3 py-2 text-[10px] font-mono tracking-widest text-muted-foreground/50 mt-2">
+                    USE CASES
+                  </div>
+                  {CATEGORY_ORDER.map((cat) => {
+                    const cases = grouped[cat];
+                    if (cases.length === 0) return null;
+                    const isOpen = expandedCat === cat;
+                    return (
+                      <div key={cat}>
+                        <button
+                          onClick={() => setExpandedCat(isOpen ? null : cat)}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+                        >
+                          <span className="text-base">{CATEGORY_ICONS[cat]}</span>
+                          <span>{CATEGORY_LABELS[cat]}</span>
+                          <span className="ml-auto text-xs opacity-40">{cases.length}</span>
+                          <svg
+                            className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                           >
-                            <div className="pl-4 pb-1 flex flex-col gap-0.5">
-                              {cases.map((uc) => (
-                                <button
-                                  key={uc.slug}
-                                  onClick={() => handleNavigate(`/use-cases/${uc.slug}`)}
-                                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-left hover:bg-white/5 transition-colors"
-                                >
-                                  <span className="text-sm">{uc.icon}</span>
-                                  <span className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                                    {uc.title}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        <AnimatePresence initial={false}>
+                          {isOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="pl-4 pb-1 flex flex-col gap-0.5">
+                                {cases.map((uc) => (
+                                  <button
+                                    key={uc.slug}
+                                    onClick={() => handleNavigate(`/use-cases/${uc.slug}`)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-left hover:bg-white/5 transition-colors"
+                                  >
+                                    <span className="text-sm">{uc.icon}</span>
+                                    <span className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                      {uc.title}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* CTA at bottom */}
             <div className="px-4 pb-6 mt-2">
-              <button
-                onClick={() => { onClose(); onPilotClick(); }}
-                className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all"
-                style={{
-                  background: "hsl(var(--primary))",
-                  color: "hsl(var(--primary-foreground))",
-                }}
-              >
-                Request Access →
-              </button>
+              {activeTab === "ai-transformation" ? (
+                <a
+                  href="https://calendly.com/arpitdhamija-ai/30min"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onClose}
+                  className="block w-full py-2.5 rounded-lg text-sm font-semibold transition-all text-center"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(258 90% 56%), hsl(217 91% 60%))",
+                    color: "hsl(var(--primary-foreground))",
+                  }}
+                >
+                  Book Transformation Call →
+                </a>
+              ) : (
+                <button
+                  onClick={() => { onClose(); onPilotClick(); }}
+                  className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  style={{
+                    background: "hsl(var(--primary))",
+                    color: "hsl(var(--primary-foreground))",
+                  }}
+                >
+                  {activeTab === "ai-workers"
+                    ? "Hire AI Worker →"
+                    : "Request Access →"}
+                </button>
+              )}
             </div>
           </motion.div>
         </>
@@ -291,13 +358,16 @@ function UseCasesMegaMenu({ onNavigate }: { onNavigate: (slug: string) => void }
  * Props:
  *  - onPilotClick: opens the pilot/request-access modal
  *  - breadcrumb: optional { icon, label } shown after the logo (for use-case pages)
+ *  - activeTab: optional landing tab — when set, nav links become context-aware
  */
 export function LandingNav({
   onPilotClick,
   breadcrumb,
+  activeTab,
 }: {
   onPilotClick: () => void;
   breadcrumb?: { icon: string; label: string };
+  activeTab?: LandingTab;
 }) {
   const { scrollY } = useScroll();
   const navigate = useNavigate();
@@ -375,8 +445,8 @@ export function LandingNav({
               </>
             )}
 
-            {/* Pricing link (hidden when breadcrumb is shown to save space) */}
-            {!breadcrumb && (
+            {/* Pricing — shown on AI Department tab + non-landing pages (not on Workers/Transformation) */}
+            {!breadcrumb && (!activeTab || activeTab === "ai-department") && (
               <Link
                 to="/pricing"
                 className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
@@ -385,50 +455,107 @@ export function LandingNav({
               </Link>
             )}
 
-
-            {/* Use Cases dropdown */}
-            <div
-              className="relative hidden sm:block"
-              onMouseEnter={handleMenuEnter}
-              onMouseLeave={handleMenuLeave}
-            >
-              <button
-                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
-                onClick={() => setMenuOpen(!menuOpen)}
+            {/* Context-aware nav links based on active landing tab */}
+            {(!activeTab || activeTab === "ai-department") && (
+              /* Use Cases dropdown — AI Department + non-landing pages */
+              <div
+                className="relative hidden sm:block"
+                onMouseEnter={handleMenuEnter}
+                onMouseLeave={handleMenuLeave}
               >
-                Use Cases
-                <svg
-                  className={`w-3.5 h-3.5 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
+                <button
+                  className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
+                  onClick={() => setMenuOpen(!menuOpen)}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+                  Use Cases
+                  <svg
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-              <AnimatePresence>
-                {menuOpen && (
-                  <UseCasesMegaMenu onNavigate={handleNavigate} />
-                )}
-              </AnimatePresence>
-            </div>
+                <AnimatePresence>
+                  {menuOpen && (
+                    <UseCasesMegaMenu onNavigate={handleNavigate} />
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {activeTab === "ai-workers" && (
+              /* AI Workers quick links */
+              <div className="hidden sm:flex items-center gap-1">
+                <button
+                  onClick={() => document.getElementById("roles")?.scrollIntoView({ behavior: "smooth" })}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
+                >
+                  Roles
+                </button>
+                <button
+                  onClick={() => document.getElementById("how-it-works-workers")?.scrollIntoView({ behavior: "smooth" })}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
+                >
+                  How It Works
+                </button>
+              </div>
+            )}
+
+            {activeTab === "ai-transformation" && (
+              /* AI Transformation quick links */
+              <div className="hidden sm:flex items-center gap-1">
+                <button
+                  onClick={() => document.getElementById("pain-points")?.scrollIntoView({ behavior: "smooth" })}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
+                >
+                  The Problem
+                </button>
+                <button
+                  onClick={() => document.getElementById("transformation-process")?.scrollIntoView({ behavior: "smooth" })}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
+                >
+                  Our Process
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
-            <motion.button
-              onClick={onPilotClick}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="hidden sm:block text-sm font-semibold px-4 py-1.5 rounded-lg transition-all relative overflow-hidden"
-              style={{
-                background: "hsl(var(--primary))",
-                color: "hsl(var(--primary-foreground))",
-              }}
-            >
-              Request Access →
-            </motion.button>
+            {activeTab === "ai-transformation" ? (
+              <motion.a
+                href="https://calendly.com/arpitdhamija-ai/30min"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="hidden sm:block text-sm font-semibold px-4 py-1.5 rounded-lg transition-all relative overflow-hidden text-center"
+                style={{
+                  background: "linear-gradient(135deg, hsl(258 90% 56%), hsl(217 91% 60%))",
+                  color: "hsl(var(--primary-foreground))",
+                }}
+              >
+                Book a Call →
+              </motion.a>
+            ) : (
+              <motion.button
+                onClick={onPilotClick}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="hidden sm:block text-sm font-semibold px-4 py-1.5 rounded-lg transition-all relative overflow-hidden"
+                style={{
+                  background: "hsl(var(--primary))",
+                  color: "hsl(var(--primary-foreground))",
+                }}
+              >
+                {activeTab === "ai-workers"
+                  ? "Hire AI Worker →"
+                  : "Request Access →"}
+              </motion.button>
+            )}
 
             {/* Hamburger — mobile only */}
             <button
@@ -449,6 +576,7 @@ export function LandingNav({
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         onPilotClick={onPilotClick}
+        activeTab={activeTab}
       />
     </>
   );

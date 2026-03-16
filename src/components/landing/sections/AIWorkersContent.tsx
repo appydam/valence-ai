@@ -165,7 +165,7 @@ export function AIWorkersContent({ onPilotClick }: { onPilotClick: () => void })
   return (
     <>
       {/* ─── HERO ──────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-[120px] pb-16 px-6">
+      <section className="relative overflow-hidden pt-[140px] pb-16 px-6">
         {/* Background gradient */}
         <div
           className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.06]"
@@ -330,7 +330,7 @@ export function AIWorkersContent({ onPilotClick }: { onPilotClick: () => void })
       </section>
 
       {/* ─── HOW A WORKER OPERATES ─────────────────────────────────────── */}
-      <section className="py-16 px-6">
+      <section id="how-it-works-workers" className="py-16 px-6 scroll-mt-28">
         <div className="max-w-4xl mx-auto">
           <Reveal>
             <motion.div variants={itemVariants} className="text-center mb-12">
@@ -415,7 +415,7 @@ export function AIWorkersContent({ onPilotClick }: { onPilotClick: () => void })
       </section>
 
       {/* ─── COST COMPARISON ───────────────────────────────────────────── */}
-      <section className="py-16 px-6" style={{ background: "hsl(240 33% 3%)" }}>
+      <section id="cost-comparison" className="py-16 px-6 scroll-mt-28" style={{ background: "hsl(240 33% 3%)" }}>
         <div className="max-w-4xl mx-auto">
           <Reveal>
             <motion.div variants={itemVariants} className="text-center mb-10">

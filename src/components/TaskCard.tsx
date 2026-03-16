@@ -23,8 +23,11 @@ export function TaskCard({ task, onClick, commentCount = 0, onRetry }: { task: T
   const agentConfig = task.assignee ? AGENT_CONFIG[task.assignee] : null;
   const hasDeliverables = task.deliverables.length > 0;
   const isBlocked = task.status !== "done" && task.status !== "cancelled" && task.dependsOn && task.dependsOn.length > 0;
-  const hasIterations = (task.iterationCount ?? 0) > 0;
+  const iterCount = task.iterationCount ?? 0;
   const maxIter = task.maxIterations ?? 3;
+  // Only show iteration badge on active tasks — done/cancelled tasks already resolved their review cycles
+  const showIterBadge = iterCount > 0 && task.status !== "done" && task.status !== "cancelled";
+  const isMaxedOut = iterCount >= maxIter;
 
   // Use lastAgentActivity (set by heartbeat) if available, otherwise fall back to updatedAt
   const lastActivity = task.lastAgentActivity ?? task.updatedAt;
@@ -57,10 +60,12 @@ export function TaskCard({ task, onClick, commentCount = 0, onRetry }: { task: T
           </span>
         )}
 
-        {/* Revision badge */}
-        {hasIterations && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-500">
-            {task.iterationCount}/{maxIter}
+        {/* Revision badge — only on active tasks, hidden once done */}
+        {showIterBadge && (
+          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+            isMaxedOut ? "bg-destructive/15 text-destructive" : "bg-amber-500/15 text-amber-500"
+          }`}>
+            Rev {iterCount}/{maxIter}
           </span>
         )}
 

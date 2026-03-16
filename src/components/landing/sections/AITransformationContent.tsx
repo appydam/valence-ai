@@ -179,13 +179,13 @@ const TRANSFORM_FAQS = [
 ];
 
 /* ─── Main content ───────────────────────────────────────────────────────────── */
-export function AITransformationContent({ onPilotClick }: { onPilotClick: () => void }) {
+export function AITransformationContent() {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   return (
     <>
       {/* ─── HERO ──────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-[120px] pb-16 px-6">
+      <section className="relative overflow-hidden pt-[140px] pb-16 px-6">
         {/* Subtle grid background */}
         <div
           className="absolute inset-0 opacity-[0.03]"
@@ -232,9 +232,11 @@ export function AITransformationContent({ onPilotClick }: { onPilotClick: () => 
               variants={itemVariants}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <button
-                onClick={onPilotClick}
-                className="group px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-primary text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-0.5"
+              <a
+                href="https://calendly.com/arpitdhamija-ai/30min"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-500 to-primary text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30 hover:-translate-y-0.5"
               >
                 Book a Transformation Call
                 <motion.span
@@ -244,7 +246,7 @@ export function AITransformationContent({ onPilotClick }: { onPilotClick: () => 
                 >
                   &rarr;
                 </motion.span>
-              </button>
+              </a>
               <a
                 href="#pain-points"
                 className="px-8 py-3.5 rounded-xl border border-border/50 text-foreground font-medium hover:bg-card/50 hover:border-border transition-all"
@@ -325,7 +327,7 @@ export function AITransformationContent({ onPilotClick }: { onPilotClick: () => 
       </section>
 
       {/* ─── WHAT WE DO — 5 PHASE TIMELINE ─────────────────────────────── */}
-      <section className="py-16 px-6">
+      <section id="transformation-process" className="py-16 px-6 scroll-mt-28">
         <div className="max-w-4xl mx-auto">
           <Reveal>
             <motion.div variants={itemVariants} className="text-center mb-12">
@@ -390,7 +392,7 @@ export function AITransformationContent({ onPilotClick }: { onPilotClick: () => 
       </section>
 
       {/* ─── BEFORE / AFTER ────────────────────────────────────────────── */}
-      <section className="py-16 px-6" style={{ background: "hsl(240 33% 3%)" }}>
+      <section id="before-after" className="py-16 px-6 scroll-mt-28" style={{ background: "hsl(240 33% 3%)" }}>
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <motion.div variants={itemVariants} className="text-center mb-12">
@@ -605,9 +607,11 @@ export function AITransformationContent({ onPilotClick }: { onPilotClick: () => 
                 We'll audit your stack, show you the savings, and build a
                 transformation plan — free. No commitment.
               </p>
-              <motion.button
-                onClick={onPilotClick}
-                className="px-10 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-primary text-white font-semibold text-lg shadow-lg shadow-purple-500/20"
+              <motion.a
+                href="https://calendly.com/arpitdhamija-ai/30min"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-10 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-primary text-white font-semibold text-lg shadow-lg shadow-purple-500/20"
                 whileHover={{
                   scale: 1.03,
                   boxShadow: "0 10px 40px hsl(258 90% 66% / 0.3)",
@@ -615,7 +619,7 @@ export function AITransformationContent({ onPilotClick }: { onPilotClick: () => 
                 whileTap={{ scale: 0.98 }}
               >
                 Book a Transformation Call
-              </motion.button>
+              </motion.a>
               <p className="text-xs text-muted-foreground/40 mt-4">
                 Free audit. Free ROI projection. No obligation.
               </p>

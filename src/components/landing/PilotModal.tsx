@@ -120,7 +120,19 @@ function FormStep({
       </button>
 
       <h2 className={`font-bold mb-0.5 ${mobile ? "text-lg" : "text-xl"}`}>Tell us about your team</h2>
-      <p className={`text-muted-foreground/60 ${mobile ? "text-xs mb-3" : "text-sm mb-5"}`}>Arpit will review your application and reach out personally.</p>
+      <p className={`text-muted-foreground/60 ${mobile ? "text-xs mb-1" : "text-sm mb-2"}`}>Arpit will review your application and reach out personally.</p>
+
+      <a
+        href="https://calendly.com/arpitdhamija-ai/30min"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center gap-1.5 rounded-lg font-medium transition-all hover:bg-primary/10 ${mobile ? "text-xs px-2.5 py-1.5 mb-2" : "text-xs px-3 py-1.5 mb-4"}`}
+        style={{ border: "1px solid hsl(var(--primary) / 0.25)", color: "hsl(var(--primary) / 0.8)" }}
+      >
+        <span>📅</span>
+        <span>Prefer to talk? Book a 30-min call instead</span>
+        <span className="text-[10px] opacity-60">→</span>
+      </a>
 
       <form onSubmit={onSubmit} className={mobile ? "space-y-2" : "space-y-3"}>
         {/* Name + Email — side-by-side on mobile too (saves vertical space) */}
@@ -243,10 +255,21 @@ function DoneStep({ email, onClose, mobile }: { email: string; onClose: () => vo
         <span className="text-foreground font-mono">{email}</span> within 48 hours.
       </p>
 
+      <a
+        href="https://calendly.com/arpitdhamija-ai/30min"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`w-full flex items-center justify-center gap-2 rounded-xl font-semibold transition-all hover:opacity-90 ${mobile ? "py-2.5 text-sm mb-3" : "py-3 text-sm mb-4"}`}
+        style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", boxShadow: "0 0 20px hsl(var(--primary) / 0.25)" }}
+      >
+        <span>📅</span>
+        Book a 30-min Call with Arpit
+      </a>
+
       <div className={`rounded-xl text-left ${mobile ? "p-3 mb-3" : "p-4 mb-5"}`} style={{ background: "hsl(240 33% 4%)", border: "1px solid hsl(var(--border) / 0.5)" }}>
-        <p className="text-xs font-mono text-muted-foreground/50 mb-1.5 tracking-widest uppercase">In the meantime</p>
+        <p className="text-xs font-mono text-muted-foreground/50 mb-1.5 tracking-widest uppercase">Or reach out directly</p>
         <p className={`text-muted-foreground/70 leading-relaxed ${mobile ? "text-xs" : "text-sm"}`}>
-          Reach out directly at{" "}
+          Email{" "}
           <a href="mailto:arpitdhamija.ai@gmail.com" className="text-primary/70 hover:text-primary transition-colors">
             arpitdhamija.ai@gmail.com
           </a>

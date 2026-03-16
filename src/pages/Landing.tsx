@@ -13,6 +13,7 @@ import { WorkflowDemo } from "@/components/landing/WorkflowDemo";
 import { IntegrationGrid } from "@/components/landing/IntegrationGrid";
 import { UseCaseScenario } from "@/components/landing/UseCaseScenario";
 import { ComparisonTable } from "@/components/landing/ComparisonTable";
+import { DemoVideoPlayer } from "@/components/landing/DemoVideoPlayer";
 import { AgentSVG } from "@/components/SquadView/AgentSVG";
 import { AGENT_CONFIG } from "@/types/mission";
 import type { AgentName } from "@/types/mission";
@@ -1992,7 +1993,7 @@ export default function Landing() {
         }
       />
       <PilotModal open={pilotOpen} onClose={() => setPilotOpen(false)} />
-      <LandingNav onPilotClick={() => setPilotOpen(true)} />
+      <LandingNav onPilotClick={() => setPilotOpen(true)} activeTab={activeTab} />
       <LandingToggle activeTab={activeTab} onTabChange={setActiveTab} />
 
       <AnimatePresence mode="wait">
@@ -2014,7 +2015,7 @@ export default function Landing() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <AITransformationContent onPilotClick={() => setPilotOpen(true)} />
+            <AITransformationContent />
           </motion.div>
         ) : (
           <motion.div
@@ -2026,7 +2027,7 @@ export default function Landing() {
           >
 
       {/* ── SECTION 1: HERO ── */}
-      <section className="relative overflow-hidden pt-[104px] pb-0">
+      <section className="relative overflow-hidden pt-[140px] pb-0">
         {/* Particle field background */}
         <motion.div className="absolute inset-0" style={{ y: heroParallax }}>
           <HeroParticleField opacity={0.9} />
@@ -2262,6 +2263,11 @@ export default function Landing() {
               />
               <div className="relative z-10 w-full">
                 <HeroMissionVisual />
+              </div>
+
+              {/* Demo Video floating button — overlaps between text and visual */}
+              <div className="absolute z-20" style={{ left: "-100px", top: "calc(50% - 150px)", transform: "translate(-50%, -50%)" }}>
+                <DemoVideoPlayer variant="compact" />
               </div>
             </motion.div>
           </div>
