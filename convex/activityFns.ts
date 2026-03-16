@@ -14,6 +14,7 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const limit = args.limit || 200;
     let q;
     if (args.agentName) {
       q = ctx.db
@@ -22,8 +23,7 @@ export const list = query({
     } else {
       q = ctx.db.query("activity").withIndex("by_timestamp");
     }
-    const results = await q.order("desc").collect();
-    return args.limit ? results.slice(0, args.limit) : results;
+    return await q.order("desc").take(limit);
   },
 });
 

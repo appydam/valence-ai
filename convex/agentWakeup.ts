@@ -32,6 +32,7 @@ export const triggerWakeup = internalAction({
     agentName: v.string(),
     taskId: v.string(),
     reason: v.optional(v.string()),
+    isRetry: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const slug = AGENT_SLUGS[args.agentName];
@@ -137,7 +138,17 @@ export const triggerWakeup = internalAction({
       } catch (logErr: any) {
         console.error(`[AgentWakeup] Failed to log failure activity: ${logErr.message}`);
       }
-      // No auto-retry — sweep cron (every 10 min) is the fallback
+      // Retry once after 30s if this wasn't already a retry
+      if (!args.isRetry) {
+        console.log(`[AgentWakeup] Scheduling retry for ${args.agentName} in 30s`);
+        await ctx.scheduler.runAfter(30_000, internal.agentWakeup.triggerWakeup, {
+          agentName: args.agentName,
+          taskId: args.taskId,
+          reason: args.reason,
+          isRetry: true,
+        });
+      }
+      // Beyond retry, sweep cron (every 2 min) is the final fallback
     }
   },
 });

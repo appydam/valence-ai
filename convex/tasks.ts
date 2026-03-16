@@ -1028,9 +1028,10 @@ export const completeTask = mutation({
       }
     }
 
-    // 6c. Auto-wake Sentinel (QA) when any agent submits work for review
-    // Sentinel reviews first; Kaze does final approval if needed
-    if (targetStatus === "in_review" && args.agentName !== "Kaze" && args.agentName !== "Sentinel") {
+    // 6c. Auto-wake Sentinel (QA) when any agent submits work for review.
+    // Sentinel reviews ALL in_review tasks — including Kaze's autopilot submissions.
+    // Only skip if Sentinel itself submitted (prevent self-review loop).
+    if (targetStatus === "in_review" && args.agentName !== "Sentinel") {
       await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
         agentName: "Sentinel",
         taskId: args.taskId as string,
@@ -1084,19 +1085,38 @@ export const rejectTask = mutation({
     const newIterationCount = currentIterations + 1;
 
     if (newIterationCount > maxIterations) {
-      // Max iterations reached — escalate to human, keep in_review
+      // Max iterations reached — force-complete the task so it doesn't rot in_review.
+      // Mark done with escalation comment so human knows it needs attention.
+      await ctx.db.patch(args.taskId, {
+        status: "done",
+        rejectionReason: args.reason,
+        iterationCount: newIterationCount,
+        completedAt: now,
+        updatedAt: now,
+      });
       await ctx.db.insert("comments", {
         taskId: args.taskId,
         author: "System",
-        content: `⚠️ **Max iterations reached** (${maxIterations}/${maxIterations}). This task has been rejected ${maxIterations} times. Escalating to human operator for review.\n\nLast rejection from ${args.reviewerName}: ${args.reason}`,
+        content: `⚠️ **Max iterations reached** (${maxIterations}/${maxIterations}). Task auto-completed to prevent stuck state. Needs human review.\n\nLast rejection from ${args.reviewerName}: ${args.reason}`,
         mentions: ["Kaze"],
         createdAt: now,
       });
-      await ctx.db.patch(args.taskId, {
-        rejectionReason: args.reason,
-        iterationCount: newIterationCount,
-        updatedAt: now,
+      await ctx.db.insert("activity", {
+        timestamp: now,
+        agentName: task.assignee as any || "Kaze",
+        action: "escalation",
+        details: `Task "${task.title}" hit max iterations (${maxIterations}). Auto-completed — needs human review. Last issue: ${args.reason.slice(0, 200)}`,
+        taskId: args.taskId,
       });
+      // Increment mission completed count since we're marking done
+      if (task.missionId) {
+        const mission = await ctx.db.get(task.missionId);
+        if (mission) {
+          await ctx.db.patch(task.missionId, {
+            completedTaskCount: mission.completedTaskCount + 1,
+          });
+        }
+      }
       return { ok: true, escalated: true, iterationCount: newIterationCount };
     }
 
@@ -1217,9 +1237,10 @@ export const sentinelReviewSweep = internalMutation({
       .withIndex("by_status", (q) => q.eq("status", "in_review"))
       .collect();
 
-    // Filter: tasks in_review for >1 min, not assigned to Kaze (Kaze reviews her own)
+    // Filter: tasks in_review for >1 min. Sentinel reviews ALL in_review tasks,
+    // including Kaze-assigned ones (autopilot coordination, subtask QA).
     const unreviewedTasks = inReviewTasks.filter(
-      (t) => t.updatedAt && t.updatedAt < oneMinuteAgo && t.assignee !== "Kaze"
+      (t) => t.updatedAt && t.updatedAt < oneMinuteAgo
     );
 
     if (unreviewedTasks.length > 0) {
@@ -1234,12 +1255,31 @@ export const sentinelReviewSweep = internalMutation({
 
       if (!sentinelActive) {
         const oldest = unreviewedTasks.sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0))[0];
+        const stuckMinutes = Math.round((Date.now() - (oldest.updatedAt || 0)) / 60000);
         console.log(`[SentinelSweep] ${unreviewedTasks.length} task(s) unreviewed >1min. Waking Sentinel for ${oldest._id}`);
         await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
           agentName: "Sentinel",
           taskId: oldest._id as string,
           reason: "sweep_unreviewed",
         });
+
+        // Escalate if task has been stuck in_review for >30 min despite repeated sweep attempts.
+        // Wake Kaze as backup reviewer — Kaze can approve directly.
+        if (stuckMinutes >= 30) {
+          await ctx.db.insert("activity", {
+            timestamp: Date.now(),
+            agentName: "Sentinel" as any,
+            action: "escalation",
+            details: `Task "${oldest.title}" stuck in_review for ${stuckMinutes}min — Sentinel not responding. Escalating to Kaze. ${unreviewedTasks.length} total task(s) waiting for review.`,
+            taskId: oldest._id,
+          });
+          // Wake Kaze as backup — Kaze is also a reviewer and can mark tasks done
+          await ctx.scheduler.runAfter(0, internal.agentWakeup.triggerWakeup, {
+            agentName: "Kaze",
+            taskId: oldest._id as string,
+            reason: "sentinel_unresponsive_review",
+          });
+        }
       }
     }
 
