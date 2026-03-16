@@ -2857,4 +2857,160 @@ http.route({
   }),
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// CASHFREE WEBHOOK
+// ═══════════════════════════════════════════════════════════════════
+
+http.route({ path: "/api/cashfree/webhook", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/cashfree/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const payload = await request.text();
+    const signature = request.headers.get("x-cashfree-signature") ?? "";
+    const timestamp = request.headers.get("x-cashfree-timestamp") ?? "";
+
+    await ctx.runAction(api.cashfreeActions.handleWebhook, {
+      payload,
+      signature,
+      timestamp,
+    });
+
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: corsHeaders(request),
+    });
+  }),
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// FILE MANAGER SSH PROXY ROUTES
+// ═══════════════════════════════════════════════════════════════════
+
+// POST /api/ssh-proxy/file-tree — List files in OpenClaw workspace
+http.route({ path: "/api/ssh-proxy/file-tree", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/file-tree",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const result = await forwardToSshProxy(ctx, request, "/ssh/file-tree");
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "file_manager.list",
+        resource: "file_tree",
+        timestamp: Date.now(),
+      });
+    }
+    return result;
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/file-read — Read a file from server
+http.route({ path: "/api/ssh-proxy/file-read", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/file-read",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, _auth) => {
+    const body = await request.json();
+    return forwardToSshProxy(ctx, request, "/ssh/file-read", {
+      filePath: body.filePath,
+    });
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/file-write — Write a file to server
+http.route({ path: "/api/ssh-proxy/file-write", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/file-write",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const body = await request.json();
+    const result = await forwardToSshProxy(ctx, request, "/ssh/file-write", {
+      filePath: body.filePath,
+      content: body.content,
+    });
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "file_manager.write",
+        resource: "file",
+        resourceId: body.filePath,
+        timestamp: Date.now(),
+      });
+    }
+    return result;
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/file-delete — Delete a file on server
+http.route({ path: "/api/ssh-proxy/file-delete", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/file-delete",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const body = await request.json();
+    const result = await forwardToSshProxy(ctx, request, "/ssh/file-delete", {
+      filePath: body.filePath,
+    });
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "file_manager.delete",
+        resource: "file",
+        resourceId: body.filePath,
+        timestamp: Date.now(),
+      });
+    }
+    return result;
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/file-mkdir — Create a directory on server
+http.route({ path: "/api/ssh-proxy/file-mkdir", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/file-mkdir",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const body = await request.json();
+    const result = await forwardToSshProxy(ctx, request, "/ssh/file-mkdir", {
+      dirPath: body.dirPath,
+    });
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "file_manager.mkdir",
+        resource: "directory",
+        resourceId: body.dirPath,
+        timestamp: Date.now(),
+      });
+    }
+    return result;
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/update-api-key — Update AI API key on server
+http.route({ path: "/api/ssh-proxy/update-api-key", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/update-api-key",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const body = await request.json();
+    const result = await forwardToSshProxy(ctx, request, "/ssh/update-api-key", {
+      provider: body.provider,
+      apiKey: body.apiKey,
+    });
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "byok.sync",
+        resource: "api_key",
+        resourceId: body.provider,
+        timestamp: Date.now(),
+      });
+    }
+    return result;
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
 export default http;

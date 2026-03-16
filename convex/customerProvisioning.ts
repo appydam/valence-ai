@@ -11,6 +11,16 @@ type StepDef = {
   type: "auto" | "manual" | "semi";
 };
 
+const INDIVIDUAL_STEPS: StepDef[] = [
+  { id: "payment_confirmed", title: "Step 1 — Payment Confirmed", type: "auto" },
+  { id: "create_lightsail_instance", title: "Step 2 — Create 4GB Lightsail Instance", type: "auto" },
+  { id: "wait_for_running", title: "Step 3 — Wait for Server Ready", type: "auto" },
+  { id: "open_ports", title: "Step 4 — Open Firewall Ports", type: "auto" },
+  { id: "install_openclaw", title: "Step 5 — Install OpenClaw + Agents", type: "auto" },
+  { id: "configure_byok", title: "Step 6 — Configure API Key", type: "auto" },
+  { id: "verify_and_activate", title: "Step 7 — Verify & Go Live", type: "auto" },
+];
+
 const CLOUD_STEPS: StepDef[] = [
   { id: "create_convex", title: "Step 1 — Create Convex Project", type: "manual" },
   { id: "deploy_and_seed", title: "Step 2 — Deploy + Env Vars + Seed Database", type: "semi" },
@@ -29,8 +39,13 @@ const ONPREM_STEPS: StepDef[] = [
   { id: "send_invite", title: "Step 6 — Send Admin Invite & Go Live", type: "manual" },
 ];
 
-function getStepsForPlan(deploymentModel: "cloud" | "onprem") {
-  const defs = deploymentModel === "cloud" ? CLOUD_STEPS : ONPREM_STEPS;
+function getStepsForPlan(deploymentModel: "cloud" | "onprem", plan?: string) {
+  let defs: StepDef[];
+  if (plan === "individual") {
+    defs = INDIVIDUAL_STEPS;
+  } else {
+    defs = deploymentModel === "cloud" ? CLOUD_STEPS : ONPREM_STEPS;
+  }
   return defs.map((def) => ({
     ...def,
     status: "pending" as const,
@@ -79,7 +94,7 @@ export const create = mutation({
     companyName: v.string(),
     domain: v.string(),
     adminEmail: v.string(),
-    plan: v.union(v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
+    plan: v.union(v.literal("individual"), v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
     deploymentModel: v.union(v.literal("cloud"), v.literal("onprem")),
     contactName: v.optional(v.string()),
     contactRole: v.optional(v.string()),
@@ -99,7 +114,7 @@ export const create = mutation({
     const identity = await ctx.auth.getUserIdentity();
     const createdBy = identity?.subject ?? "system";
 
-    const steps = getStepsForPlan(args.deploymentModel);
+    const steps = getStepsForPlan(args.deploymentModel, args.plan);
     const now = Date.now();
 
     return await ctx.db.insert("customerProvisionings", {

@@ -855,9 +855,10 @@ export default defineSchema({
   // ============================================================
 
   subscriptions: defineTable({
-    stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
-    plan: v.union(v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
+    gateway: v.union(v.literal("cashfree"), v.literal("stripe")),
+    gatewayCustomerId: v.string(),
+    gatewaySubscriptionId: v.string(),
+    plan: v.union(v.literal("individual"), v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
     status: v.union(
       v.literal("active"),
       v.literal("past_due"),
@@ -871,8 +872,8 @@ export default defineSchema({
     trialEnd: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_stripe_customer", ["stripeCustomerId"])
-    .index("by_stripe_subscription", ["stripeSubscriptionId"])
+  }).index("by_gateway_customer", ["gateway", "gatewayCustomerId"])
+    .index("by_gateway_subscription", ["gateway", "gatewaySubscriptionId"])
     .index("by_plan", ["plan"]),
 
   planLimits: defineTable({
@@ -921,7 +922,7 @@ export default defineSchema({
     companyName: v.string(),
     domain: v.string(),
     adminEmail: v.string(),
-    plan: v.union(v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
+    plan: v.union(v.literal("individual"), v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
 
     // Deployment model
     deploymentModel: v.union(v.literal("cloud"), v.literal("onprem")),
@@ -1077,4 +1078,57 @@ export default defineSchema({
   })
     .index("by_task", ["taskId", "timestamp"])
     .index("by_agent", ["agentName", "timestamp"]),
+
+  // ============================================================
+  // BYOK (Bring Your Own Key) — user-provided AI API keys
+  // ============================================================
+
+  byokKeys: defineTable({
+    userId: v.string(),
+    provider: v.union(
+      v.literal("anthropic"),
+      v.literal("openai"),
+      v.literal("google"),
+      v.literal("xai")
+    ),
+    keyEncrypted: v.string(),
+    displayPrefix: v.string(),
+    isActive: v.boolean(),
+    lastValidatedAt: v.optional(v.number()),
+    validationStatus: v.optional(v.union(
+      v.literal("valid"),
+      v.literal("invalid"),
+      v.literal("unknown")
+    )),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_provider", ["userId", "provider"]),
+
+  // ============================================================
+  // FILE MANAGER — cached server file tree
+  // ============================================================
+
+  fileTreeCache: defineTable({
+    path: v.string(),
+    relativePath: v.string(),
+    name: v.string(),
+    type: v.union(v.literal("file"), v.literal("directory")),
+    size: v.optional(v.number()),
+    modifiedAt: v.optional(v.number()),
+    parentPath: v.string(),
+    syncStatus: v.union(
+      v.literal("synced"),
+      v.literal("modified_locally"),
+      v.literal("modified_remotely"),
+      v.literal("unknown")
+    ),
+    cachedContent: v.optional(v.string()),
+    contentUpdatedAt: v.optional(v.number()),
+    lastFetchedAt: v.number(),
+  })
+    .index("by_path", ["path"])
+    .index("by_parent", ["parentPath"])
+    .index("by_sync_status", ["syncStatus"]),
 });

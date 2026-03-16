@@ -106,9 +106,10 @@ export const incrementUsage = mutation({
  */
 export const upsertSubscription = mutation({
   args: {
-    stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
-    plan: v.union(v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
+    gateway: v.union(v.literal("cashfree"), v.literal("stripe")),
+    gatewayCustomerId: v.string(),
+    gatewaySubscriptionId: v.string(),
+    plan: v.union(v.literal("individual"), v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
     status: v.union(
       v.literal("active"),
       v.literal("past_due"),
@@ -124,7 +125,9 @@ export const upsertSubscription = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("subscriptions")
-      .withIndex("by_stripe_subscription", (q) => q.eq("stripeSubscriptionId", args.stripeSubscriptionId))
+      .withIndex("by_gateway_subscription", (q) =>
+        q.eq("gateway", args.gateway).eq("gatewaySubscriptionId", args.gatewaySubscriptionId)
+      )
       .first();
 
     if (existing) {
@@ -154,6 +157,15 @@ export const seedPlanLimits = mutation({
     if (existing) return;
 
     const plans = [
+      {
+        plan: "individual",
+        maxUsers: 1,
+        maxAgents: 5,
+        maxIntegrations: 100,
+        maxTasksPerMonth: 10000,
+        maxApiCallsPerMonth: 100000,
+        features: ["board", "tasks", "integrations", "webhooks", "memory", "autopilot", "analytics", "audit_log", "war_room", "daily_digest", "file_manager", "byok"],
+      },
       {
         plan: "business",
         maxUsers: 25,

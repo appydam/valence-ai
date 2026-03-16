@@ -28,7 +28,7 @@ async function callSonnet(prompt: string): Promise<string> {
 
   if (!accessKey || !secretKey) throw new Error("AWS credentials not set");
 
-  const modelId = "us.anthropic.claude-sonnet-4-6-v1";
+  const modelId = "us.anthropic.claude-sonnet-4-6";
   const host = `bedrock-runtime.${region}.amazonaws.com`;
   const path = `/model/${encodeURIComponent(modelId)}/invoke`;
 
@@ -96,8 +96,10 @@ export const extractAndSummarize = action({
 
     // 3. Extract text by file type
     if (args.fileType === "application/pdf" || lowerName.endsWith(".pdf")) {
+      // Require the inner lib directly to skip pdf-parse's broken index.js
+      // (index.js has a !module.parent check that tries to read a test PDF)
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const pdfParse = require("pdf-parse");
+      const pdfParse = require("pdf-parse/lib/pdf-parse.js");
       const data = await pdfParse(buffer);
       rawText = data.text || "";
     } else if (

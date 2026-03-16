@@ -10,7 +10,7 @@ import { api } from "./_generated/api";
  */
 export const createCheckoutSession = action({
   args: {
-    plan: v.union(v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
+    plan: v.union(v.literal("individual"), v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
     successUrl: v.string(),
     cancelUrl: v.string(),
   },
@@ -23,6 +23,7 @@ export const createCheckoutSession = action({
 
     // Map plan to Stripe price ID
     const priceMap: Record<string, string | undefined> = {
+      individual: process.env.STRIPE_PRICE_INDIVIDUAL,
       business: process.env.STRIPE_PRICE_BUSINESS,
       enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
       enterprise_plus: process.env.STRIPE_PRICE_ENTERPRISE_PLUS,
@@ -63,7 +64,7 @@ export const createPortalSession = action({
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-12-18.acacia" as any });
 
     const session = await stripe.billingPortal.sessions.create({
-      customer: sub.stripeCustomerId,
+      customer: sub.gatewayCustomerId,
       return_url: args.returnUrl,
     });
 
@@ -100,9 +101,10 @@ export const handleWebhook = action({
         const sub = event.data.object as any;
         const plan = sub.metadata?.plan ?? "business";
         await ctx.runMutation(api.billing.upsertSubscription, {
-          stripeCustomerId: sub.customer as string,
-          stripeSubscriptionId: sub.id,
-          plan: plan as "business" | "enterprise" | "enterprise_plus",
+          gateway: "stripe" as const,
+          gatewayCustomerId: sub.customer as string,
+          gatewaySubscriptionId: sub.id,
+          plan: plan as "individual" | "business" | "enterprise" | "enterprise_plus",
           status: sub.status as any,
           currentPeriodStart: sub.current_period_start * 1000,
           currentPeriodEnd: sub.current_period_end * 1000,
@@ -114,9 +116,10 @@ export const handleWebhook = action({
       case "customer.subscription.deleted": {
         const sub = event.data.object as any;
         await ctx.runMutation(api.billing.upsertSubscription, {
-          stripeCustomerId: sub.customer as string,
-          stripeSubscriptionId: sub.id,
-          plan: (sub.metadata?.plan ?? "business") as "business" | "enterprise" | "enterprise_plus",
+          gateway: "stripe" as const,
+          gatewayCustomerId: sub.customer as string,
+          gatewaySubscriptionId: sub.id,
+          plan: (sub.metadata?.plan ?? "business") as "individual" | "business" | "enterprise" | "enterprise_plus",
           status: "cancelled",
           currentPeriodStart: sub.current_period_start * 1000,
           currentPeriodEnd: sub.current_period_end * 1000,
