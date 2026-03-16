@@ -5,6 +5,7 @@ import { SEOHead } from "@/components/SEOHead";
 import { organizationSchema, softwareApplicationSchema, faqSchema } from "@/lib/structuredData";
 import { PilotModal } from "@/components/landing/PilotModal";
 import { LandingNav } from "@/components/landing/LandingNav";
+import { LandingToggle } from "@/components/landing/LandingToggle";
 import { HeroParticleField } from "@/components/landing/HeroParticleField";
 import { TypingCommand } from "@/components/landing/TypingCommand";
 import { StatsBar } from "@/components/landing/StatsBar";
@@ -23,6 +24,9 @@ import {
   getUseCasesByCategory,
   type UseCaseCategory,
 } from "@/data/useCases";
+import { useLandingTab } from "@/hooks/useLandingTab";
+import { AIWorkersContent } from "@/components/landing/sections/AIWorkersContent";
+import { AITransformationContent } from "@/components/landing/sections/AITransformationContent";
 
 // ─── Color helpers ───────────────────────────────────────────────────────────
 const COLOR_MAP: Record<string, string> = {
@@ -1950,6 +1954,7 @@ export default function Landing() {
   const heroParallax = useTransform(scrollY, [0, 600], [0, prefersReduced ? 0 : -80]);
   const navigate = useNavigate();
   const [pilotOpen, setPilotOpen] = useState(false);
+  const [activeTab, setActiveTab] = useLandingTab();
 
   const landingFaqs = [
     { question: "What is Valence AI?", answer: "Valence AI is an autonomous AI workforce platform that lets you deploy five specialized AI agents — Kaze (orchestrator), Scout (researcher), Forge (builder), Ghost (writer), and Sentinel (monitor) — that work together as a team to execute complex business workflows. Unlike a chatbot or a single-agent tool, Valence orchestrates multiple AI workers in parallel, with persistent memory, 100+ integrations, quality review gates, and real-time monitoring, all from one command center." },
@@ -1965,20 +1970,63 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <SEOHead
-        title="Valence AI — Deploy Your Autonomous AI Workforce"
-        description="Five specialized AI agents. 100+ integrations. Multi-step workflows that research, build, write, and monitor — all orchestrated from one command center. Deploy your AI workforce today."
+        title={
+          activeTab === "ai-workers"
+            ? "Valence AI — Hire AI Workers: SDR, Writer, Analyst & More"
+            : activeTab === "ai-transformation"
+              ? "Valence AI — AI Business Transformation: Replace SaaS, Go AI-Native"
+              : "Valence AI — Deploy Your Autonomous AI Workforce"
+        }
+        description={
+          activeTab === "ai-workers"
+            ? "Hire individual AI workers for any role — SDR, content writer, bookkeeper, data analyst. They plug into your tools, work 24/7, and cost a fraction of a human hire."
+            : activeTab === "ai-transformation"
+              ? "We audit your tech stack, replace legacy software and expensive SaaS, and rebuild everything into one AI-native ecosystem — privately hosted, custom-built, fully managed."
+              : "Five specialized AI agents. 100+ integrations. Multi-step workflows that research, build, write, and monitor — all orchestrated from one command center. Deploy your AI workforce today."
+        }
         canonical="/landing"
-        jsonLd={[
-          organizationSchema(),
-          softwareApplicationSchema(),
-          faqSchema(landingFaqs),
-        ]}
+        jsonLd={
+          activeTab === "ai-department"
+            ? [organizationSchema(), softwareApplicationSchema(), faqSchema(landingFaqs)]
+            : [organizationSchema()]
+        }
       />
       <PilotModal open={pilotOpen} onClose={() => setPilotOpen(false)} />
       <LandingNav onPilotClick={() => setPilotOpen(true)} />
+      <LandingToggle activeTab={activeTab} onTabChange={setActiveTab} />
+
+      <AnimatePresence mode="wait">
+        {activeTab === "ai-workers" ? (
+          <motion.div
+            key="ai-workers"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <AIWorkersContent onPilotClick={() => setPilotOpen(true)} />
+          </motion.div>
+        ) : activeTab === "ai-transformation" ? (
+          <motion.div
+            key="ai-transformation"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <AITransformationContent onPilotClick={() => setPilotOpen(true)} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="ai-department"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
 
       {/* ── SECTION 1: HERO ── */}
-      <section className="relative overflow-hidden pt-14 pb-0">
+      <section className="relative overflow-hidden pt-[104px] pb-0">
         {/* Particle field background */}
         <motion.div className="absolute inset-0" style={{ y: heroParallax }}>
           <HeroParticleField opacity={0.9} />
@@ -2704,6 +2752,10 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── FOOTER ── */}
       <footer
