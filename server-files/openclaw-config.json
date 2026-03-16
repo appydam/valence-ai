@@ -55,6 +55,17 @@
         "maxTurns": 20,
         "timeout": 300
       }
+    },
+    "mercado": {
+      "name": "Mercado",
+      "description": "B2B Sales Quotation agent — parses product requests, searches catalog, applies pricing, generates quotations for RacknSell",
+      "soul": "~/.openclaw/workspace/agents/mercado/SOUL.md",
+      "skills": [],
+      "model": "anthropic/claude-sonnet-4-6",
+      "session": {
+        "maxTurns": 20,
+        "timeout": 300
+      }
     }
   }
 }
