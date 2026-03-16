@@ -1,15 +1,19 @@
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SEOHead } from "@/components/SEOHead";
 import { softwareApplicationSchema, faqSchema } from "@/lib/structuredData";
 import {
   Check, Users, Sparkles, Cpu, Server, Bot, Plug, Shield,
   Building2, Crown, ArrowRight, Brain, Webhook,
-  Eye, MessageSquare, HardDrive, MemoryStick,
+  Eye, MessageSquare, HardDrive, MemoryStick, User, Key, FileCode,
 } from "lucide-react";
+import { useAction } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { LandingNav } from "@/components/landing/LandingNav";
+import { LandingToggle } from "@/components/landing/LandingToggle";
 import { PilotModal } from "@/components/landing/PilotModal";
+import type { LandingTab } from "@/hooks/useLandingTab";
 
 // ─── Server tier data ────────────────────────────────────────────────────────
 
@@ -160,8 +164,16 @@ const faqs = [
     a: "Enterprise+ runs the full agent runtime in your own VPC or on-premises infrastructure. Your data never leaves your environment. We handle setup, updates, and ongoing support.",
   },
   {
+    q: "What does BYOK (Bring Your Own Key) mean?",
+    a: "With the Individual plan, you provide your own AI API key from Anthropic (Claude), OpenAI, Google (Gemini), or xAI (Grok). You pay $59/mo for the infrastructure, and your AI costs go directly to your provider at their standard rates. This keeps the platform affordable while giving you full control.",
+  },
+  {
+    q: "What's the File Manager?",
+    a: "The File Manager lets you browse and edit all your agent configuration files directly in the app — SOUL.md files (agent personalities), SKILL.md files (skill configs), and openclaw-config.json (agent settings). Changes sync instantly to your server. No SSH or terminal needed.",
+  },
+  {
     q: "Is there a free trial?",
-    a: "We offer a 2-week pilot at 50% off so you can see real results before committing. Contact us to set up your pilot.",
+    a: "We offer a 2-week pilot at 50% off for Business and Enterprise plans. The Individual plan is self-serve at $59/mo with no commitment — cancel anytime.",
   },
 ];
 
@@ -181,9 +193,126 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
+// ─── Individual Plan Card ────────────────────────────────────────────────────
+
+function IndividualPlanCard({ index }: { index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      custom={index}
+      initial="hidden"
+      animate={inView ? "visible" : "hidden"}
+      variants={fadeUp}
+      className="relative rounded-2xl border border-emerald-500/40 bg-emerald-500/[0.03] p-7 flex flex-col"
+      style={{
+        backdropFilter: "blur(8px)",
+        boxShadow: "0 0 60px hsla(160, 84%, 39%, 0.08), 0 1px 2px hsl(0 0% 0% / 0.4)",
+      }}
+    >
+      {/* Badge */}
+      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+        <span
+          className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em]"
+          style={{
+            background: "linear-gradient(135deg, hsl(160, 84%, 39%), hsl(142, 76%, 36%))",
+            color: "white",
+            boxShadow: "0 4px 20px hsla(160, 84%, 39%, 0.3)",
+          }}
+        >
+          For Individuals
+        </span>
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center gap-2.5 mb-2 mt-1">
+        <User className="w-5 h-5 text-emerald-500" />
+        <h3 className="text-lg font-semibold text-foreground">Individual</h3>
+      </div>
+      <p className="text-xs text-muted-foreground mb-4">Your own AI workforce. Bring your own API key.</p>
+
+      {/* Price */}
+      <div className="mb-1">
+        <span className="text-4xl font-bold text-foreground tracking-tight">$59</span>
+        <span className="text-base text-muted-foreground">/mo</span>
+      </div>
+      <p className="text-xs text-muted-foreground mb-5">No onboarding fee. Self-serve setup.</p>
+
+      {/* Specs */}
+      <div className="space-y-3 mb-5">
+        <div className="flex items-center gap-3 text-sm text-foreground">
+          <Users className="w-4 h-4 text-muted-foreground shrink-0" />
+          1 user
+        </div>
+        <div className="flex items-center gap-3 text-sm text-foreground">
+          <Key className="w-4 h-4 text-muted-foreground shrink-0" />
+          BYOK — Claude, GPT, Gemini, or Grok
+        </div>
+        <div className="flex items-center gap-3 text-sm text-foreground">
+          <Sparkles className="w-4 h-4 text-muted-foreground shrink-0" />
+          10 missions/day
+        </div>
+      </div>
+
+      {/* Server spec box */}
+      <div className="rounded-lg border border-emerald-500/15 bg-emerald-500/[0.03] p-3 mb-5">
+        <p className="text-[10px] font-medium text-emerald-400 uppercase tracking-wider mb-2">Your Cloud Server</p>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs text-foreground">
+            <MemoryStick className="w-3.5 h-3.5 text-muted-foreground" />
+            4 GB RAM · 2 vCPUs
+          </div>
+          <div className="flex items-center gap-2 text-xs text-foreground">
+            <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
+            80 GB SSD
+          </div>
+          <div className="flex items-center gap-2 text-xs text-foreground">
+            <Server className="w-3.5 h-3.5 text-muted-foreground" />
+            3 TB Transfer
+          </div>
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className="border-t border-border/40 pt-5 mb-6 flex-1">
+        <div className="space-y-2.5">
+          {[
+            "All 5 AI Agents",
+            "~100 Integrations",
+            "File Manager (SOUL/SKILL editor)",
+            "Autopilot Mission Planner",
+            "Agent Memory Bank",
+            "War Room (Real-time Observability)",
+            "Analytics Dashboard",
+            "Self-serve — fully automated setup",
+          ].map((f, i) => (
+            <div key={i} className="flex items-start gap-2.5 text-sm text-foreground/80">
+              <Check className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
+              {f}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <a
+        href="https://calendly.com/arpitdhamija-ai/30min"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+      >
+        <MessageSquare className="w-4 h-4" />
+        Talk to Us
+      </a>
+    </motion.div>
+  );
+}
+
 // ─── Business Plan Card (with tabs) ─────────────────────────────────────────
 
-function BusinessPlanCard({ index, onPilotClick }: { index: number; onPilotClick: () => void }) {
+function BusinessPlanCard({ index }: { index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const [activeTier, setActiveTier] = useState(0);
@@ -291,20 +420,22 @@ function BusinessPlanCard({ index, onPilotClick }: { index: number; onPilotClick
       </div>
 
       {/* CTA */}
-      <button
-        onClick={onPilotClick}
+      <a
+        href="https://calendly.com/arpitdhamija-ai/30min"
+        target="_blank"
+        rel="noopener noreferrer"
         className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
       >
         <MessageSquare className="w-4 h-4" />
         Talk to Us
-      </button>
+      </a>
     </motion.div>
   );
 }
 
 // ─── Enterprise Plan Card (with tabs) ───────────────────────────────────────
 
-function EnterprisePlanCard({ index, onPilotClick }: { index: number; onPilotClick: () => void }) {
+function EnterprisePlanCard({ index }: { index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const [activeTier, setActiveTier] = useState(0); // default to Performance
@@ -429,23 +560,24 @@ function EnterprisePlanCard({ index, onPilotClick }: { index: number; onPilotCli
       </div>
 
       {/* CTA */}
-      <button
-        onClick={onPilotClick}
+      <a
+        href="https://calendly.com/arpitdhamija-ai/30min"
+        target="_blank"
+        rel="noopener noreferrer"
         className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-purple-500 text-white hover:bg-purple-600"
       >
         <MessageSquare className="w-4 h-4" />
         Talk to Us
-      </button>
+      </a>
     </motion.div>
   );
 }
 
 // ─── Static Plan Card (Enterprise+) ─────────────────────────────────────────
 
-function StaticPlanCard({ plan, index, onPilotClick }: {
+function StaticPlanCard({ plan, index }: {
   plan: typeof enterprisePlusPlan;
   index: number;
-  onPilotClick: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
@@ -509,13 +641,15 @@ function StaticPlanCard({ plan, index, onPilotClick }: {
       </div>
 
       {/* CTA */}
-      <button
-        onClick={onPilotClick}
+      <a
+        href="https://calendly.com/arpitdhamija-ai/30min"
+        target="_blank"
+        rel="noopener noreferrer"
         className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
       >
         <MessageSquare className="w-4 h-4" />
         Talk to Us
-      </button>
+      </a>
     </motion.div>
   );
 }
@@ -550,6 +684,11 @@ export default function Pricing() {
   const allInView = useInView(allRef, { once: true, margin: "-60px" });
 
   const [pilotOpen, setPilotOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleTabChange = (tab: LandingTab) => {
+    navigate(`/landing#${tab}`);
+  };
 
   const pricingFaqSchema = faqSchema(faqs.map((f) => ({ question: f.q, answer: f.a })));
 
@@ -562,10 +701,11 @@ export default function Pricing() {
         jsonLd={[softwareApplicationSchema(), pricingFaqSchema]}
       />
       <PilotModal open={pilotOpen} onClose={() => setPilotOpen(false)} />
-      <LandingNav onPilotClick={() => setPilotOpen(true)} />
+      <LandingNav onPilotClick={() => setPilotOpen(true)} activeTab="ai-department" />
+      <LandingToggle activeTab="ai-department" onTabChange={handleTabChange} />
 
       {/* ── Hero ── */}
-      <section className="relative pt-32 pb-6 px-6">
+      <section className="relative pt-[140px] pb-6 px-6">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div
             className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full"
@@ -592,7 +732,7 @@ export default function Pricing() {
               }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              ENTERPRISE PRICING
+              PRICING
             </div>
           </motion.div>
 
@@ -626,10 +766,11 @@ export default function Pricing() {
 
       {/* ── Plan Cards ── */}
       <section className="px-6 pb-20 pt-8">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-          <BusinessPlanCard index={0} onPilotClick={() => setPilotOpen(true)} />
-          <EnterprisePlanCard index={1} onPilotClick={() => setPilotOpen(true)} />
-          <StaticPlanCard plan={enterprisePlusPlan} index={2} onPilotClick={() => setPilotOpen(true)} />
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <IndividualPlanCard index={0} />
+          <BusinessPlanCard index={1} />
+          <EnterprisePlanCard index={2} />
+          <StaticPlanCard plan={enterprisePlusPlan} index={3} />
         </div>
       </section>
 
@@ -686,25 +827,26 @@ export default function Pricing() {
             className="rounded-2xl border border-border/40 overflow-hidden"
             style={{ backdropFilter: "blur(8px)", background: "hsl(240 20% 6% / 0.6)" }}
           >
-            <div className="grid grid-cols-4 text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border/30 px-6 py-3">
+            <div className="grid grid-cols-5 text-xs font-mono uppercase tracking-wider text-muted-foreground border-b border-border/30 px-6 py-3">
               <span>What you get</span>
+              <span className="text-center text-emerald-400">Individual</span>
               <span className="text-center text-blue-400">Business</span>
               <span className="text-center text-purple-400">Enterprise</span>
               <span className="text-center text-amber-400">Enterprise+</span>
             </div>
             {[
-              { label: "Users", values: ["Up to 20+", "25", "Unlimited"] },
-              { label: "Missions / user / day", values: ["10", "10", "Unlimited"] },
-              { label: "AI Model", values: ["Sonnet 4.6", "Sonnet + Opus", "Full Opus"] },
-              { label: "Server", values: ["3 tiers (16-64 GB) shared", "2 tiers (32-64 GB) dedicated", "On-prem / VPC"] },
-              { label: "Integrations", values: ["~100", "~100", "Unlimited"] },
-              { label: "Custom Agents", values: ["—", "Yes", "Yes"] },
-              { label: "SLA", values: ["—", "—", "Custom"] },
-              { label: "Price", values: ["From $2,499/mo", "From $4,999/mo", "Custom"] },
+              { label: "Users", values: ["1", "Up to 20+", "25", "Unlimited"] },
+              { label: "Missions / day", values: ["10", "10 per user", "10 per user", "Unlimited"] },
+              { label: "AI Model", values: ["BYOK (any)", "Sonnet 4.6", "Sonnet + Opus", "Full Opus"] },
+              { label: "Server", values: ["4 GB", "16-64 GB shared", "32-64 GB dedicated", "On-prem / VPC"] },
+              { label: "Integrations", values: ["~100", "~100", "~100", "Unlimited"] },
+              { label: "File Manager", values: ["Yes", "Yes", "Yes", "Yes"] },
+              { label: "Onboarding", values: ["Self-serve", "$1,500", "$3,000", "Included"] },
+              { label: "Price", values: ["$59/mo", "From $2,499/mo", "From $4,999/mo", "Custom"] },
             ].map((row, i) => (
               <div
                 key={row.label}
-                className={`grid grid-cols-4 text-sm px-6 py-3 ${
+                className={`grid grid-cols-5 text-sm px-6 py-3 ${
                   i % 2 === 0 ? "bg-white/[0.01]" : ""
                 } border-b border-border/10 last:border-b-0`}
               >
@@ -763,7 +905,9 @@ export default function Pricing() {
               Start Your Pilot →
             </button>
             <a
-              href="mailto:arpit@valenceai.co?subject=Valence%20AI%20Demo%20Request"
+              href="https://calendly.com/arpitdhamija-ai/30min"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-6 py-3 rounded-xl text-sm font-semibold border border-border/50 text-muted-foreground hover:text-foreground hover:border-border transition-all"
             >
               Book a Demo

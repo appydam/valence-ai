@@ -8,9 +8,17 @@ import {
 import { useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
-type Plan = "business" | "enterprise" | "enterprise_plus";
+type Plan = "individual" | "business" | "enterprise" | "enterprise_plus";
 
 const planMeta: Record<Plan, { name: string; icon: any; color: string; price: string; period: string; tagline: string; highlight?: boolean }> = {
+  individual: {
+    name: "Individual",
+    icon: Users,
+    color: "text-emerald-500",
+    price: "$59",
+    period: "/mo",
+    tagline: "BYOK, 1 user, all 5 agents, 4GB server",
+  },
   business: {
     name: "Business",
     icon: Building2,
@@ -58,6 +66,8 @@ const featureLabels: Record<string, string> = {
   daily_digest: "Daily CEO Digest",
   unlimited_missions: "Unlimited Missions",
   custom_integrations: "Custom Integration Building",
+  file_manager: "File Manager (SOUL/SKILL Editor)",
+  byok: "Bring Your Own API Key",
 };
 
 function UsageMeter({ label, current, max, icon: Icon }: { label: string; current: number; max: number; icon: any }) {
@@ -158,13 +168,14 @@ const BillingPage = () => {
   const meta = planMeta[currentPlan];
   const PlanIcon = meta.icon;
 
-  const planOrder: Plan[] = ["business", "enterprise", "enterprise_plus"];
+  const planOrder: Plan[] = ["individual", "business", "enterprise", "enterprise_plus"];
   const sortedPlans = planOrder
     .map((p) => planLimits.find((l) => l.plan === p))
     .filter(Boolean) as typeof planLimits;
 
   // Plan-specific specs for the cards
   const planSpecs: Record<Plan, { users: string; missions: string; model: string; infra: string }> = {
+    individual: { users: "1 user", missions: "10 missions/day", model: "BYOK (any provider)", infra: "4 GB Cloud Server" },
     business: { users: "Up to 20+ users", missions: "10 missions/day per user", model: "Claude Sonnet 4.6", infra: "Cloud server (3 tiers: 8-32 GB)" },
     enterprise: { users: "25 users", missions: "10 missions/day per user", model: "Sonnet + Opus 4.6 hybrid", infra: "Dedicated server (16 GB · 4 vCPUs)" },
     enterprise_plus: { users: "Unlimited users", missions: "Unlimited missions", model: "Full Opus 4.6", infra: "On-prem / your VPC" },
@@ -286,7 +297,7 @@ const BillingPage = () => {
               Enterprise-grade AI operations. All plans include 5 specialized agents, 30+ integrations, and full platform access.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {planOrder.map((p) => {
               const pm = planMeta[p];
               const PI = pm.icon;
