@@ -23,3 +23,8 @@ convex/_generated
 *.njsproj
 *.sln
 *.sw?
+
+# Email outreach (contains credentials)
+emailsender/
+external data/
+important docs/

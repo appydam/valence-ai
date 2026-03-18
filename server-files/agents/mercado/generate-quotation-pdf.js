@@ -164,33 +164,33 @@ function generatePDFBuffer(data, logoBuffer) {
 
       // RFQ details (right side)
       const rfqX = 340;
-      const rfqLabelW = 120;
-      const rfqValX = 460;
-      const rfqValW = 100;
+      const rfqLabelW = 100;
+      const rfqValX = 440;
+      const rfqValW = PAGE_W - RM - rfqValX;
       let ry = logoStartY + 5;
 
       doc.font("Bold").fontSize(8.5).fillColor("#333333");
-      doc.text("RFQ No : ", rfqX, ry, { width: rfqLabelW, continued: false });
+      doc.text("RFQ No :", rfqX, ry, { width: rfqLabelW });
       doc.font("Bold").fontSize(8.5);
       doc.text(data.quotationNo || "", rfqValX, ry, { width: rfqValW });
-      ry += 14;
+      ry += 18;
 
       if (data.reference) {
         doc.font("Bold").fontSize(8).fillColor("#333333");
-        doc.text("Reference : ", rfqX, ry, { width: rfqLabelW });
+        doc.text("Reference :", rfqX, ry, { width: rfqLabelW });
         doc.font("Bold").fontSize(8);
         doc.text(data.reference || "", rfqValX, ry, { width: rfqValW });
-        ry += 14;
+        ry += 18;
       }
 
       doc.font("Bold").fontSize(8.5).fillColor("#333333");
-      doc.text("RFQ Date : ", rfqX, ry, { width: rfqLabelW });
+      doc.text("RFQ Date :", rfqX, ry, { width: rfqLabelW });
       doc.font("Bold").fontSize(8.5);
       doc.text(data.date || "", rfqValX, ry, { width: rfqValW });
-      ry += 14;
+      ry += 18;
 
       doc.font("Bold").fontSize(8.5).fillColor("#333333");
-      doc.text("RFQ Offer Date : ", rfqX, ry, { width: rfqLabelW });
+      doc.text("RFQ Offer Date :", rfqX, ry, { width: rfqLabelW });
       doc.font("Bold").fontSize(8.5);
       doc.text(data.date || "", rfqValX, ry, { width: rfqValW });
 
@@ -390,40 +390,40 @@ function generatePDFBuffer(data, logoBuffer) {
     // ===================== DRAW TOTALS =====================
     function drawTotals() {
       y += 2;
-      const totalsW = COL.rate.w + COL.amount.w;
-      const totalsX = COL.rate.x;
-      const labelW = COL.rate.w;
+      const totalsX = COL.qty.x;
+      const totalsW = COL.qty.w + COL.rate.w + COL.amount.w;
+      const labelW = COL.qty.w + COL.rate.w;
       const valX = COL.amount.x;
       const valW = COL.amount.w;
+      const rowH = 18;
 
       // Total (excl GST)
-      doc.rect(totalsX, y, totalsW, 18).lineWidth(0.5).strokeColor("#000000").stroke();
-      doc.moveTo(valX, y).lineTo(valX, y + 18).stroke();
+      doc.rect(totalsX, y, totalsW, rowH).lineWidth(0.5).strokeColor("#000000").stroke();
+      doc.moveTo(valX, y).lineTo(valX, y + rowH).stroke();
       doc.font("Regular").fontSize(8).fillColor("#333333");
-      doc.text("Total (excl GST)", totalsX + 4, y + 4, { width: labelW - 8, align: "right" });
-      doc.text(formatNum(data.subtotal), valX + 2, y + 4, { width: valW - 4, align: "right" });
-      y += 18;
+      doc.text("Total (excl GST)", totalsX + 4, y + 5, { width: labelW - 8, align: "right" });
+      doc.text(formatNum(data.subtotal), valX + 2, y + 5, { width: valW - 4, align: "right" });
+      y += rowH;
 
       // GST
-      doc.rect(totalsX, y, totalsW, 18).lineWidth(0.5).strokeColor("#000000").stroke();
-      doc.moveTo(valX, y).lineTo(valX, y + 18).stroke();
-      doc.text("GST", totalsX + 4, y + 4, { width: labelW - 8, align: "right" });
-      doc.text(formatNum(data.totalGst), valX + 2, y + 4, { width: valW - 4, align: "right" });
-      y += 18;
+      doc.rect(totalsX, y, totalsW, rowH).lineWidth(0.5).strokeColor("#000000").stroke();
+      doc.moveTo(valX, y).lineTo(valX, y + rowH).stroke();
+      doc.text("GST", totalsX + 4, y + 5, { width: labelW - 8, align: "right" });
+      doc.text(formatNum(data.totalGst), valX + 2, y + 5, { width: valW - 4, align: "right" });
+      y += rowH;
 
       // Total (incl GST)
-      doc.rect(totalsX, y, totalsW, 18).lineWidth(0.5).strokeColor("#000000").stroke();
-      doc.moveTo(valX, y).lineTo(valX, y + 18).stroke();
+      doc.rect(totalsX, y, totalsW, rowH).lineWidth(0.5).strokeColor("#000000").stroke();
+      doc.moveTo(valX, y).lineTo(valX, y + rowH).stroke();
       doc.font("Bold").fontSize(8).fillColor("#333333");
-      doc.text("Total (incl GST)", totalsX + 4, y + 4, { width: labelW - 8, align: "right" });
-      doc.text(formatNum(data.grandTotal), valX + 2, y + 4, { width: valW - 4, align: "right" });
-      y += 18;
+      doc.text("Total (incl GST)", totalsX + 4, y + 5, { width: labelW - 8, align: "right" });
+      doc.text(formatNum(data.grandTotal), valX + 2, y + 5, { width: valW - 4, align: "right" });
+      y += rowH;
     }
 
     // ===================== DRAW TERMS =====================
     function drawTerms() {
-      y += 12;
-      doc.font("Bold").fontSize(8.5).fillColor("#333333");
+      y += 16;
 
       const terms = [
         ["Payment Terms -", data.paymentTerms || "Advance payment"],
@@ -433,12 +433,16 @@ function generatePDFBuffer(data, logoBuffer) {
         ["Delivery timeline -", data.deliveryTimeline || "5-10 Working Days"],
       ];
 
+      const termLabelW = 135;
+      const termValX = LM + termLabelW;
+      const termValW = 300;
+
       terms.forEach(([label, value]) => {
         doc.font("Bold").fontSize(8.5).fillColor("#333333");
-        doc.text(label + " ", LM, y, { width: 130, continued: true });
+        doc.text(label, LM, y, { width: termLabelW });
         doc.font("Regular").fontSize(8.5);
-        doc.text(value, { width: 300 });
-        y += 14;
+        doc.text(value, termValX, y, { width: termValW });
+        y += 16;
       });
 
       // Items not found
