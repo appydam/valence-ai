@@ -333,9 +333,12 @@ export const executeTool = action({
         } else if (response.status === 404) {
           userError = "Resource not found";
           details = errorBody?.substring(0, 500) || "The requested resource does not exist.";
+        } else if (response.status === 501) {
+          userError = "API not available";
+          details = `The API returned 501 Not Implemented. This usually means the API is not enabled in your cloud project, or credentials (e.g. developer token) are missing or unapproved. ${errorBody?.substring(0, 300) || ""}`;
         } else if (response.status >= 500) {
           userError = "Server error";
-          details = `The API server returned an error (${response.status}). Try again later.`;
+          details = `The API server returned an error (${response.status}). ${errorBody?.substring(0, 300) || "Try again later."}`;
         } else {
           userError = `HTTP ${response.status}`;
           details = errorBody?.substring(0, 500) || response.statusText;
