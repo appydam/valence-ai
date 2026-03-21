@@ -5,9 +5,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Authenticated, Unauthenticated, AuthLoading, useMutation } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { api } from "../convex/_generated/api";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { NicheShell } from "./niche/framework/NicheShell";
+import { resolveNiche } from "./niche/framework/nicheResolver";
+
+const AdsApp = lazy(() => import("./niche/ads/AdsApp"));
+const GtmApp = lazy(() => import("./niche/gtm/GtmApp"));
+const ContentApp = lazy(() => import("./niche/content/ContentApp"));
 import Index from "./pages/Index";
 import Board from "./pages/Board";
 import Missions from "./pages/Missions";
@@ -93,6 +99,22 @@ function AuthenticatedRoutes() {
   if (location.pathname === "/login") {
     return <Navigate to="/" replace />;
   }
+
+  // Standalone niche mode: subdomain like ads.usevalence.ai renders only the niche
+  const standaloneNiche = resolveNiche();
+  if (standaloneNiche) {
+    const NicheComponent = { ads: AdsApp, gtm: GtmApp, content: ContentApp }[standaloneNiche];
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<NicheLoadingSpinner />}>
+          <NicheShell nicheId={standaloneNiche}>
+            <NicheComponent />
+          </NicheShell>
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <Routes>
@@ -118,9 +140,24 @@ function AuthenticatedRoutes() {
         <Route path="/ops" element={<OperationsHub />} />
         <Route path="/brief" element={<MorningBrief />} />
         <Route path="/docs" element={<Docs />} />
+        {/* Niche sub-products (embedded mode — accessed via sidebar) */}
+        <Route path="/niche/ads/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="ads"><AdsApp /></NicheShell></Suspense>} />
+        <Route path="/niche/gtm/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="gtm"><GtmApp /></NicheShell></Suspense>} />
+        <Route path="/niche/content/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="content"><ContentApp /></NicheShell></Suspense>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </ErrorBoundary>
+  );
+}
+
+function NicheLoadingSpinner() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
   );
 }
 

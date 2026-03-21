@@ -7,6 +7,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   FolderOpen,
   Plug,
   Webhook,
@@ -18,7 +19,9 @@ import {
   Rocket,
   Newspaper,
   FileCode,
+  Boxes,
 } from "lucide-react";
+import { NICHE_LIST } from "@/niche/framework/registry";
 import { UserButton } from "@clerk/clerk-react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -43,6 +46,7 @@ const navItems = [
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [nicheOpen, setNicheOpen] = useState(true);
   const location = useLocation();
   const currentUser = useQuery(api.users.getCurrentUser);
   const isAdmin = currentUser?.role === "admin";
@@ -90,9 +94,66 @@ export function AppSidebar() {
             </Link>
           );
         })}
+
+        {/* Niche Products Section */}
+        <div className="my-2 border-t border-border/50" />
+        {collapsed ? (
+          /* Collapsed: just show icons */
+          NICHE_LIST.map((niche) => {
+            const isActive = location.pathname.startsWith(niche.basePath);
+            return (
+              <Link
+                key={niche.id}
+                to={niche.basePath}
+                className={cn(
+                  "flex items-center justify-center px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+                  isActive
+                    ? "font-medium shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                )}
+                style={isActive ? { background: `${niche.accentColor}15`, color: niche.accentColor } : undefined}
+                title={niche.name}
+              >
+                <span className="text-base">{niche.emoji}</span>
+              </Link>
+            );
+          })
+        ) : (
+          /* Expanded: collapsible section */
+          <>
+            <button
+              onClick={() => setNicheOpen(!nicheOpen)}
+              className="flex items-center gap-2 px-3 py-2 w-full text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+            >
+              <Boxes className="w-3.5 h-3.5" />
+              <span className="flex-1">Niche Products</span>
+              <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", nicheOpen ? "" : "-rotate-90")} />
+            </button>
+            {nicheOpen && NICHE_LIST.map((niche) => {
+              const isActive = location.pathname.startsWith(niche.basePath);
+              return (
+                <Link
+                  key={niche.id}
+                  to={niche.basePath}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+                    isActive
+                      ? "font-medium shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  )}
+                  style={isActive ? { background: `${niche.accentColor}15`, color: niche.accentColor } : undefined}
+                >
+                  <span className="text-base w-5 text-center shrink-0">{niche.emoji}</span>
+                  <span className="truncate">{niche.name}</span>
+                </Link>
+              );
+            })}
+          </>
+        )}
+        <div className="my-2 border-t border-border/50" />
+
         {isAdmin && (
           <>
-            <div className="my-2 border-t border-border/50" />
             <Link
               to="/ops"
               className={cn(
