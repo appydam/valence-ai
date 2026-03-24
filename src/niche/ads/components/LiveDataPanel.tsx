@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   DollarSign,
   TrendingUp,
@@ -6,11 +7,13 @@ import {
   Plug,
   RefreshCw,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useNiche } from "../../framework/NicheContext";
 import { useIntegrationCall } from "../../framework/useIntegrationCall";
 import { useCampaignData } from "../hooks/useCampaignData";
+import { useSimulation } from "../simulation/SimulationContext";
 
 const PLATFORMS = [
   { slug: "google-ads", label: "Google Ads", color: "#4285F4" },
@@ -24,14 +27,91 @@ function formatNumber(n: number): string {
   return String(n);
 }
 
+const SIM_CREATIVES = [
+  { image: "/simulation/ads/summer-sale.png", title: "Summer Sale — Up to 50% Off", platform: "Google Display + Facebook", cta: "Shop Now →", delay: 18000 },
+  { image: "/simulation/ads/summer-collection.png", title: "The Summer Edit — New Arrivals", platform: "Instagram Feed + Stories", cta: "Shop Collection →", delay: 21000 },
+  { image: "/simulation/ads/retargeting.png", title: "Still Thinking? 10% Off", platform: "Facebook + Display", cta: "Complete Order →", delay: 24000 },
+  { image: "/simulation/ads/remarketing-grid.png", title: "Picked For You", platform: "Google Shopping", cta: "Shop Picks →", delay: 27000 },
+  { image: "/simulation/ads/genz-unboxing.mp4", title: "UGC Unboxing — Gen-Z Reels", platform: "Reels + TikTok", cta: "Shop the Drop →", delay: 30000 },
+];
+
+function SimCreativesPanel() {
+  const [visibleCount, setVisibleCount] = useState(0);
+  const { isSimulating } = useSimulation();
+
+  useEffect(() => {
+    if (!isSimulating) { setVisibleCount(0); return; }
+    const timers = SIM_CREATIVES.map((c, i) =>
+      setTimeout(() => setVisibleCount(i + 1), c.delay)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [isSimulating]);
+
+  if (visibleCount === 0) return null;
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/30 shrink-0">
+        <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+        <span className="text-xs font-medium text-foreground/80">AI Creatives</span>
+        <span className="ml-auto text-[10px] text-muted-foreground/40 font-mono">{visibleCount}/{SIM_CREATIVES.length}</span>
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+        <p className="text-[10px] text-muted-foreground/40 mb-1">
+          Waiting for Ghost to generate creatives...
+        </p>
+        {SIM_CREATIVES.slice(0, visibleCount).map((c, i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-purple-500/15 bg-card/50 overflow-hidden animate-[fadeScale_0.4s_ease-out]"
+          >
+            {c.image.endsWith(".mp4") ? (
+              <video src={c.image} autoPlay muted loop playsInline className="w-full h-28 object-cover" />
+            ) : (
+              <img src={c.image} alt={c.title} className="w-full h-28 object-cover" />
+            )}
+            <div className="p-2.5">
+              <p className="text-[11px] font-semibold text-foreground leading-tight mb-0.5">{c.title}</p>
+              <p className="text-[9px] text-muted-foreground/40">{c.platform}</p>
+              <div className="mt-1.5 inline-flex items-center px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/15 text-purple-400 text-[9px] font-semibold">
+                {c.cta}
+              </div>
+            </div>
+          </div>
+        ))}
+        {visibleCount >= SIM_CREATIVES.length && (
+          <Link
+            to="/niche/ads/creatives"
+            className="block text-center text-[11px] font-medium text-purple-400 hover:underline mt-2"
+          >
+            View All Insights →
+          </Link>
+        )}
+      </div>
+      <style>{`
+        @keyframes fadeScale {
+          from { opacity: 0; transform: scale(0.92) translateY(8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export function LiveDataPanel() {
   const { config } = useNiche();
   const { isConnected } = useIntegrationCall();
   const { campaigns, stats, loading, refresh, hasConnections } = useCampaignData();
+  const { isSimulating } = useSimulation();
 
   const topCampaigns = [...campaigns]
     .sort((a, b) => b.roas - a.roas)
     .slice(0, 3);
+
+  // During simulation, show creatives panel instead
+  if (isSimulating) {
+    return <SimCreativesPanel />;
+  }
 
   if (!hasConnections) {
     return (
