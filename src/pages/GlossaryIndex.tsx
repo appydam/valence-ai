@@ -25,6 +25,11 @@ const FALLBACK_TERMS = [
   { slug: "ai-orchestrator", title: "AI Orchestrator", description: "An AI orchestrator is a master agent that manages and coordinates a team of specialist agents — routing tasks, managing dependencies, and reviewing deliverables.", category: "core" },
   { slug: "human-in-the-loop", title: "Human-in-the-Loop", description: "Human-in-the-loop (HITL) is an AI design pattern where humans review and approve AI decisions at critical steps — combining automation efficiency with human judgment.", category: "design" },
   { slug: "enterprise-ai", title: "Enterprise AI", description: "Enterprise AI refers to AI systems designed for business use at scale — with security, compliance, integrations, audit trails, and reliability requirements.", category: "core" },
+  { slug: "ai-agent-platform", title: "AI Agent Platform", description: "An AI agent platform is a managed system for deploying, orchestrating, and monitoring autonomous AI agents — providing infrastructure, integrations, and tools without requiring custom engineering.", category: "core" },
+  { slug: "ai-automation", title: "AI Automation", description: "AI automation uses artificial intelligence to execute repetitive tasks, complex workflows, and business processes autonomously — going beyond rule-based automation with reasoning and decision-making.", category: "core" },
+  { slug: "ai-orchestration", title: "AI Orchestration", description: "AI orchestration is the process of coordinating multiple AI models, agents, and workflows to accomplish complex business goals — managing task routing, dependencies, and quality control.", category: "technical" },
+  { slug: "generative-ai-agents", title: "Generative AI Agents", description: "Generative AI agents are autonomous AI systems that use large language models to create content, write code, draft communications, and produce original work as part of business workflows.", category: "core" },
+  { slug: "ai-task-automation", title: "AI Task Automation", description: "AI task automation is the use of AI agents to autonomously execute specific business tasks — from lead enrichment and report generation to code review and content creation — without manual intervention.", category: "technical" },
 ];
 
 export default function GlossaryIndex() {

@@ -80,6 +80,54 @@ const COMPARISONS: ComparisonEntry[] = [
     verdict: "Copilot Cowork for M365-native orgs; Valence for cross-stack automation",
     tags: ["Microsoft", "M365", "enterprise agent"],
   },
+  {
+    slug: "valence-vs-salesforce-agentforce",
+    title: "Valence AI vs Salesforce Agentforce",
+    description: "Agentforce embeds AI agents inside Salesforce CRM — powerful if you live in that ecosystem. Valence AI is platform-agnostic, connecting 100+ tools across your entire stack at a fraction of the cost.",
+    competitor: "Salesforce Agentforce",
+    verdict: "Agentforce for Salesforce-native teams; Valence for cross-platform operations",
+    tags: ["enterprise", "CRM-locked", "platform-agnostic"],
+  },
+  {
+    slug: "valence-vs-langchain",
+    title: "Valence AI vs LangChain / LangGraph",
+    description: "LangChain is the most popular AI agent framework — but it's a developer toolkit, not a ready-to-deploy platform. Valence AI gives you five production agents out of the box with no code required.",
+    competitor: "LangChain / LangGraph",
+    verdict: "LangChain for custom dev; Valence for immediate deployment",
+    tags: ["framework", "developer tools", "no-code"],
+  },
+  {
+    slug: "valence-vs-servicenow",
+    title: "Valence AI vs ServiceNow Autonomous Workforce",
+    description: "ServiceNow's Autonomous Workforce brings AI agents to ITSM — with enterprise pricing and months-long implementation. Valence AI deploys in hours, works with any stack, and costs a fraction.",
+    competitor: "ServiceNow",
+    verdict: "ServiceNow for ITSM-centric orgs; Valence for agile cross-functional teams",
+    tags: ["enterprise", "ITSM", "fast deployment"],
+  },
+  {
+    slug: "valence-vs-sintra",
+    title: "Valence AI vs Sintra AI",
+    description: "Sintra offers consumer-grade AI employees at $97/mo — but with limited autonomy and no persistent memory. Valence AI provides enterprise-grade agents with real task execution, quality gates, and cross-agent coordination.",
+    competitor: "Sintra AI",
+    verdict: "Sintra for individual tasks; Valence for autonomous operations",
+    tags: ["AI employees", "consumer vs enterprise", "autonomy"],
+  },
+  {
+    slug: "valence-vs-11x",
+    title: "Valence AI vs 11x.ai",
+    description: "11x offers Alice, an AI SDR for outbound sales at $5k+/mo. Valence AI covers your entire business — sales, marketing, ops, finance, DevOps — with five specialized agents working as a coordinated team.",
+    competitor: "11x.ai",
+    verdict: "11x for dedicated AI SDR; Valence for full-business automation",
+    tags: ["AI SDR", "sales-only", "multi-department"],
+  },
+  {
+    slug: "valence-vs-relevance-ai",
+    title: "Valence AI vs Relevance AI",
+    description: "Relevance AI is a low-code GTM agent builder that requires manual workflow design. Valence AI agents are truly autonomous — they decompose tasks, coordinate across agents, and apply quality gates automatically.",
+    competitor: "Relevance AI",
+    verdict: "Relevance for GTM workflows; Valence for autonomous multi-agent operations",
+    tags: ["low-code", "GTM", "autonomous agents"],
+  },
 ];
 
 function ComparisonCard({ comparison }: { comparison: ComparisonEntry }) {
@@ -134,7 +182,7 @@ export default function CompareIndex() {
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead
         title="Valence AI Comparisons — How We Stack Up Against the Alternatives"
-        description="Compare Valence AI to Lindy, Zapier, Make, CrewAI, AutoGPT, and other AI automation tools. Honest breakdowns of architecture, pricing, and use cases."
+        description="Compare Valence AI to Lindy, Zapier, Make, CrewAI, AutoGPT, LangChain, Salesforce Agentforce, ServiceNow, Sintra, 11x, and more. Honest breakdowns of AI agent platforms — architecture, pricing, and use cases."
         canonical="https://usevalence.ai/compare"
       />
       <LandingNav onPilotClick={() => setPilotOpen(true)} />

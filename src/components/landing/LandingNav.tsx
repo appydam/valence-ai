@@ -224,7 +224,7 @@ function MobileMenu({
                 >
                   {activeTab === "ai-workers"
                     ? "Hire AI Worker →"
-                    : "Request Access →"}
+                    : "Get Started →"}
                 </button>
               )}
             </div>

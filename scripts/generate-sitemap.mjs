@@ -101,6 +101,12 @@ const comparisonSlugs = [
   "valence-vs-perplexity-computer",
   "valence-vs-claude-cowork",
   "valence-vs-microsoft-copilot",
+  "valence-vs-salesforce-agentforce",
+  "valence-vs-langchain",
+  "valence-vs-servicenow",
+  "valence-vs-sintra",
+  "valence-vs-11x",
+  "valence-vs-relevance-ai",
 ];
 
 // ── Glossary slugs ────────────────────────────────────────────────────────────
@@ -120,6 +126,11 @@ const glossarySlugs = [
   "ai-orchestrator",
   "human-in-the-loop",
   "enterprise-ai",
+  "ai-agent-platform",
+  "ai-automation",
+  "ai-orchestration",
+  "generative-ai-agents",
+  "ai-task-automation",
 ];
 
 // ── Blog post slugs (populated as posts are created) ──────────────────────────

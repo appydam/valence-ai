@@ -44,6 +44,11 @@ const ALL_COMPARISONS: RelatedItem[] = [
   { title: "Valence AI vs Perplexity Computer", href: "/compare/valence-vs-perplexity-computer", label: "Comparison" },
   { title: "Valence AI vs Salesforce Agentforce", href: "/compare/valence-vs-salesforce-agentforce", label: "Comparison" },
   { title: "Valence AI vs Devin", href: "/compare/valence-vs-devin", label: "Comparison" },
+  { title: "Valence AI vs LangChain", href: "/compare/valence-vs-langchain", label: "Comparison" },
+  { title: "Valence AI vs ServiceNow", href: "/compare/valence-vs-servicenow", label: "Comparison" },
+  { title: "Valence AI vs Sintra AI", href: "/compare/valence-vs-sintra", label: "Comparison" },
+  { title: "Valence AI vs 11x.ai", href: "/compare/valence-vs-11x", label: "Comparison" },
+  { title: "Valence AI vs Relevance AI", href: "/compare/valence-vs-relevance-ai", label: "Comparison" },
 ];
 
 export default function ComparisonPage() {

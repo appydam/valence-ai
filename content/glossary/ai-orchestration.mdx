@@ -1,0 +1,51 @@
+---
+title: "AI Orchestration"
+slug: "ai-orchestration"
+description: "AI orchestration is the coordination of multiple AI agents, models, or services to accomplish complex goals — managing task decomposition, agent routing, progress tracking, failure handling, and output assembly across a multi-agent system."
+category: "technical"
+relatedTerms: ["ai-orchestrator", "multi-agent-orchestration", "task-decomposition", "ai-agent-platform", "ai-workforce"]
+---
+
+**AI orchestration** is the coordination of multiple AI agents, models, or services to accomplish complex goals. An AI orchestration system manages the full lifecycle of a mission: parsing the goal, decomposing it into subtasks, routing each subtask to the appropriate agent or service, tracking progress, handling failures, and assembling the final output.
+
+AI orchestration is what transforms a collection of individual AI capabilities into a functioning AI workforce. Without orchestration, agents are isolated tools; with orchestration, they become a coordinated team.
+
+## Why AI Orchestration Matters
+
+Complex business objectives cannot be accomplished by a single agent or model call. A mission like "research our top 50 churning accounts and draft personalized win-back emails" requires research capabilities, CRM data access, writing skills, and quality review — different cognitive tasks that benefit from specialization.
+
+AI orchestration solves this by:
+
+**Decomposing complex goals** into discrete, manageable subtasks with clear inputs and expected outputs.
+
+**Routing tasks to specialists** who are optimized for that type of work — research agents for research, writing agents for writing, building agents for technical tasks.
+
+**Managing dependencies** between tasks — ensuring research completes before writing begins, ensuring quality review happens before delivery.
+
+**Handling failures gracefully** — retrying transient errors, routing around permanent failures, escalating when necessary.
+
+**Assembling coherent outputs** from multiple agent contributions into a unified deliverable.
+
+## AI Orchestration Architectures
+
+**Centralized orchestration:** A single orchestrator agent manages all task routing and coordination. This is the most common pattern in production systems because it provides clear accountability and a single point of mission understanding. Valence AI uses this pattern — Kaze is the central orchestrator.
+
+**Hierarchical orchestration:** Multiple layers of orchestrators — a top-level orchestrator delegates to mid-level coordinators, which manage individual agents. Used for very complex missions with many parallel workstreams.
+
+**Peer-to-peer orchestration:** Agents coordinate directly with each other without a central orchestrator. Simpler to build but harder to debug and monitor.
+
+## AI Orchestration vs. Workflow Automation
+
+Traditional workflow automation (Zapier, Make, n8n) connects tools through predefined rules. AI orchestration uses reasoning to determine what needs to happen, in what order, and how to adapt when things change. The orchestrator is not following a flowchart — it is actively planning, monitoring, and adjusting.
+
+## Valence AI's Approach to AI Orchestration
+
+Valence AI implements centralized AI orchestration through Kaze, powered by Claude Opus 4.6. Kaze receives natural language missions, decomposes them into subtasks, delegates to Scout (research), Forge (building), Ghost (writing), and Sentinel (quality review), monitors execution, handles failures, and assembles final outputs for human review. This AI orchestration layer is what makes Valence AI a true autonomous AI workforce rather than a collection of disconnected tools.
+
+## Related Terms
+
+- [AI Orchestrator](/glossary/ai-orchestrator)
+- [Multi-Agent Orchestration](/glossary/multi-agent-orchestration)
+- [Task Decomposition](/glossary/task-decomposition)
+- [AI Agent Platform](/glossary/ai-agent-platform)
+- [AI Workforce](/glossary/ai-workforce)

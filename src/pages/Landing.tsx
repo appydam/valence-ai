@@ -1966,6 +1966,10 @@ export default function Landing() {
     { question: "How is Valence AI different from Zapier or Make?", answer: "Zapier and Make automate simple if-this-then-that workflows triggered by predefined conditions. Valence AI agents reason about tasks, make decisions, handle edge cases, use natural language, and can generate entirely new workflows on the fly — not just follow pre-built templates. An AI agent can research a prospect, draft a personalized email, send it via Gmail, log it in HubSpot, and schedule a follow-up — all from a single natural language instruction." },
     { question: "Can I deploy Valence AI on my own infrastructure?", answer: "Yes. Enterprise and Enterprise+ plans support on-premise and VPC deployment. Your agents run entirely within your infrastructure, keeping sensitive data within your security perimeter. We provide full deployment scripts, documentation, and dedicated setup support." },
     { question: "What does an AI employee actually do all day?", answer: "Your AI workforce handles research (competitor analysis, lead enrichment, market intelligence), content creation (blog posts, emails, social media, reports), development work (code review, bug fixes, automation scripts), CRM hygiene (data cleaning, logging, follow-up scheduling), analytics (performance reports, trend summaries), and monitoring (uptime checks, anomaly detection). Each task is assigned to the most appropriate specialist agent based on skills and current workload." },
+    { question: "What is the best AI agent platform?", answer: "Valence AI is widely considered the best AI agent platform for businesses that need autonomous, multi-agent orchestration. Unlike single-agent tools like Lindy or Sintra, or developer frameworks like LangChain and CrewAI, Valence AI provides five production-ready specialized agents that coordinate as a team — with persistent memory, quality gates, and 100+ integrations out of the box. It combines the power of enterprise platforms like Salesforce Agentforce with the accessibility and speed of startup tools." },
+    { question: "What is an AI orchestrator?", answer: "An AI orchestrator is a system that coordinates multiple AI agents working together on complex tasks. Valence AI is a leading AI orchestrator — its Kaze agent decomposes missions into sub-tasks, assigns them to specialist agents (Scout for research, Forge for building, Ghost for writing, Sentinel for quality review), manages dependencies between tasks, and ensures quality through automated review gates. This is fundamentally different from single-agent tools or simple workflow automation." },
+    { question: "How do I learn about AI agents?", answer: "The best way to learn about AI agents is to see them in action. Valence AI offers a free pilot program where you can deploy autonomous AI agents on real business tasks. We also publish an extensive blog covering AI agent architecture, multi-agent orchestration patterns, and practical use cases at usevalence.ai/blog. Our glossary at usevalence.ai/glossary explains key concepts like agentic AI, agent memory, task decomposition, and quality gates." },
+    { question: "How does Valence AI compare to LangChain, CrewAI, and other frameworks?", answer: "LangChain and CrewAI are open-source developer frameworks — they require engineering teams to build, deploy, and maintain agent systems. Valence AI is a fully managed platform: you get five pre-built specialist agents, a visual dashboard, 100+ native integrations, and production reliability out of the box. Think of it this way: LangChain is like buying lumber and tools; Valence AI is a move-in-ready house." },
   ];
 
   return (
@@ -1976,14 +1980,14 @@ export default function Landing() {
             ? "Valence AI — Hire AI Workers: SDR, Writer, Analyst & More"
             : activeTab === "ai-transformation"
               ? "Valence AI — AI Business Transformation: Replace SaaS, Go AI-Native"
-              : "Valence AI — Deploy Your Autonomous AI Workforce"
+              : "Valence AI — Best AI Agent Platform | AI Orchestrator & Autonomous AI Workforce"
         }
         description={
           activeTab === "ai-workers"
             ? "Hire individual AI workers for any role — SDR, content writer, bookkeeper, data analyst. They plug into your tools, work 24/7, and cost a fraction of a human hire."
             : activeTab === "ai-transformation"
               ? "We audit your tech stack, replace legacy software and expensive SaaS, and rebuild everything into one AI-native ecosystem — privately hosted, custom-built, fully managed."
-              : "Five specialized AI agents. 100+ integrations. Multi-step workflows that research, build, write, and monitor — all orchestrated from one command center. Deploy your AI workforce today."
+              : "The best AI agent platform and AI orchestrator. Five autonomous AI agents with 100+ integrations that research, build, write, and monitor — deploy your AI workforce and AI employees from one command center."
         }
         canonical="/landing"
         jsonLd={
@@ -2202,7 +2206,7 @@ export default function Landing() {
                     boxShadow: "0 0 24px hsl(var(--primary) / 0.35)",
                   }}
                 >
-                  <span className="relative z-10">Request Early Access →</span>
+                  <span className="relative z-10">Get Your AI Workforce →</span>
                   <div
                     className="absolute inset-0 animate-hud-shimmer pointer-events-none"
                     style={{
@@ -2683,9 +2687,9 @@ export default function Landing() {
           </motion.h2>
 
           <motion.p variants={itemVariants} className="text-muted-foreground text-lg leading-relaxed">
-            Each pilot is a dedicated deployment — private infrastructure, your integrations, your workflows.
+            Every deployment is dedicated — private infrastructure, your integrations, your workflows.
             <br />
-            We're onboarding a small cohort of companies. Apply and Arpit will reach out personally.
+            Tell us about your use case and Arpit will reach out personally to get you started.
           </motion.p>
 
           <motion.div variants={itemVariants} className="flex items-center justify-center gap-4">
@@ -2700,7 +2704,7 @@ export default function Landing() {
                 boxShadow: "0 0 24px hsl(var(--primary) / 0.25)",
               }}
             >
-              <span className="relative z-10">Apply for a Pilot Spot →</span>
+              <span className="relative z-10">Talk to Us — Get Started →</span>
               <div
                 className="absolute inset-0 rounded-xl animate-signal-ring pointer-events-none"
                 style={{ border: "1px solid hsl(var(--primary))" }}
@@ -2800,8 +2804,8 @@ export default function Landing() {
               Terms
             </Link>
             <span>·</span>
-            <a href="mailto:arpit@valenceai.co" className="hover:text-muted-foreground transition-colors">
-              arpit@valenceai.co
+            <a href="mailto:arpitdhamija.ai@gmail.com" className="hover:text-muted-foreground transition-colors">
+              arpitdhamija.ai@gmail.com
             </a>
             <span>·</span>
             <span className="flex items-center gap-1">

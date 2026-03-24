@@ -5,8 +5,26 @@ export function organizationSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Valence AI",
+    url: "https://usevalence.ai",
     description:
-      "Open-source AI agent orchestration platform. Deploy and manage autonomous AI agents with 100+ integrations from one command center.",
+      "Valence AI is the best AI agent platform and AI orchestrator for deploying autonomous AI workforce. Manage AI employees that research, build, write, and integrate with 100+ tools from one command center.",
+    sameAs: [
+      "https://twitter.com/arpit_dhamija",
+      "https://github.com/arpitdhamija-ai",
+    ],
+    founder: {
+      "@type": "Person",
+      name: "Arpit Dhamija",
+    },
+    knowsAbout: [
+      "AI Agent",
+      "AI Orchestrator",
+      "Autonomous AI",
+      "AI Workforce",
+      "AI Employee",
+      "Multi-Agent Orchestration",
+      "Agentic AI",
+    ],
   };
 }
 
@@ -15,10 +33,12 @@ export function softwareApplicationSchema() {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Valence AI",
+    url: "https://usevalence.ai",
     applicationCategory: "BusinessApplication",
+    applicationSubCategory: "AI Agent Platform",
     operatingSystem: "Web",
     description:
-      "Open-source AI agent orchestration platform. Deploy specialized AI agents and automate complex, multi-step workflows with 100+ integrations.",
+      "The best AI agent platform and AI orchestrator. Deploy autonomous AI agents as AI employees — five specialized agents handle sales, marketing, operations, finance, and DevOps with 100+ integrations.",
     offers: [
       {
         "@type": "Offer",
@@ -26,9 +46,21 @@ export function softwareApplicationSchema() {
         price: "0",
         priceCurrency: "USD",
       },
+      {
+        "@type": "Offer",
+        name: "Managed AI Workforce",
+        price: "2499",
+        priceCurrency: "USD",
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
+          billingDuration: "P1M",
+        },
+      },
     ],
     featureList: [
-      "Multi-agent orchestration",
+      "Multi-agent AI orchestration",
+      "Autonomous AI workforce management",
+      "AI employee deployment",
       "100+ app integrations",
       "Persistent agent memory",
       "Quality review gates",
@@ -36,7 +68,11 @@ export function softwareApplicationSchema() {
       "Webhook triggers",
       "Continuous monitors",
       "Self-hosted / on-premise",
+      "Cross-agent coordination",
+      "Natural language task assignment",
     ],
+    keywords:
+      "ai agent, ai orchestrator, autonomous ai, ai workforce, ai employee, best ai company, ai agent platform, ai automation, multi-agent orchestration",
   };
 }
 
