@@ -102,14 +102,23 @@ function MobileMenu({
 
             {/* Nav items */}
             <div className="px-3 py-4 flex flex-col gap-1">
-              {/* Pricing — only on AI Department + non-landing pages */}
+              {/* Pricing + Open Source — only on AI Department + non-landing pages */}
               {(!activeTab || activeTab === "ai-department") && (
-                <button
-                  onClick={() => handleNavigate("/pricing")}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left"
-                >
-                  Pricing
-                </button>
+                <>
+                  <button
+                    onClick={() => handleNavigate("/pricing")}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left"
+                  >
+                    Pricing
+                  </button>
+                  <button
+                    onClick={() => handleNavigate("/open-source")}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors text-left"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400/80" />
+                    Open Source
+                  </button>
+                </>
               )}
 
               {/* Tab-specific quick links (AI Workers / Transformation) */}
@@ -194,19 +203,16 @@ function MobileMenu({
             {/* CTA at bottom */}
             <div className="px-4 pb-6 mt-2">
               {activeTab === "ai-transformation" ? (
-                <a
-                  href="https://calendly.com/arpitdhamija-ai/30min"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={onClose}
+                <button
+                  onClick={() => { onClose(); onPilotClick(); }}
                   className="block w-full py-2.5 rounded-lg text-sm font-semibold transition-all text-center"
                   style={{
                     background: "linear-gradient(135deg, hsl(258 90% 56%), hsl(217 91% 60%))",
                     color: "hsl(var(--primary-foreground))",
                   }}
                 >
-                  Book Transformation Call →
-                </a>
+                  Get Started →
+                </button>
               ) : (
                 <button
                   onClick={() => { onClose(); onPilotClick(); }}
@@ -445,14 +451,23 @@ export function LandingNav({
               </>
             )}
 
-            {/* Pricing — shown on AI Department tab + non-landing pages (not on Workers/Transformation) */}
+            {/* Pricing + Open Source — shown on AI Department tab + non-landing pages */}
             {!breadcrumb && (!activeTab || activeTab === "ai-department") && (
-              <Link
-                to="/pricing"
-                className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
-              >
-                Pricing
-              </Link>
+              <>
+                <Link
+                  to="/pricing"
+                  className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
+                >
+                  Pricing
+                </Link>
+                <Link
+                  to="/open-source"
+                  className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400/80" />
+                  Open Source
+                </Link>
+              </>
             )}
 
             {/* Context-aware nav links based on active landing tab */}
@@ -526,10 +541,8 @@ export function LandingNav({
 
           <div className="flex items-center gap-2">
             {activeTab === "ai-transformation" ? (
-              <motion.a
-                href="https://calendly.com/arpitdhamija-ai/30min"
-                target="_blank"
-                rel="noopener noreferrer"
+              <motion.button
+                onClick={onPilotClick}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="hidden sm:block text-sm font-semibold px-4 py-1.5 rounded-lg transition-all relative overflow-hidden text-center"
@@ -538,8 +551,8 @@ export function LandingNav({
                   color: "hsl(var(--primary-foreground))",
                 }}
               >
-                Book a Call →
-              </motion.a>
+                Get Started →
+              </motion.button>
             ) : (
               <motion.button
                 onClick={onPilotClick}

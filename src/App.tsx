@@ -14,6 +14,7 @@ import { resolveNiche } from "./niche/framework/nicheResolver";
 const AdsApp = lazy(() => import("./niche/ads/AdsApp"));
 const GtmApp = lazy(() => import("./niche/gtm/GtmApp"));
 const ContentApp = lazy(() => import("./niche/content/ContentApp"));
+const BrandMonitorApp = lazy(() => import("./niche/brand-monitor/BrandMonitorApp"));
 import Index from "./pages/Index";
 import Board from "./pages/Board";
 import Missions from "./pages/Missions";
@@ -23,6 +24,7 @@ import Integrations from "./pages/Integrations";
 import BlueprintWizard from "./pages/BlueprintWizard";
 import BlueprintDetail from "./pages/BlueprintDetail";
 import Webhooks from "./pages/Webhooks";
+import Monitors from "./pages/Monitors";
 import Analytics from "./pages/Analytics";
 import MemoryBank from "./pages/MemoryBank";
 import AgentMemoryDetail from "./pages/AgentMemoryDetail";
@@ -33,8 +35,8 @@ import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 import UseCasePage from "./pages/UseCase";
 import Autopilot from "./pages/Autopilot";
-import Billing from "./pages/Billing";
 import Pricing from "./pages/Pricing";
+import OpenSource from "./pages/OpenSource";
 import Onboarding from "./pages/Onboarding";
 import OperationsHub from "./pages/OperationsHub";
 import MorningBrief from "./pages/MorningBrief";
@@ -103,7 +105,7 @@ function AuthenticatedRoutes() {
   // Standalone niche mode: subdomain like ads.usevalence.ai renders only the niche
   const standaloneNiche = resolveNiche();
   if (standaloneNiche) {
-    const NicheComponent = { ads: AdsApp, gtm: GtmApp, content: ContentApp }[standaloneNiche];
+    const NicheComponent = { ads: AdsApp, gtm: GtmApp, content: ContentApp, "brand-monitor": BrandMonitorApp }[standaloneNiche];
     return (
       <ErrorBoundary>
         <Suspense fallback={<NicheLoadingSpinner />}>
@@ -130,11 +132,11 @@ function AuthenticatedRoutes() {
         <Route path="/integrations/blueprint/new" element={<BlueprintWizard />} />
         <Route path="/integrations/blueprint/:id" element={<BlueprintDetail />} />
         <Route path="/webhooks" element={<Webhooks />} />
+        <Route path="/monitors" element={<Monitors />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/memory" element={<MemoryBank />} />
         <Route path="/memory/:agentName" element={<AgentMemoryDetail />} />
         <Route path="/soul/review/:versionId" element={<SoulReview />} />
-        <Route path="/billing" element={<Billing />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/files" element={<FileManager />} />
         <Route path="/ops" element={<OperationsHub />} />
@@ -144,6 +146,7 @@ function AuthenticatedRoutes() {
         <Route path="/niche/ads/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="ads"><AdsApp /></NicheShell></Suspense>} />
         <Route path="/niche/gtm/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="gtm"><GtmApp /></NicheShell></Suspense>} />
         <Route path="/niche/content/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="content"><ContentApp /></NicheShell></Suspense>} />
+        <Route path="/niche/brand-monitor/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="brand-monitor"><BrandMonitorApp /></NicheShell></Suspense>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </ErrorBoundary>
@@ -173,6 +176,7 @@ const App = () => (
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/open-source" element={<OpenSource />} />
           <Route path="/use-cases/:slug" element={<UseCasePage />} />
           {/* Blog */}
           <Route path="/blog" element={<BlogIndex />} />
