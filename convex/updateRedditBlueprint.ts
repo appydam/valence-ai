@@ -5,7 +5,7 @@
  * Run after setting REDDIT_CLIENT_ID and OAUTH_SECRET_REDDIT.
  *
  * Usage:
- * npx convex run updateRedditBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateRedditBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

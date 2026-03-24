@@ -7,7 +7,7 @@
  * After token exchange, must call "Mark App Status" within 5 min.
  *
  * Usage:
- * npx convex run seedKekaBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedKekaBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

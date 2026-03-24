@@ -9,7 +9,7 @@
  * Prerequisites:
  * 1. Create a developer app at https://developers.intercom.com/
  *    - Go to Your Apps → New App
- *    - Add callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Add callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *    - Set required permissions in Authentication tab
  * 2. Submit for review if building a public app (for multi-workspace OAuth)
  * 3. Set in Convex env vars:
@@ -538,7 +538,7 @@ export default mutation({
       nextSteps: [
         "1. Create a developer app at https://app.intercom.com/a/developer-signup",
         "2. In your app settings → Authentication → Add redirect URL:",
-        "   https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "   https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Set permissions: Read/Write Conversations, Read/Write Contacts",
         "4. Set INTERCOM_CLIENT_ID in Convex env vars (client_id from app settings)",
         "5. Set OAUTH_SECRET_INTERCOM in Convex env vars (client_secret from app settings)",

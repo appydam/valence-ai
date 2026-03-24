@@ -5,7 +5,7 @@
  * Run after setting RAZORPAY_CLIENT_ID and OAUTH_SECRET_RAZORPAY.
  *
  * Usage:
- * npx convex run updateRazorpayBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateRazorpayBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

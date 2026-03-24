@@ -8,7 +8,7 @@
  *
  * Prerequisites:
  * 1. Create an OAuth client in Zendesk Admin → Apps and integrations → APIs → Zendesk API → OAuth Clients
- *    - Redirect URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Redirect URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 2. Set in Convex env vars:
  *    - ZENDESK_CLIENT_ID = Unique Identifier from OAuth client
  *    - OAUTH_SECRET_ZENDESK = Secret from OAuth client
@@ -498,7 +498,7 @@ export default mutation({
       nextSteps: [
         "1. Go to Zendesk Admin → Apps and integrations → APIs → Zendesk API → OAuth Clients",
         "2. Add a new OAuth client with redirect URL:",
-        "   https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "   https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Set ZENDESK_CLIENT_ID in Convex env vars (Unique Identifier)",
         "4. Set OAUTH_SECRET_ZENDESK in Convex env vars (Secret)",
         "5. Note: Users will need to provide their Zendesk subdomain during connection",

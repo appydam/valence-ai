@@ -7,7 +7,7 @@
  * API docs: https://developers.salesloft.com/docs/platform/
  *
  * Usage:
- * npx convex run seedSalesloftBlueprint:seedSalesloft --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedSalesloftBlueprint:seedSalesloft --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

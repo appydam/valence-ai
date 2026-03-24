@@ -5,7 +5,7 @@
  * Run after setting GOOGLE_ANALYTICS_CLIENT_ID and OAUTH_SECRET_GOOGLE_ANALYTICS.
  *
  * Usage:
- * npx convex run updateGoogleAnalyticsBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateGoogleAnalyticsBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

@@ -5,11 +5,11 @@
  * Prerequisites:
  * 1. Create a Meta App at https://developers.facebook.com/
  * 2. Add the Instagram product to your app
- * 3. Set callback URL to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ * 3. Set callback URL to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 4. Set Convex env var: OAUTH_SECRET_INSTAGRAM=<your_app_secret>
  *
  * Usage (after deploy):
- * npx convex run seedInstagramBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedInstagramBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  *
  * IMPORTANT PLATFORM LIMITATIONS:
  * - Requires Business or Creator account (personal accounts not supported)
@@ -252,7 +252,7 @@ export default mutation({
         "3. Get your App ID and App Secret",
         "4. Set INSTAGRAM_CLIENT_ID in Convex env vars (optional, can be hardcoded)",
         "5. Set OAUTH_SECRET_INSTAGRAM=<your_app_secret> in Convex env vars",
-        "6. Add callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "6. Add callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "7. Your Instagram account must be a Business or Creator account",
         "8. Note: AI-generated content must be labeled per Meta policy",
       ],

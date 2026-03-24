@@ -10,7 +10,7 @@ import { encryptCredentials } from "./lib/crypto";
  * Shopify custom/dev apps provide a static access token (shpat_...) instead of OAuth flow.
  *
  * Usage:
- * npx convex run connectShopifyDirect --url https://beloved-squirrel-599.convex.cloud \
+ * npx convex run connectShopifyDirect --url https://<YOUR_DEPLOYMENT>.convex.cloud \
  *   '{"userId": "...", "accessToken": "shpat_..."}'
  */
 export default action({

@@ -7,7 +7,7 @@
  * Webhook URLs are per-table (generated in Clay UI).
  *
  * Usage:
- * npx convex run seedClayBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedClayBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

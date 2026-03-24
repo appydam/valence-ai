@@ -7,7 +7,7 @@
  * not flat strings — to match Notion's API requirements.
  *
  * Usage:
- *   npx convex run seedNotionBlueprint --url https://beloved-squirrel-599.convex.cloud
+ *   npx convex run seedNotionBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  *
  * OR via Convex dashboard:
  *   Functions -> seedNotionBlueprint -> Run
@@ -546,7 +546,7 @@ PATTERN for a full research document:
       toolsCreated: toolIds.length,
       action: existing ? "updated" : "created",
       criticalFix: "create_page now requires nested parent/properties objects — see aiUsageHint",
-      nextStep: "Deploy then run: npx convex run seedNotionBlueprint --url https://beloved-squirrel-599.convex.cloud",
+      nextStep: "Deploy then run: npx convex run seedNotionBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud",
     };
   },
 });

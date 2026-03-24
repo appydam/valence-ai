@@ -5,7 +5,7 @@
  * Run after setting KEKA_CLIENT_ID and OAUTH_SECRET_KEKA.
  *
  * Usage:
- * npx convex run updateKekaBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateKekaBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

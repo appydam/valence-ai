@@ -7,7 +7,7 @@
  * API docs: https://api.outreach.io/api/v2/schema.json
  *
  * Usage:
- * npx convex run seedOutreachBlueprint:seedOutreach --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedOutreachBlueprint:seedOutreach --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

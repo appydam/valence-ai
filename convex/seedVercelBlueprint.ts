@@ -5,7 +5,7 @@
  * Uses OpenID Connect scopes for authorization.
  *
  * Usage:
- * npx convex run seedVercelBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedVercelBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";
@@ -141,9 +141,9 @@ export default mutation({
       toolsCreated: toolIds.length,
       nextSteps: [
         "1. Create OAuth app at https://vercel.com/account/oauth-apps (or via Integrations Console)",
-        "2. Set redirect URL to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
-        "3. npx convex env set VERCEL_CLIENT_ID '<client_id>' --url https://beloved-squirrel-599.convex.cloud",
-        "4. npx convex env set OAUTH_SECRET_VERCEL '<client_secret>' --url https://beloved-squirrel-599.convex.cloud",
+        "2. Set redirect URL to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
+        "3. npx convex env set VERCEL_CLIENT_ID '<client_id>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
+        "4. npx convex env set OAUTH_SECRET_VERCEL '<client_secret>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
       ],
     };
   },

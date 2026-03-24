@@ -192,7 +192,7 @@ export default mutation({
         "2. Set GITHUB_CLIENT_SECRET in Convex environment variables",
         "3. Set INTEGRATION_MASTER_KEY for token encryption",
         "4. Register OAuth app at: https://github.com/settings/developers",
-        "5. Set callback URL to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "5. Set callback URL to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
       ],
     };
   },

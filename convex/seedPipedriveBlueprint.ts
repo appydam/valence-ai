@@ -2,7 +2,7 @@
  * Seed Pipedrive CRM integration blueprint
  *
  * Usage:
- * npx convex run seedPipedriveBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedPipedriveBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";
@@ -159,9 +159,9 @@ export default mutation({
       toolsCreated: toolIds.length,
       nextSteps: [
         "1. Create OAuth app at https://developers.pipedrive.com/",
-        "2. Set callback URL to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
-        "3. npx convex env set PIPEDRIVE_CLIENT_ID '<client_id>' --url https://beloved-squirrel-599.convex.cloud",
-        "4. npx convex env set OAUTH_SECRET_PIPEDRIVE '<client_secret>' --url https://beloved-squirrel-599.convex.cloud",
+        "2. Set callback URL to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
+        "3. npx convex env set PIPEDRIVE_CLIENT_ID '<client_id>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
+        "4. npx convex env set OAUTH_SECRET_PIPEDRIVE '<client_secret>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
       ],
     };
   },

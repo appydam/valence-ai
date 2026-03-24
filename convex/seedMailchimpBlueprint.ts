@@ -6,7 +6,7 @@
  * Mailchimp does NOT use scopes — the token grants full account access.
  *
  * Usage:
- * npx convex run seedMailchimpBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedMailchimpBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";
@@ -179,9 +179,9 @@ export default mutation({
       toolsCreated: toolIds.length,
       nextSteps: [
         "1. Register app at https://admin.mailchimp.com/account/oauth2/",
-        "2. Set redirect URI to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
-        "3. npx convex env set MAILCHIMP_CLIENT_ID '<client_id>' --url https://beloved-squirrel-599.convex.cloud",
-        "4. npx convex env set OAUTH_SECRET_MAILCHIMP '<client_secret>' --url https://beloved-squirrel-599.convex.cloud",
+        "2. Set redirect URI to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
+        "3. npx convex env set MAILCHIMP_CLIENT_ID '<client_id>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
+        "4. npx convex env set OAUTH_SECRET_MAILCHIMP '<client_secret>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
       ],
     };
   },

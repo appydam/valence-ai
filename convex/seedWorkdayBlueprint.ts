@@ -8,7 +8,7 @@
  *
  * Prerequisites:
  * 1. Register an API client in Workday → Register API Client (Integrations)
- *    - Add redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Add redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *    - Grant scope: r:workers, r:organizations
  * 2. Set in Convex env vars:
  *    - WORKDAY_CLIENT_ID = API Client ID
@@ -309,7 +309,7 @@ export default mutation({
       toolIds,
       nextSteps: [
         "1. In Workday → Register API Client (Integration)",
-        "2. Set redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "2. Set redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Grant scopes: r:workers, r:organizations",
         "4. Set WORKDAY_CLIENT_ID in Convex env vars (Client ID)",
         "5. Set OAUTH_SECRET_WORKDAY in Convex env vars (Client Secret)",

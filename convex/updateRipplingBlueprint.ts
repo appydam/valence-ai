@@ -5,7 +5,7 @@
  * Run after setting RIPPLING_CLIENT_ID and OAUTH_SECRET_RIPPLING.
  *
  * Usage:
- * npx convex run updateRipplingBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateRipplingBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

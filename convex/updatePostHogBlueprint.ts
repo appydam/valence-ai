@@ -5,7 +5,7 @@
  * Run after setting POSTHOG_CLIENT_ID and OAUTH_SECRET_POSTHOG.
  *
  * Usage:
- * npx convex run updatePostHogBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updatePostHogBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

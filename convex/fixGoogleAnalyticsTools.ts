@@ -4,7 +4,7 @@
  * not analyticsdata.googleapis.com (the blueprint base URL).
  *
  * Usage:
- * npx convex run fixGoogleAnalyticsTools --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run fixGoogleAnalyticsTools --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

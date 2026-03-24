@@ -5,7 +5,7 @@
  * Run after setting PIPEDRIVE_CLIENT_ID and OAUTH_SECRET_PIPEDRIVE.
  *
  * Usage:
- * npx convex run updatePipedriveBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updatePipedriveBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

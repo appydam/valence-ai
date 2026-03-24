@@ -6,7 +6,7 @@
  * Requires Pro plan or higher.
  *
  * Usage:
- * npx convex run seedLaGrowthMachineBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedLaGrowthMachineBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

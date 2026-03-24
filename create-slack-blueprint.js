@@ -1,7 +1,7 @@
 // Script to create a test Slack OAuth2 blueprint
 // Run with: node create-slack-blueprint.js
 
-const CONVEX_URL = "https://beloved-squirrel-599.convex.site";
+const CONVEX_URL = "https://<YOUR_DEPLOYMENT>.convex.site";
 
 async function createSlackBlueprint() {
   const blueprint = {

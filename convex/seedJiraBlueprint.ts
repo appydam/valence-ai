@@ -8,7 +8,7 @@
  *
  * Prerequisites:
  * 1. Create an OAuth 2.0 app at https://developer.atlassian.com/console/myapps/
- * 2. Add callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ * 2. Add callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 3. Set in Convex env vars:
  *    - JIRA_CLIENT_ID = your OAuth app client ID
  *    - OAUTH_SECRET_JIRA = your OAuth app client secret
@@ -527,7 +527,7 @@ export default mutation({
       toolIds,
       nextSteps: [
         "1. Create OAuth 2.0 app at https://developer.atlassian.com/console/myapps/",
-        "2. Add callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "2. Add callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Set JIRA_CLIENT_ID in Convex environment variables",
         "4. Set OAUTH_SECRET_JIRA in Convex environment variables",
         "5. Run this seed mutation from the Convex dashboard",

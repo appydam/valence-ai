@@ -7,7 +7,7 @@
  * API docs: https://developer.instantly.ai/api/v2
  *
  * Usage:
- * npx convex run seedInstantlyBlueprint:seedInstantly --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedInstantlyBlueprint:seedInstantly --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

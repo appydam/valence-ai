@@ -11,7 +11,7 @@
  * - Create an OAuth consumer in your Bitbucket workspace:
  *   https://bitbucket.org/{your-workspace}/workspace/settings/api
  *   - Name: Mission Control
- *   - Callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *   - Callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *   - Permissions: Account:Read, Repositories:Read, Pull requests:Read+Write, Issues:Read+Write
  * - Then set in Convex env vars:
  *   - BITBUCKET_CLIENT_ID = OAuth consumer Key
@@ -424,7 +424,7 @@ export default mutation({
       toolIds,
       nextSteps: [
         "1. Go to https://bitbucket.org/{your-workspace}/workspace/settings/api",
-        "2. Click 'Add consumer', set callback URL to https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "2. Click 'Add consumer', set callback URL to https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Enable permissions: Account:Read, Repositories:Read, Pull requests:Read+Write, Issues:Read+Write",
         "4. Copy the Key and Secret",
         "5. Run: npx convex env set BITBUCKET_CLIENT_ID <Key>",

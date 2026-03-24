@@ -9,7 +9,7 @@
  * Prerequisites:
  * 1. Create a Facebook App at https://developers.facebook.com/apps/
  *    - Add "Marketing API" product
- *    - Add redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Add redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *    - Set app permissions: ads_management, ads_read, business_management
  * 2. Set in Convex env vars:
  *    - FACEBOOK_CLIENT_ID = App ID
@@ -387,7 +387,7 @@ export default mutation({
         "1. Create a Facebook App at https://developers.facebook.com/apps/",
         "2. Add the 'Marketing API' product to your app",
         "3. In Settings → Basic, set redirect URI:",
-        "   https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "   https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "4. Set FACEBOOK_CLIENT_ID in Convex env vars (App ID)",
         "5. Set OAUTH_SECRET_FACEBOOK in Convex env vars (App Secret)",
         "6. Request permissions: ads_management, ads_read, business_management",

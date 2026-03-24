@@ -115,7 +115,7 @@ const BillingPage = () => {
   const handleUpgrade = async (plan: Plan) => {
     if (!isAdmin) return;
     if (plan === "enterprise_plus") {
-      window.open("mailto:arpit@valenceai.co?subject=Enterprise%2B%20Inquiry", "_blank");
+      window.open("mailto:arpitdhamija.ai@gmail.com?subject=Enterprise%2B%20Inquiry", "_blank");
       return;
     }
     setUpgrading(plan);

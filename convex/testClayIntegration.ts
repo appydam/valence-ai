@@ -8,7 +8,7 @@
  * and Clay accepts the webhook payload.
  *
  * Usage:
- *   npx convex run testClayIntegration '{"userId":"<YOUR_CLERK_USER_ID>","webhookId":"pull-in-data-from-a-webhook-f2081e27-6a6a-462e-8932-89f081bf778b"}' --url https://beloved-squirrel-599.convex.cloud
+ *   npx convex run testClayIntegration '{"userId":"<YOUR_CLERK_USER_ID>","webhookId":"pull-in-data-from-a-webhook-f2081e27-6a6a-462e-8932-89f081bf778b"}' --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

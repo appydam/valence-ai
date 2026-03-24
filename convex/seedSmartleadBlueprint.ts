@@ -8,7 +8,7 @@
  * Rate limit: 60 requests per 60 seconds per API key.
  *
  * Usage:
- * npx convex run seedSmartleadBlueprint:seedSmartlead --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedSmartleadBlueprint:seedSmartlead --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

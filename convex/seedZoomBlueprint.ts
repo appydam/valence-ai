@@ -9,7 +9,7 @@
  * Prerequisites:
  * 1. Create a Server-to-Server OAuth app at https://marketplace.zoom.us/develop/create
  *    (Or a User-managed OAuth app for per-user tokens)
- * 2. Add callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ * 2. Add callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 3. Required scopes: meeting:read:admin, meeting:write:admin, user:read:admin,
  *    recording:read:admin, webinar:read:admin, webinar:write:admin
  * 4. Set in Convex env vars:

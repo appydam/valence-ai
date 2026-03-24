@@ -9,7 +9,7 @@
  *
  * Prerequisites:
  * 1. Create a custom app in Shopify Partners or store Admin -> Settings -> Apps -> Develop apps
- *    - Add redirect URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Add redirect URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *    - Request scopes: read_products, write_products, read_orders, read_customers, write_orders,
  *      read_inventory, write_inventory, read_locations, read_themes, write_themes,
  *      read_content, write_content, read_script_tags, write_script_tags,
@@ -2108,7 +2108,7 @@ async function insertTools(ctx: any, blueprintId: any, now: number) {
 const NEXT_STEPS = [
   "1. Create a custom app in Shopify Admin -> Settings -> Apps -> Develop apps",
   "2. Or create a public app via Shopify Partners dashboard",
-  "3. Set redirect URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+  "3. Set redirect URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
   "4. Request ALL scopes listed in the file header comments",
   "5. Set SHOPIFY_CLIENT_ID in Convex env vars (API Key)",
   "6. Set OAUTH_SECRET_SHOPIFY in Convex env vars (API Secret Key)",
@@ -2119,7 +2119,7 @@ const NEXT_STEPS = [
 /**
  * Migrate existing Shopify blueprint to v2.
  * Deletes old blueprint + all tools, then re-creates with expanded tool set.
- * Run: npx convex run seedShopifyBlueprint:migrate --url https://beloved-squirrel-599.convex.cloud
+ * Run: npx convex run seedShopifyBlueprint:migrate --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 export const migrate = mutation({
   args: {},

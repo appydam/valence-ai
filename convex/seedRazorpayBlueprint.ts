@@ -5,7 +5,7 @@
  * Note: Razorpay uses array-style scope notation (scope[]=read_write).
  *
  * Usage:
- * npx convex run seedRazorpayBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedRazorpayBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";
@@ -161,9 +161,9 @@ export default mutation({
       nextSteps: [
         "1. Register as Razorpay Partner at https://dashboard.razorpay.com/",
         "2. Create OAuth application in Partner settings",
-        "3. Set redirect URI to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
-        "4. npx convex env set RAZORPAY_CLIENT_ID '<client_id>' --url https://beloved-squirrel-599.convex.cloud",
-        "5. npx convex env set OAUTH_SECRET_RAZORPAY '<client_secret>' --url https://beloved-squirrel-599.convex.cloud",
+        "3. Set redirect URI to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
+        "4. npx convex env set RAZORPAY_CLIENT_ID '<client_id>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
+        "5. npx convex env set OAUTH_SECRET_RAZORPAY '<client_secret>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
       ],
     };
   },

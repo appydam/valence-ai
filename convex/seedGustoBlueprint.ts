@@ -8,7 +8,7 @@
  *
  * Prerequisites:
  * 1. Register a developer application at https://dev.gusto.com/
- *    - Add redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Add redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 2. Set in Convex env vars:
  *    - GUSTO_CLIENT_ID = Application ID
  *    - OAUTH_SECRET_GUSTO = Application Secret
@@ -350,7 +350,7 @@ export default mutation({
       toolIds,
       nextSteps: [
         "1. Register a developer app at https://dev.gusto.com/",
-        "2. Add redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "2. Add redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Set GUSTO_CLIENT_ID in Convex env vars (Application ID)",
         "4. Set OAUTH_SECRET_GUSTO in Convex env vars (Application Secret)",
         "5. For production, submit app for Gusto review",

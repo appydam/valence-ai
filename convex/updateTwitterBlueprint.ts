@@ -5,7 +5,7 @@
  * Run this after setting TWITTER_CLIENT_ID and OAUTH_SECRET_TWITTER_X.
  *
  * Usage:
- * npx convex run updateTwitterBlueprint:default --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateTwitterBlueprint:default --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

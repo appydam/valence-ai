@@ -8,7 +8,7 @@
  *
  * Prerequisites:
  * 1. Register an app at https://www.figma.com/developers/apps
- *    - Add callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Add callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *    - Request scopes: files:read, file_comments:write, file_comments:read
  * 2. Set in Convex env vars:
  *    - FIGMA_CLIENT_ID = Client ID from app registration
@@ -343,7 +343,7 @@ export default mutation({
       toolIds,
       nextSteps: [
         "1. Register an app at https://www.figma.com/developers/apps",
-        "2. Set callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "2. Set callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Request scopes: files:read, file_comments:write, file_comments:read",
         "4. Set FIGMA_CLIENT_ID in Convex env vars",
         "5. Set OAUTH_SECRET_FIGMA in Convex env vars",

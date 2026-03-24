@@ -5,11 +5,11 @@
  * Prerequisites:
  * 1. Go to https://developers.tiktok.com/ and create an app
  * 2. Add products: Login Kit + Content Posting API
- * 3. Set redirect URI to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ * 3. Set redirect URI to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 4. Set Convex env var: OAUTH_SECRET_TIKTOK=<your_client_secret>
  *
  * Usage (after deploy):
- * npx convex run seedTikTokBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedTikTokBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  *
  * IMPORTANT PLATFORM LIMITATIONS:
  * - Posted content stays PRIVATE/DRAFT until TikTok manually audits your app
@@ -286,7 +286,7 @@ export default mutation({
       nextSteps: [
         "1. Go to https://developers.tiktok.com/ and create a developer app",
         "2. Add products: Login Kit and Content Posting API",
-        "3. Set redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "3. Set redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "4. Copy Client Key and Client Secret from your app settings",
         "5. Set TIKTOK_CLIENT_KEY in Convex env vars",
         "6. Set OAUTH_SECRET_TIKTOK=<client_secret> in Convex env vars",

@@ -3,7 +3,7 @@
  * Run after seedVercelBlueprint.
  *
  * Usage:
- * npx convex run addVercelTools --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run addVercelTools --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

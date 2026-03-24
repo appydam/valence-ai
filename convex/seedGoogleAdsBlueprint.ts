@@ -8,7 +8,7 @@
  *
  * Prerequisites:
  * 1. Create OAuth credentials in Google Cloud Console → APIs & Services → Credentials
- *    - Add redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Add redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *    - Enable Google Ads API in the API Library
  * 2. Apply for a Google Ads API developer token at https://ads.google.com/aw/apicenter
  * 3. Set in Convex env vars:
@@ -2024,7 +2024,7 @@ export default mutation({
       nextSteps: [
         "1. Go to Google Cloud Console → APIs & Services → Credentials",
         "2. Create an OAuth 2.0 Client ID (Web application type)",
-        "3. Add redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "3. Add redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "4. Enable 'Google Ads API' in the API Library",
         "5. Apply for a developer token at https://ads.google.com/aw/apicenter",
         "6. Set GOOGLE_ADS_CLIENT_ID in Convex env vars",

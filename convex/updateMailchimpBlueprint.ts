@@ -5,7 +5,7 @@
  * Run after setting MAILCHIMP_CLIENT_ID and OAUTH_SECRET_MAILCHIMP.
  *
  * Usage:
- * npx convex run updateMailchimpBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateMailchimpBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

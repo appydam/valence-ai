@@ -6,7 +6,7 @@
  * Token expires in 30 days; refresh token available.
  *
  * Usage:
- * npx convex run seedAfterShipBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedAfterShipBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

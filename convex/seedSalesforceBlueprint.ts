@@ -9,7 +9,7 @@
  * Prerequisites:
  * 1. Create a Connected App in Salesforce Setup → App Manager → New Connected App
  *    - Enable OAuth Settings
- *    - Callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *    - Scopes: api, refresh_token, offline_access
  * 2. Set in Convex env vars:
  *    - SALESFORCE_CLIENT_ID = Consumer Key from Connected App
@@ -473,7 +473,7 @@ export default mutation({
       toolIds,
       nextSteps: [
         "1. In Salesforce Setup → App Manager → New Connected App",
-        "2. Enable OAuth Settings, set callback URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "2. Enable OAuth Settings, set callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Add scopes: api, refresh_token, offline_access",
         "4. Set SALESFORCE_CLIENT_ID in Convex env vars (Consumer Key)",
         "5. Set OAUTH_SECRET_SALESFORCE in Convex env vars (Consumer Secret)",

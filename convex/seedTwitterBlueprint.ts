@@ -6,11 +6,11 @@
  * 1. Go to https://developer.twitter.com/en/portal/dashboard
  * 2. Create a project and app
  * 3. Enable OAuth 2.0 with PKCE (User authentication settings)
- * 4. Set callback URL to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ * 4. Set callback URL to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 5. Set Convex env var: OAUTH_SECRET_TWITTER_X=<your_client_secret>
  *
  * Usage (after deploy):
- * npx convex run seedTwitterBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedTwitterBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  *
  * IMPORTANT PLATFORM LIMITATIONS (Free Tier):
  * - 500 posts per month (roughly 16-17 per day)
@@ -305,7 +305,7 @@ export default mutation({
         "1. Go to https://developer.twitter.com/en/portal/dashboard",
         "2. Create a project and app (free tier is sufficient)",
         "3. Enable OAuth 2.0 with PKCE in User Authentication Settings",
-        "4. Set callback URL to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "4. Set callback URL to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "5. Copy Client ID and Client Secret",
         "6. Set TWITTER_CLIENT_ID in Convex env vars",
         "7. Set OAUTH_SECRET_TWITTER_X=<client_secret> in Convex env vars",

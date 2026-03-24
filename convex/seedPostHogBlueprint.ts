@@ -5,7 +5,7 @@
  * Scopes follow resource:action pattern (e.g. feature_flag:read).
  *
  * Usage:
- * npx convex run seedPostHogBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedPostHogBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

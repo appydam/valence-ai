@@ -6,12 +6,12 @@
  *
  * Usage:
  * 1. Go to Convex dashboard → Functions → seedZohoWorkspaceBlueprint → Run
- *    OR run: npx convex run seedZohoWorkspaceBlueprint --url https://beloved-squirrel-599.convex.cloud
+ *    OR run: npx convex run seedZohoWorkspaceBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  *
  * Pre-requisites:
  * - Create a Zoho OAuth app at https://api-console.zoho.com/
  *   → Type: Server-based Application
- *   → Redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *   → Redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * - Set Convex env vars:
  *   → ZOHO_CLIENT_ID   — OAuth app Client ID
  *   → OAUTH_SECRET_ZOHO — OAuth app Client Secret
@@ -808,7 +808,7 @@ export default mutation({
       nextSteps: [
         "1. Create OAuth app at: https://api-console.zoho.com/",
         "   → Type: Server-based Application",
-        "   → Redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "   → Redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "2. Set ZOHO_CLIENT_ID in Convex environment variables",
         "3. Set OAUTH_SECRET_ZOHO in Convex environment variables (Client Secret value)",
         "4. Deploy Convex: npx convex dev --once --typecheck=disable",

@@ -5,7 +5,7 @@
  * Run after setting VERCEL_CLIENT_ID and OAUTH_SECRET_VERCEL.
  *
  * Usage:
- * npx convex run updateVercelBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateVercelBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

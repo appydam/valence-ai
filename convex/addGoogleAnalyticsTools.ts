@@ -3,7 +3,7 @@
  * Run after seedGoogleAnalyticsBlueprint.
  *
  * Usage:
- * npx convex run addGoogleAnalyticsTools --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run addGoogleAnalyticsTools --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

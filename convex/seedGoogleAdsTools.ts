@@ -1,6 +1,6 @@
 /**
  * Seed missing Google Ads tools required by AI Ad Manager pages.
- * Run once: npx convex run seedGoogleAdsTools --url https://beloved-squirrel-599.convex.cloud
+ * Run once: npx convex run seedGoogleAdsTools --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 import { mutation } from "./_generated/server";
 

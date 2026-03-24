@@ -9,7 +9,7 @@
  * Prerequisites:
  * 1. Register an OAuth application in ServiceNow → System OAuth → Application Registry
  *    - Create an "External Client" application
- *    - Add redirect URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ *    - Add redirect URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 2. Set in Convex env vars:
  *    - SERVICENOW_CLIENT_ID = Client ID from the OAuth application
  *    - OAUTH_SECRET_SERVICENOW = Client Secret from the OAuth application
@@ -556,7 +556,7 @@ export default mutation({
       toolIds,
       nextSteps: [
         "1. In ServiceNow → System OAuth → Application Registry → New → External Client",
-        "2. Set redirect URL: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "2. Set redirect URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "3. Set SERVICENOW_CLIENT_ID in Convex env vars (Client ID)",
         "4. Set OAUTH_SECRET_SERVICENOW in Convex env vars (Client Secret)",
         "5. Ensure the OAuth application has scopes for Table API access",

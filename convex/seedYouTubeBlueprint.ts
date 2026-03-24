@@ -7,11 +7,11 @@
  * 2. Create a project (or use existing)
  * 3. Enable the YouTube Data API v3
  * 4. Create OAuth 2.0 credentials (Web application type)
- * 5. Set callback URL to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback
+ * 5. Set callback URL to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  * 6. Set Convex env var: OAUTH_SECRET_YOUTUBE=<your_client_secret>
  *
  * Usage (after deploy):
- * npx convex run seedYouTubeBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedYouTubeBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  *
  * FREE TIER QUOTA (10,000 units/day, resets at midnight PT):
  * - Read operations (videos.list, channels.list): 1 unit each
@@ -462,7 +462,7 @@ export default mutation({
         "1. Go to https://console.cloud.google.com/",
         "2. Create/select a project and enable YouTube Data API v3",
         "3. Create OAuth 2.0 credentials (Application type: Web application)",
-        "4. Add authorized redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
+        "4. Add authorized redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
         "5. Copy Client ID and Client Secret",
         "6. Set YOUTUBE_CLIENT_ID in Convex env vars",
         "7. Set OAUTH_SECRET_YOUTUBE=<client_secret> in Convex env vars",

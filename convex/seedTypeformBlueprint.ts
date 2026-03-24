@@ -249,7 +249,7 @@ export default mutation({
         exampleArgs: JSON.stringify({
           formId: "abc123XY",
           tag: "mission-control-webhook",
-          url: "https://beloved-squirrel-599.convex.site/api/webhooks/typeform",
+          url: "https://<YOUR_DEPLOYMENT>.convex.site/api/webhooks/typeform",
           enabled: true,
         }),
       },

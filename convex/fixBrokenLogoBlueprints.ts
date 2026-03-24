@@ -2,7 +2,7 @@
  * Fix iconUrl for blueprints whose simpleicons slugs don't exist.
  * Updates DB iconUrl to match the working inline SVGs in integrationLogos.ts.
  *
- * Run: npx convex run fixBrokenLogoBlueprints --url https://beloved-squirrel-599.convex.cloud
+ * Run: npx convex run fixBrokenLogoBlueprints --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

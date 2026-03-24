@@ -8,7 +8,7 @@
  * Requires partner account + app review.
  *
  * Usage:
- * npx convex run seedRipplingBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedRipplingBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";

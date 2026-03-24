@@ -5,7 +5,7 @@
  * Requires a Google Cloud project with Analytics Data API enabled.
  *
  * Usage:
- * npx convex run seedGoogleAnalyticsBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedGoogleAnalyticsBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";
@@ -197,9 +197,9 @@ export default mutation({
       nextSteps: [
         "1. Create OAuth app at https://console.cloud.google.com/apis/credentials",
         "2. Enable 'Google Analytics Data API' in APIs & Services",
-        "3. Set authorized redirect URI to: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
-        "4. npx convex env set GOOGLE_ANALYTICS_CLIENT_ID '<client_id>' --url https://beloved-squirrel-599.convex.cloud",
-        "5. npx convex env set OAUTH_SECRET_GOOGLE_ANALYTICS '<client_secret>' --url https://beloved-squirrel-599.convex.cloud",
+        "3. Set authorized redirect URI to: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
+        "4. npx convex env set GOOGLE_ANALYTICS_CLIENT_ID '<client_id>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
+        "5. npx convex env set OAUTH_SECRET_GOOGLE_ANALYTICS '<client_secret>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
       ],
     };
   },

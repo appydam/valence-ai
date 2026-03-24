@@ -5,7 +5,7 @@
  * Run after setting AFTERSHIP_CLIENT_ID and OAUTH_SECRET_AFTERSHIP.
  *
  * Usage:
- * npx convex run updateAfterShipBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run updateAfterShipBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { action } from "./_generated/server";

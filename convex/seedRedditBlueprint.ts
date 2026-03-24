@@ -7,7 +7,7 @@
  * Use duration=permanent in authorize URL to get a refresh token.
  *
  * Usage:
- * npx convex run seedRedditBlueprint --url https://beloved-squirrel-599.convex.cloud
+ * npx convex run seedRedditBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";
@@ -281,10 +281,10 @@ export default mutation({
         "1. Go to https://www.reddit.com/prefs/apps",
         "2. Click 'Create App' at the bottom",
         "3. Select type: 'web app'",
-        "4. Set redirect URI: https://beloved-squirrel-599.convex.site/api/integrations/oauth/callback",
-        "5. npx convex env set REDDIT_CLIENT_ID '<id>' --url https://beloved-squirrel-599.convex.cloud",
-        "6. npx convex env set OAUTH_SECRET_REDDIT '<secret>' --url https://beloved-squirrel-599.convex.cloud",
-        "7. npx convex run updateRedditBlueprint --url https://beloved-squirrel-599.convex.cloud",
+        "4. Set redirect URI: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback",
+        "5. npx convex env set REDDIT_CLIENT_ID '<id>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
+        "6. npx convex env set OAUTH_SECRET_REDDIT '<secret>' --url https://<YOUR_DEPLOYMENT>.convex.cloud",
+        "7. npx convex run updateRedditBlueprint --url https://<YOUR_DEPLOYMENT>.convex.cloud",
       ],
     };
   },
