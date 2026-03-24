@@ -1,6 +1,6 @@
 /**
  * Content loader utilities for MDX blog posts, comparisons, and glossary entries.
- * Uses Vite's import.meta.glob for dynamic imports.
+ * Returns empty results when content directory is not present (e.g. OSS builds).
  */
 
 export interface PostMeta {
@@ -16,25 +16,28 @@ export interface PostMeta {
   readTime?: string;
 }
 
-// ── Blog manifest (static JSON, always available) ────────────────────────────
+// ── Blog manifest ────────────────────────────────────────────────────────────
+const manifestModules = import.meta.glob("../../content/blog/manifest.json", { eager: false });
 let _blogManifest: PostMeta[] | null = null;
 
 export async function getBlogManifest(): Promise<PostMeta[]> {
   if (_blogManifest) return _blogManifest;
   try {
-    const manifest = await import("../../content/blog/manifest.json");
-    _blogManifest = manifest.default as PostMeta[];
+    const key = Object.keys(manifestModules)[0];
+    if (!key) { _blogManifest = []; return _blogManifest; }
+    const mod = await manifestModules[key]() as { default: PostMeta[] };
+    _blogManifest = mod.default;
   } catch {
     _blogManifest = [];
   }
   return _blogManifest;
 }
 
-// ── Dynamic MDX loaders ───────────────────────────────────────────────────────
+// ── Dynamic MDX loaders (gracefully empty when content/ not present) ─────────
 
-const blogModules = import.meta.glob("../../content/blog/*.mdx");
-const comparisonModules = import.meta.glob("../../content/comparisons/*.mdx");
-const glossaryModules = import.meta.glob("../../content/glossary/*.mdx");
+const blogModules = import.meta.glob("../../content/blog/*.mdx", { eager: false });
+const comparisonModules = import.meta.glob("../../content/comparisons/*.mdx", { eager: false });
+const glossaryModules = import.meta.glob("../../content/glossary/*.mdx", { eager: false });
 
 export async function loadBlogPost(slug: string) {
   const key = `../../content/blog/${slug}.mdx`;
