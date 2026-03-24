@@ -25,6 +25,11 @@ import {
   PieChart,
   GitBranch,
   Sparkles,
+  Eye,
+  MessageSquare,
+  Bell,
+  Globe,
+  TrendingUp,
 } from "lucide-react";
 import type { NicheConfig } from "./types";
 
@@ -120,6 +125,28 @@ export const NICHE_REGISTRY: Record<string, NicheConfig> = {
       { label: "Hashtags", path: "/hashtags", icon: Search },
       { label: "Brand Voice", path: "/brand-voice", icon: Palette },
       { label: "Flywheel", path: "/flywheel", icon: RotateCcw },
+    ],
+  },
+  "brand-monitor": {
+    id: "brand-monitor",
+    name: "AI Brand Monitor",
+    tagline: "Track mentions, sentiment, and brand health",
+    domain: "brand.usevalence.ai",
+    basePath: "/niche/brand-monitor",
+    icon: Eye,
+    emoji: "👁️",
+    accentColor: "hsl(330, 81%, 60%)",
+    accentHsl: "330 81% 60%",
+    requiredIntegrations: ["twitter-x"],
+    optionalIntegrations: ["slack", "notion", "google-alerts"],
+    sidebarItems: [
+      { label: "Home", path: "", icon: LayoutDashboard },
+      { label: "Mentions", path: "/mentions", icon: MessageSquare },
+      { label: "Sentiment", path: "/sentiment", icon: TrendingUp },
+      { label: "Alerts", path: "/alerts", icon: Bell },
+      { label: "Sources", path: "/sources", icon: Globe },
+      { label: "Reports", path: "/reports", icon: BarChart3 },
+      { label: "History", path: "/history", icon: History },
     ],
   },
 };
