@@ -1,12 +1,11 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// Using v.string() to avoid Convex type instantiation depth errors with 5+ literals
-// Validation is enforced at the application layer in individual mutations/queries
+// Agent names are dynamic — any string is valid
 const agentNameValidator = v.string();
 
-// Export AgentName type for use in other files
-export type AgentName = "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel";
+// AgentName is now a plain string (agents are user-defined, not hardcoded)
+export type AgentName = string;
 
 const agentStatusValidator = v.union(
   v.literal("online"),
@@ -42,6 +41,12 @@ export default defineSchema({
     currentTaskId: v.optional(v.string()),
     tasksCompleted: v.number(),
     color: v.string(),
+    // Dynamic agent fields
+    slug: v.optional(v.string()),
+    isOrchestrator: v.optional(v.boolean()),
+    isReviewer: v.optional(v.boolean()),
+    canBeThrottled: v.optional(v.boolean()),
+    sortOrder: v.optional(v.number()),
     // Server health metrics (reported via heartbeat)
     serverMetrics: v.optional(v.object({
       cpuPercent: v.number(),
@@ -851,52 +856,6 @@ export default defineSchema({
     .index("by_session_time", ["sessionId", "timestamp"]),
 
   // ============================================================
-  // BILLING & SUBSCRIPTION TABLES
-  // ============================================================
-
-  subscriptions: defineTable({
-    gateway: v.union(v.literal("cashfree"), v.literal("stripe")),
-    gatewayCustomerId: v.string(),
-    gatewaySubscriptionId: v.string(),
-    plan: v.union(v.literal("individual"), v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
-    status: v.union(
-      v.literal("active"),
-      v.literal("past_due"),
-      v.literal("cancelled"),
-      v.literal("trialing"),
-      v.literal("paused")
-    ),
-    currentPeriodStart: v.number(),
-    currentPeriodEnd: v.number(),
-    cancelAtPeriodEnd: v.boolean(),
-    trialEnd: v.optional(v.number()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }).index("by_gateway_customer", ["gateway", "gatewayCustomerId"])
-    .index("by_gateway_subscription", ["gateway", "gatewaySubscriptionId"])
-    .index("by_plan", ["plan"]),
-
-  planLimits: defineTable({
-    plan: v.string(),
-    maxUsers: v.number(),
-    maxAgents: v.number(),
-    maxIntegrations: v.number(),
-    maxTasksPerMonth: v.number(),
-    maxApiCallsPerMonth: v.number(),
-    features: v.array(v.string()),
-  }).index("by_plan", ["plan"]),
-
-  usageCounters: defineTable({
-    periodStart: v.number(),
-    periodEnd: v.number(),
-    tasksCreated: v.number(),
-    apiCallsMade: v.number(),
-    integrationExecutions: v.number(),
-    agentSessions: v.number(),
-    updatedAt: v.number(),
-  }).index("by_period", ["periodStart"]),
-
-  // ============================================================
   // ONBOARDING & BRANDING TABLES
   // ============================================================
 
@@ -911,68 +870,6 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
-
-  // ============================================================
-  // CUSTOMER PROVISIONING TRACKER (Admin Ops)
-  // ============================================================
-
-  customerProvisionings: defineTable({
-    // Customer identity
-    slug: v.string(),
-    companyName: v.string(),
-    domain: v.string(),
-    adminEmail: v.string(),
-    plan: v.union(v.literal("individual"), v.literal("business"), v.literal("enterprise"), v.literal("enterprise_plus")),
-
-    // Deployment model
-    deploymentModel: v.union(v.literal("cloud"), v.literal("onprem")),
-
-    // Collected info (pre-flight)
-    contactName: v.optional(v.string()),
-    contactRole: v.optional(v.string()),
-    anthropicKeyPreference: v.optional(v.union(v.literal("we_provide"), v.literal("customer_provides"))),
-    serverSize: v.optional(v.string()),
-    serverRegion: v.optional(v.string()),
-    notes: v.optional(v.string()),
-
-    // Infrastructure IDs (populated during provisioning)
-    convexProject: v.optional(v.string()),
-    convexUrl: v.optional(v.string()),
-    convexSiteUrl: v.optional(v.string()),
-    vercelProject: v.optional(v.string()),
-    lightsailIp: v.optional(v.string()),
-    lightsailInstance: v.optional(v.string()),
-    sshKeyPath: v.optional(v.string()),
-
-    // Step completion tracking
-    steps: v.array(v.object({
-      id: v.string(),
-      title: v.string(),
-      type: v.union(v.literal("auto"), v.literal("manual"), v.literal("semi")),
-      status: v.union(v.literal("pending"), v.literal("running"), v.literal("done"), v.literal("failed"), v.literal("skipped")),
-      completedAt: v.optional(v.number()),
-      failedReason: v.optional(v.string()),
-      output: v.optional(v.string()),
-    })),
-
-    // Overall status
-    status: v.union(
-      v.literal("preflight"),
-      v.literal("provisioning"),
-      v.literal("verifying"),
-      v.literal("active"),
-      v.literal("paused"),
-      v.literal("failed"),
-    ),
-
-    createdAt: v.number(),
-    updatedAt: v.number(),
-    completedAt: v.optional(v.number()),
-    createdBy: v.string(),
-  })
-    .index("by_slug", ["slug"])
-    .index("by_status", ["status"])
-    .index("by_created", ["createdAt"]),
 
   brandConfig: defineTable({
     companyName: v.string(),
@@ -1109,6 +1006,92 @@ export default defineSchema({
   // ============================================================
   // FILE MANAGER — cached server file tree
   // ============================================================
+
+  // ============================================================
+  // CONTINUOUS MONITORS — 24/7 external service monitoring
+  // ============================================================
+
+  monitors: defineTable({
+    userId: v.string(),                    // Clerk ID of owner
+    name: v.string(),                      // "Google Ads Spend Pacing"
+    description: v.optional(v.string()),
+
+    // What to poll
+    blueprintSlug: v.string(),             // "google-ads", "shopify", "stripe"
+    toolName: v.string(),                  // Blueprint tool to call (e.g. "list_campaigns")
+    toolArgs: v.optional(v.string()),      // JSON-stringified args for the tool
+
+    // Polling config
+    intervalMinutes: v.number(),           // 5, 15, 30, 60
+    nextCheckAt: v.number(),               // epoch ms — when this monitor is next due
+    lastCheckedAt: v.optional(v.number()), // epoch ms — last successful check
+
+    // Monitor type: poll vs webhook-push
+    monitorType: v.union(
+      v.literal("poll"),                   // Active polling via cron
+      v.literal("webhook")                 // Passive — triggered by incoming webhook
+    ),
+    webhookEndpointId: v.optional(v.id("webhookEndpoints")),
+
+    // Conditions (JSON-stringified array of condition objects)
+    // Format: [{ field: "data.spend", operator: "gt", value: 500 }, ...]
+    conditions: v.string(),
+
+    // Action when triggered
+    actionType: v.union(
+      v.literal("create_task"),
+      v.literal("send_notification"),
+      v.literal("trigger_agent"),
+      v.literal("log_alert")
+    ),
+    actionConfig: v.string(),              // JSON config for the action
+
+    // State
+    status: v.union(
+      v.literal("active"),
+      v.literal("paused"),
+      v.literal("error")
+    ),
+    lastError: v.optional(v.string()),
+    consecutiveFailures: v.number(),       // Auto-pause after 5 consecutive failures
+
+    // Snapshot of last fetched data (for "changed" condition operator)
+    lastSnapshot: v.optional(v.string()),  // JSON-stringified last API response (truncated to 10KB)
+
+    // Stats
+    totalChecks: v.number(),
+    totalTriggers: v.number(),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status_next", ["status", "nextCheckAt"])
+    .index("by_webhook_endpoint", ["webhookEndpointId"]),
+
+  monitorEvents: defineTable({
+    monitorId: v.id("monitors"),
+    userId: v.string(),
+
+    eventType: v.union(
+      v.literal("check_ok"),        // Checked, conditions not met
+      v.literal("triggered"),       // Conditions met, action fired
+      v.literal("error"),           // API call failed
+      v.literal("action_failed")    // Conditions met but action failed
+    ),
+
+    // What was fetched
+    responseSnapshot: v.optional(v.string()),  // Truncated API response (max 5KB)
+    conditionResults: v.optional(v.string()),  // JSON: which conditions matched
+
+    // What action was taken (if triggered)
+    actionResult: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+
+    timestamp: v.number(),
+  })
+    .index("by_monitor", ["monitorId", "timestamp"])
+    .index("by_user_time", ["userId", "timestamp"]),
 
   fileTreeCache: defineTable({
     path: v.string(),

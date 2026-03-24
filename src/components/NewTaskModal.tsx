@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { AgentName, AGENT_CONFIG, TaskPriority } from "@/types/mission";
+import { TaskPriority } from "@/types/mission";
+import { useAgents } from "@/hooks/useAgents";
 import { X, Search, Link2 } from "lucide-react";
 import { FileAttachButton } from "@/components/FileAttachButton";
 
@@ -18,7 +19,7 @@ interface NewTaskModalProps {
     title: string;
     description: string;
     priority: TaskPriority;
-    assignee?: AgentName;
+    assignee?: string;
     tags: string[];
     missionId?: string;
     dependsOn?: Id<"tasks">[];
@@ -27,7 +28,7 @@ interface NewTaskModalProps {
 }
 
 const priorityOptions: TaskPriority[] = ["low", "medium", "high", "urgent"];
-const agentOptions: (AgentName | "")[] = ["", "Kaze", "Scout", "Forge", "Ghost"];
+// Agent options are now loaded dynamically from the database
 
 const statusColor: Record<string, string> = {
   done: "text-emerald-400",
@@ -37,10 +38,13 @@ const statusColor: Record<string, string> = {
 };
 
 export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps) {
+  const { agents, agentConfig } = useAgents();
+  // Filter out reviewer-only agents from the assignee dropdown
+  const agentOptions = ["", ...agents.filter(a => !a.isReviewer).map(a => a.name)];
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [assignee, setAssignee] = useState<AgentName | "">("");
+  const [assignee, setAssignee] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [selectedMissionId, setSelectedMissionId] = useState<string>("");
 
@@ -138,11 +142,11 @@ export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps)
             </div>
             <div>
               <label className="text-xs text-muted-foreground font-medium mb-1 block">Assignee</label>
-              <select value={assignee} onChange={e => setAssignee(e.target.value as AgentName | "")}
+              <select value={assignee} onChange={e => setAssignee(e.target.value)}
                 className="w-full bg-secondary rounded-lg px-3 py-2 text-sm text-foreground border-0 outline-none">
                 <option value="">Unassigned</option>
                 {agentOptions.filter(Boolean).map(a => (
-                  <option key={a} value={a}>{AGENT_CONFIG[a as AgentName].emoji} {a}</option>
+                  <option key={a} value={a}>{agentConfig[a]?.emoji ?? "🤖"} {a}</option>
                 ))}
               </select>
             </div>
@@ -205,7 +209,7 @@ export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps)
                         className="w-full text-left px-2 py-1.5 rounded hover:bg-secondary transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          {t.assignee && <span className="text-xs">{AGENT_CONFIG[t.assignee as AgentName]?.emoji}</span>}
+                          {t.assignee && <span className="text-xs">{agentConfig[t.assignee!]?.emoji ?? "🤖"}</span>}
                           <span className="text-xs text-foreground truncate flex-1">{t.title}</span>
                           <span className={`text-[10px] shrink-0 ${statusColor[t.status] ?? "text-muted-foreground"}`}>
                             {t.status.replace("_", " ")}
@@ -226,7 +230,7 @@ export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps)
               <div className="space-y-1">
                 {selectedDepTasks.map((dep: any) => (
                   <div key={dep._id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-secondary group">
-                    {dep.assignee && <span className="text-xs">{AGENT_CONFIG[dep.assignee as AgentName]?.emoji}</span>}
+                    {dep.assignee && <span className="text-xs">{agentConfig[dep.assignee!]?.emoji ?? "🤖"}</span>}
                     <span className="text-xs text-foreground flex-1 truncate">{dep.title}</span>
                     <span className={`text-[10px] shrink-0 ${statusColor[dep.status] ?? "text-muted-foreground"}`}>
                       {dep.status === "done" ? "✓ done" : dep.status.replace("_", " ")}

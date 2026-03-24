@@ -5,20 +5,8 @@ export function organizationSchema() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Valence AI",
-    url: "https://usevalence.ai",
-    logo: "https://usevalence.ai/logo.svg",
     description:
-      "Autonomous AI workforce platform. Deploy AI agents that research, build, write, and integrate with 100+ tools — all from one command center.",
-    sameAs: ["https://twitter.com/arpit_dhamija"],
-    founder: {
-      "@type": "Person",
-      name: "Arpit Dhamija",
-    },
-    contactPoint: {
-      "@type": "ContactPoint",
-      email: "arpitdhamija.ai@gmail.com",
-      contactType: "customer support",
-    },
+      "Open-source AI agent orchestration platform. Deploy and manage autonomous AI agents with 100+ integrations from one command center.",
   };
 }
 
@@ -30,50 +18,25 @@ export function softwareApplicationSchema() {
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     description:
-      "Autonomous AI workforce platform with 5 specialized agents and 100+ integrations. Deploy AI employees that research, build, write, and monitor — all orchestrated from one command center.",
-    url: "https://usevalence.ai",
+      "Open-source AI agent orchestration platform. Deploy specialized AI agents and automate complex, multi-step workflows with 100+ integrations.",
     offers: [
       {
         "@type": "Offer",
-        name: "Business",
-        price: "2499",
+        name: "Self-Hosted (Open Source)",
+        price: "0",
         priceCurrency: "USD",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: "2499",
-          priceCurrency: "USD",
-          unitText: "MONTH",
-        },
-      },
-      {
-        "@type": "Offer",
-        name: "Enterprise",
-        price: "5999",
-        priceCurrency: "USD",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: "5999",
-          priceCurrency: "USD",
-          unitText: "MONTH",
-        },
       },
     ],
     featureList: [
       "Multi-agent orchestration",
       "100+ app integrations",
-      "Voice commands",
       "Persistent agent memory",
       "Quality review gates",
       "Real-time analytics dashboard",
       "Webhook triggers",
-      "On-premise deployment",
+      "Continuous monitors",
+      "Self-hosted / on-premise",
     ],
-    screenshot: "https://usevalence.ai/og-image.png",
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "48",
-    },
   };
 }
 
@@ -112,26 +75,21 @@ export function articleSchema(opts: {
     "@type": "Article",
     headline: opts.title,
     description: opts.description,
-    url: `https://usevalence.ai${opts.url}`,
+    url: opts.url,
     datePublished: opts.datePublished,
     dateModified: opts.dateModified,
     author: {
       "@type": "Person",
       name: opts.author || "Arpit Dhamija",
-      url: "https://twitter.com/arpit_dhamija",
     },
     publisher: {
       "@type": "Organization",
       name: "Valence AI",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://usevalence.ai/logo.svg",
-      },
     },
-    image: opts.image || "https://usevalence.ai/og-image.png",
+    image: opts.image,
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://usevalence.ai${opts.url}`,
+      "@id": opts.url,
     },
     ...(opts.keywords && { keywords: opts.keywords.join(", ") }),
   };
@@ -180,7 +138,7 @@ export function breadcrumbSchema(items: { name: string; url: string }[]) {
       "@type": "ListItem",
       position: i + 1,
       name: item.name,
-      item: `https://usevalence.ai${item.url}`,
+      item: item.url,
     })),
   };
 }
@@ -195,12 +153,7 @@ export function definedTermSchema(opts: {
     "@type": "DefinedTerm",
     name: opts.name,
     description: opts.description,
-    url: `https://usevalence.ai${opts.url}`,
-    inDefinedTermSet: {
-      "@type": "DefinedTermSet",
-      name: "Valence AI Glossary",
-      url: "https://usevalence.ai/glossary",
-    },
+    url: opts.url,
   };
 }
 
@@ -216,13 +169,12 @@ export function webPageSchema(opts: {
     "@type": "WebPage",
     name: opts.title,
     description: opts.description,
-    url: `https://usevalence.ai${opts.url}`,
+    url: opts.url,
     ...(opts.datePublished && { datePublished: opts.datePublished }),
     ...(opts.dateModified && { dateModified: opts.dateModified }),
     isPartOf: {
       "@type": "WebSite",
       name: "Valence AI",
-      url: "https://usevalence.ai",
     },
   };
 }

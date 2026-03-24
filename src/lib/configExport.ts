@@ -1,11 +1,13 @@
-import { AGENT_CONFIG, AgentName } from "@/types/mission";
+import { AGENT_CONFIG } from "@/types/mission";
 
 interface AgentConfig {
-  agentName: AgentName;
+  agentName: string;
   model: string;
   skills: string[];
   sessionMaxTurns: number;
   sessionTimeout: number;
+  isOrchestrator?: boolean;
+  description?: string;
 }
 
 export function generateOpenClawConfig(agentConfigs: AgentConfig[]) {
@@ -13,16 +15,18 @@ export function generateOpenClawConfig(agentConfigs: AgentConfig[]) {
 
   agentConfigs.forEach((config) => {
     const agentId = config.agentName.toLowerCase();
-    const isDefault = config.agentName === "Kaze";
+    const staticCfg = AGENT_CONFIG[config.agentName];
+    const isOrchestrator = config.isOrchestrator ?? (config.agentName === "Kaze");
+    const description = config.description ?? staticCfg?.description ?? `${config.agentName} agent`;
 
     agents[agentId] = {
-      ...(isDefault && { default: true }),
+      ...(isOrchestrator && { default: true }),
       name: config.agentName,
-      description: AGENT_CONFIG[config.agentName].description,
-      workspace: isDefault
+      description,
+      workspace: isOrchestrator
         ? "~/.openclaw/workspace"
         : `~/.openclaw/workspace/agents/${agentId}`,
-      soul: isDefault
+      soul: isOrchestrator
         ? "~/.openclaw/workspace/SOUL.md"
         : `~/.openclaw/workspace/agents/${agentId}/SOUL.md`,
       skills: config.skills,

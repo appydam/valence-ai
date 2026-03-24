@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { AGENT_CONFIG, AgentName } from "@/types/mission";
+import { AgentName } from "@/types/mission";
+import { useAgents } from "@/hooks/useAgents";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { generateOpenClawConfig, downloadConfig } from "@/lib/configExport";
@@ -69,7 +70,8 @@ export function AgentConfigPanel({ agentName, onClose, initialTab = "settings" }
   const [syncing, setSyncing] = useState(false);
   const [pulling, setPulling] = useState(false);
 
-  const agentConfig = AGENT_CONFIG[agentName];
+  const { agentConfig: dynamicConfig } = useAgents();
+  const agentCfg = dynamicConfig[agentName] ?? { emoji: "🤖", color: "#6366F1", role: "Agent", description: "" };
 
   useEffect(() => {
     if (config) {
@@ -118,15 +120,30 @@ export function AgentConfigPanel({ agentName, onClose, initialTab = "settings" }
   };
 
   const handleDownload = () => {
-    const configData = generateOpenClawConfig(
-      allConfigs.map((c) => ({
-        agentName: c.agentName as AgentName,
-        model: c.agentName === agentName ? model : c.model,
-        skills: c.agentName === agentName ? skills : c.skills,
-        sessionMaxTurns: c.agentName === agentName ? maxTurns : c.sessionMaxTurns,
-        sessionTimeout: c.agentName === agentName ? timeout : c.sessionTimeout,
-      }))
-    );
+    // Build config list from DB records, merging in current unsaved edits for this agent
+    const configsFromDb = allConfigs.map((c) => ({
+      agentName: c.agentName,
+      model: c.agentName === agentName ? model : c.model,
+      skills: c.agentName === agentName ? skills : c.skills,
+      sessionMaxTurns: c.agentName === agentName ? maxTurns : c.sessionMaxTurns,
+      sessionTimeout: c.agentName === agentName ? timeout : c.sessionTimeout,
+      isOrchestrator: dynamicConfig[c.agentName]?.isOrchestrator,
+      description: dynamicConfig[c.agentName]?.description,
+    }));
+    // If the current agent has no config record yet, add it so it appears in the export
+    const alreadyIncluded = configsFromDb.some((c) => c.agentName === agentName);
+    if (!alreadyIncluded) {
+      configsFromDb.push({
+        agentName,
+        model: model || "claude-sonnet-4-6",
+        skills,
+        sessionMaxTurns: maxTurns,
+        sessionTimeout: timeout,
+        isOrchestrator: agentCfg.isOrchestrator,
+        description: agentCfg.description,
+      });
+    }
+    const configData = generateOpenClawConfig(configsFromDb);
     downloadConfig(configData);
   };
 
@@ -218,9 +235,11 @@ export function AgentConfigPanel({ agentName, onClose, initialTab = "settings" }
     setPulling(false);
   };
 
-  if (!config) {
+  // Still loading — show nothing
+  if (config === undefined) {
     return null;
   }
+  // config === null means no DB record yet (new agent) — show panel with defaults
 
   return (
     <div className="fixed inset-y-0 right-0 w-full max-w-xl bg-card border-l border-border z-50 animate-slide-in-right overflow-auto">
@@ -232,7 +251,7 @@ export function AgentConfigPanel({ agentName, onClose, initialTab = "settings" }
             <span className="text-sm font-semibold text-foreground">
               Configure {agentName}
             </span>
-            <span className="text-lg">{agentConfig.emoji}</span>
+            <span className="text-lg">{agentCfg.emoji}</span>
           </div>
           <button
             onClick={onClose}
@@ -272,9 +291,9 @@ export function AgentConfigPanel({ agentName, onClose, initialTab = "settings" }
           <>
             {/* Agent Info */}
             <div>
-              <p className="text-sm text-muted-foreground">{agentConfig.role}</p>
+              <p className="text-sm text-muted-foreground">{agentCfg.role}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {agentConfig.description}
+                {agentCfg.description}
               </p>
             </div>
 
@@ -484,7 +503,7 @@ export function AgentConfigPanel({ agentName, onClose, initialTab = "settings" }
                 value={soulContent}
                 onChange={isAdmin ? (e) => setSoulContent(e.target.value) : undefined}
                 readOnly={!isAdmin}
-                placeholder={`# ${agentName} — ${agentConfig.role}\n\nYou are ${agentName}, the ${agentConfig.role} for this AI squad.\n\n## Your Role\n${agentConfig.description}\n\n## Personality\nDescribe how you communicate, make decisions, and approach tasks...\n\n## Priorities\n1. Your top priority\n2. Second priority\n3. Third priority`}
+                placeholder={`# ${agentName} — ${agentCfg.role}\n\nYou are ${agentName}, the ${agentCfg.role} for this AI squad.\n\n## Your Role\n${agentCfg.description}\n\n## Personality\nDescribe how you communicate, make decisions, and approach tasks...\n\n## Priorities\n1. Your top priority\n2. Second priority\n3. Third priority`}
                 className={`w-full h-96 bg-background rounded-lg px-3 py-2 text-sm text-foreground font-mono border border-border focus:ring-1 focus:ring-primary outline-none resize-none ${!isAdmin ? "opacity-70 cursor-not-allowed" : ""}`}
               />
 

@@ -1,51 +1,9 @@
 import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 
-const AGENT_DEFAULTS: Record<
-  string,
-  { emoji: string; color: string; role: string; description: string }
-> = {
-  Kaze: {
-    emoji: "🌀",
-    color: "kaze",
-    role: "Chief of Staff",
-    description: "Coordinates the squad, delegates tasks, ensures alignment",
-  },
-  Scout: {
-    emoji: "🔭",
-    color: "scout",
-    role: "Market Intelligence",
-    description: "Researches trends, finds opportunities, competitive analysis",
-  },
-  Forge: {
-    emoji: "🔨",
-    color: "forge",
-    role: "Engineer",
-    description: "Writes code, prototypes, builds automations",
-  },
-  Ghost: {
-    emoji: "👻",
-    color: "ghost",
-    role: "Content & Distribution",
-    description: "Drafts tweets, LinkedIn posts, blog content",
-  },
-  Sentinel: {
-    emoji: "🔍",
-    color: "sentinel",
-    role: "Quality Reviewer",
-    description: "Reviews outputs, ensures quality, flags issues",
-  },
-};
-
 export const beat = mutation({
   args: {
-    agentName: v.union(
-      v.literal("Kaze"),
-      v.literal("Scout"),
-      v.literal("Forge"),
-      v.literal("Ghost"),
-      v.literal("Sentinel")
-    ),
+    agentName: v.string(),
     status: v.union(
       v.literal("online"),
       v.literal("working"),
@@ -92,16 +50,21 @@ export const beat = mutation({
 
       return { action: "updated", agentId: existing._id };
     } else {
-      const defaults = AGENT_DEFAULTS[args.agentName];
+      // Auto-create agent record on first heartbeat (for dynamically added agents)
+      const slug = args.agentName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
       const id = await ctx.db.insert("agents", {
         name: args.agentName,
-        emoji: defaults.emoji,
-        role: defaults.role,
-        description: defaults.description,
+        emoji: "🤖",
+        role: "Agent",
+        description: `${args.agentName} agent`,
         status: args.status,
         lastHeartbeat: Date.now(),
         tasksCompleted: 0,
-        color: defaults.color,
+        color: "#6366F1",
+        slug,
+        isOrchestrator: false,
+        isReviewer: false,
+        canBeThrottled: true,
       });
       return { action: "created", agentId: id };
     }

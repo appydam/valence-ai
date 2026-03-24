@@ -2687,62 +2687,6 @@ http.route({
 
 http.route({ path: "/api/voice/briefing-data", method: "OPTIONS", handler: optionsHandler() });
 
-// ============================================================
-// BILLING ENDPOINTS
-// ============================================================
-
-// POST /api/billing/webhook — Stripe webhook (NO auth — uses Stripe signature verification)
-http.route({
-  path: "/api/billing/webhook",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const signature = request.headers.get("stripe-signature");
-    if (!signature) {
-      return new Response(JSON.stringify({ error: "Missing stripe-signature header" }), {
-        status: 400, headers: corsHeaders(request),
-      });
-    }
-    const payload = await request.text();
-    try {
-      const result = await ctx.runAction(api.billingActions.handleWebhook, { payload, signature });
-      return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
-    } catch (error: any) {
-      console.error("[Billing Webhook] Error:", error.message);
-      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders(request) });
-    }
-  }),
-});
-
-// POST /api/billing/checkout — Create Stripe Checkout session — SECURED (admin only)
-http.route({ path: "/api/billing/checkout", method: "OPTIONS", handler: optionsHandler() });
-http.route({
-  path: "/api/billing/checkout",
-  method: "POST",
-  handler: authenticatedHandler(async (ctx, request, _auth) => {
-    const body = await request.json();
-    const result = await ctx.runAction(api.billingActions.createCheckoutSession, {
-      plan: body.plan,
-      successUrl: body.successUrl,
-      cancelUrl: body.cancelUrl,
-    });
-    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
-  }, { requireRole: "admin" }),
-});
-
-// POST /api/billing/portal — Open Stripe Customer Portal — SECURED (admin only)
-http.route({ path: "/api/billing/portal", method: "OPTIONS", handler: optionsHandler() });
-http.route({
-  path: "/api/billing/portal",
-  method: "POST",
-  handler: authenticatedHandler(async (ctx, request, _auth) => {
-    const body = await request.json();
-    const result = await ctx.runAction(api.billingActions.createPortalSession, {
-      returnUrl: body.returnUrl,
-    });
-    return new Response(JSON.stringify(result), { status: 200, headers: corsHeaders(request) });
-  }, { requireRole: "admin" }),
-});
-
 // POST /api/agents/reasoning — Agents post reasoning steps (fire-and-forget)
 http.route({ path: "/api/agents/reasoning", method: "OPTIONS", handler: optionsHandler() });
 http.route({
@@ -2852,32 +2796,6 @@ http.route({
     const statusCode = envHealth.status === "critical" ? 503 : 200;
     return new Response(JSON.stringify(response), {
       status: statusCode,
-      headers: corsHeaders(request),
-    });
-  }),
-});
-
-// ═══════════════════════════════════════════════════════════════════
-// CASHFREE WEBHOOK
-// ═══════════════════════════════════════════════════════════════════
-
-http.route({ path: "/api/cashfree/webhook", method: "OPTIONS", handler: optionsHandler() });
-http.route({
-  path: "/api/cashfree/webhook",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const payload = await request.text();
-    const signature = request.headers.get("x-cashfree-signature") ?? "";
-    const timestamp = request.headers.get("x-cashfree-timestamp") ?? "";
-
-    await ctx.runAction(api.cashfreeActions.handleWebhook, {
-      payload,
-      signature,
-      timestamp,
-    });
-
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
       headers: corsHeaders(request),
     });
   }),
@@ -3006,6 +2924,60 @@ http.route({
         action: "byok.sync",
         resource: "api_key",
         resourceId: body.provider,
+        timestamp: Date.now(),
+      });
+    }
+    return result;
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/register-agent — Register a new agent in openclaw.json + create workspace
+http.route({ path: "/api/ssh-proxy/register-agent", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/register-agent",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const body = await request.json();
+    const result = await forwardToSshProxy(ctx, request, "/ssh/register-agent", {
+      agentName: body.agentName,
+      description: body.description,
+      model: body.model,
+      skills: body.skills,
+      sessionMaxTurns: body.sessionMaxTurns,
+      sessionTimeout: body.sessionTimeout,
+      isOrchestrator: body.isOrchestrator,
+    });
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "agent.register_server",
+        resource: "agent",
+        resourceId: body.agentName,
+        details: `Registered agent ${body.agentName} in openclaw.json`,
+        timestamp: Date.now(),
+      });
+    }
+    return result;
+  }, { requireRole: "admin", rateLimit: RATE_LIMITS.ssh }),
+});
+
+// POST /api/ssh-proxy/unregister-agent — Remove an agent from openclaw.json
+http.route({ path: "/api/ssh-proxy/unregister-agent", method: "OPTIONS", handler: optionsHandler() });
+http.route({
+  path: "/api/ssh-proxy/unregister-agent",
+  method: "POST",
+  handler: authenticatedHandler(async (ctx, request, auth) => {
+    const body = await request.json();
+    const result = await forwardToSshProxy(ctx, request, "/ssh/unregister-agent", {
+      agentName: body.agentName,
+    });
+    if (result.status === 200) {
+      await ctx.runMutation(api.auditLog.log, {
+        userId: auth.userId,
+        action: "agent.unregister_server",
+        resource: "agent",
+        resourceId: body.agentName,
+        details: `Unregistered agent ${body.agentName} from openclaw.json`,
         timestamp: Date.now(),
       });
     }

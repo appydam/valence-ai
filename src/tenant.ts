@@ -1,10 +1,7 @@
 /**
- * Runtime tenant resolution — determines which Convex backend to connect to
- * based on the subdomain (e.g., acme.use-valence.ai → "acme" → tenants.json["acme"]).
- *
- * For local dev, prefers .env.local vars, falls back to tenants.json["localhost"].
+ * Tenant resolution — reads configuration from environment variables.
+ * For open-source self-hosted deployments, set these in .env.local.
  */
-import tenantsConfig from "./tenants.json";
 
 interface TenantConfig {
   convexUrl: string;
@@ -12,45 +9,27 @@ interface TenantConfig {
   clerkPublishableKey: string;
 }
 
-type TenantsMap = Record<string, TenantConfig>;
-
 function resolve(): TenantConfig {
-  const hostname = window.location.hostname;
+  const convexUrl = import.meta.env.VITE_CONVEX_URL;
+  const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-  // Local development — prefer env vars for backwards compatibility
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    const envConvexUrl = import.meta.env.VITE_CONVEX_URL;
-    const envClerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-    if (envConvexUrl && envClerkKey) {
-      return {
-        convexUrl: envConvexUrl as string,
-        convexSiteUrl: (import.meta.env.VITE_CONVEX_SITE_URL || "") as string,
-        clerkPublishableKey: envClerkKey as string,
-      };
-    }
-    const local = (tenantsConfig.tenants as TenantsMap)["localhost"];
-    if (local?.convexUrl) return local;
+  if (!convexUrl) {
+    throw new Error(
+      "VITE_CONVEX_URL is not set. Copy .env.example to .env.local and configure your Convex deployment URL."
+    );
   }
 
-  // Production: extract slug from subdomain
-  const slug = hostname.split(".")[0];
-  const tenant = (tenantsConfig.tenants as TenantsMap)[slug];
-  if (tenant?.convexUrl) return tenant;
-
-  // Fallback: env vars (for single-tenant Vercel deploys during migration)
-  const envConvexUrl = import.meta.env.VITE_CONVEX_URL;
-  const envClerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  if (envConvexUrl && envClerkKey) {
-    return {
-      convexUrl: envConvexUrl as string,
-      convexSiteUrl: (import.meta.env.VITE_CONVEX_SITE_URL || "") as string,
-      clerkPublishableKey: envClerkKey as string,
-    };
+  if (!clerkKey) {
+    throw new Error(
+      "VITE_CLERK_PUBLISHABLE_KEY is not set. Create a free Clerk app at clerk.com and add your publishable key to .env.local."
+    );
   }
 
-  throw new Error(
-    `Unknown tenant "${slug}". Add it to src/tenants.json and redeploy.\nHostname: ${hostname}`
-  );
+  return {
+    convexUrl: convexUrl as string,
+    convexSiteUrl: (import.meta.env.VITE_CONVEX_SITE_URL || "") as string,
+    clerkPublishableKey: clerkKey as string,
+  };
 }
 
 /** Resolved tenant config — computed once at app startup */

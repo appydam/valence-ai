@@ -4,7 +4,9 @@ import { EditorState } from "@codemirror/state";
 import { basicSetup } from "codemirror";
 import { markdown } from "@codemirror/lang-markdown";
 import { json } from "@codemirror/lang-json";
+import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { Extension } from "@codemirror/state";
 
 interface CodeEditorProps {
   content: string;
@@ -14,10 +16,12 @@ interface CodeEditorProps {
   readOnly?: boolean;
 }
 
-function getLanguage(fileName: string) {
-  if (fileName.endsWith(".md")) return markdown();
-  if (fileName.endsWith(".json")) return json();
-  return markdown(); // Default to markdown for unknown files
+function getLanguage(fileName: string): Extension[] {
+  if (fileName.endsWith(".md")) return [markdown()];
+  if (fileName.endsWith(".json")) return [json()];
+  if (fileName.endsWith(".js") || fileName.endsWith(".mjs") || fileName.endsWith(".cjs")) return [javascript()];
+  if (fileName.endsWith(".ts") || fileName.endsWith(".tsx")) return [javascript({ typescript: true })];
+  return []; // plain text for .yaml, .yml, .sh, .env, etc.
 }
 
 export function CodeEditor({ content, fileName, onChange, onSave, readOnly }: CodeEditorProps) {
@@ -61,7 +65,7 @@ export function CodeEditor({ content, fileName, onChange, onSave, readOnly }: Co
       doc: content,
       extensions: [
         basicSetup,
-        getLanguage(fileName),
+        ...getLanguage(fileName),
         oneDark,
         saveKeymap,
         updateListener,

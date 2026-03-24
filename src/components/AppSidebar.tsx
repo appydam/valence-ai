@@ -20,6 +20,7 @@ import {
   Newspaper,
   FileCode,
   Boxes,
+  Radio,
 } from "lucide-react";
 import { NICHE_LIST } from "@/niche/framework/registry";
 import { UserButton } from "@clerk/clerk-react";
@@ -39,8 +40,8 @@ const navItems = [
   { title: "File Manager", path: "/files", icon: FileCode },
   { title: "Integrations", path: "/integrations", icon: Plug },
   { title: "Webhooks", path: "/webhooks", icon: Webhook },
+  { title: "Monitors", path: "/monitors", icon: Radio },
   { title: "Analytics", path: "/analytics", icon: BarChart3 },
-  { title: "Billing", path: "/billing", icon: CreditCard },
   { title: "Settings", path: "/settings", icon: Settings },
 ];
 
@@ -152,23 +153,6 @@ export function AppSidebar() {
         )}
         <div className="my-2 border-t border-border/50" />
 
-        {isAdmin && (
-          <>
-            <Link
-              to="/ops"
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
-                location.pathname === "/ops"
-                  ? "bg-primary/10 text-primary font-medium shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-              )}
-              title={collapsed ? "Onboarding" : undefined}
-            >
-              <Rocket className="w-5 h-5 shrink-0" />
-              {!collapsed && <span className="truncate">Onboarding</span>}
-            </Link>
-          </>
-        )}
       </nav>
 
       {/* Bottom */}

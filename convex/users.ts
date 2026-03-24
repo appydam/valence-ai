@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { checkPlanLimit } from "./lib/planGating";
+
 
 // Get or create a user based on Clerk data
 export const getOrCreateUser = mutation({
@@ -120,12 +120,6 @@ export const inviteUser = mutation({
     invitedBy: v.string(),
   },
   handler: async (ctx, args) => {
-    // Plan limit check
-    const planCheck = await checkPlanLimit(ctx, "users");
-    if (!planCheck.allowed) {
-      throw new Error(`Plan limit reached: ${planCheck.current}/${planCheck.limit} users (${planCheck.plan} plan). Upgrade to invite more team members.`);
-    }
-
     // Check if user with this email already exists
     const existing = await ctx.db.query("users").collect();
     const emailExists = existing.find((u) => u.email === args.email);

@@ -39,6 +39,10 @@ export async function apiPost(path: string, body: Record<string, unknown>) {
     headers,
     body: JSON.stringify(body),
   });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text}`);
+  }
   return response.json();
 }
 
@@ -49,5 +53,9 @@ export async function apiGet(path: string, params?: Record<string, string>) {
   }
   const headers = await buildHeaders();
   const response = await fetch(url.toString(), { headers });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text}`);
+  }
   return response.json();
 }

@@ -21,6 +21,14 @@ import {
   ExternalLink,
   Copy,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  GitBranch,
+  MessageSquare,
+  ShoppingCart,
+  Mail,
+  Bug,
+  Zap,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { WebhookEndpointDialog } from "@/components/webhooks/WebhookEndpointDialog";
@@ -30,6 +38,7 @@ export default function Webhooks() {
   const userId = useCurrentUserId();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("endpoints");
+  const [showExamples, setShowExamples] = useState(true);
   const [showEndpointDialog, setShowEndpointDialog] = useState(false);
   const [selectedEndpointId, setSelectedEndpointId] = useState<Id<"webhookEndpoints"> | undefined>();
 
@@ -171,6 +180,135 @@ export default function Webhooks() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Example Workflows */}
+      <Card className="mb-6 border-primary/10 bg-primary/[0.02]">
+        <CardHeader className="pb-2 cursor-pointer" onClick={() => setShowExamples(!showExamples)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              <CardTitle className="text-base">Example Workflows — What Webhooks Can Do</CardTitle>
+            </div>
+            {showExamples ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </div>
+          <CardDescription>Real-world automations triggered by external events → your AI agents handle the rest</CardDescription>
+        </CardHeader>
+        {showExamples && (
+          <CardContent className="pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {[
+                {
+                  icon: GitBranch,
+                  color: "text-orange-400",
+                  bg: "bg-orange-500/10",
+                  title: "GitHub → Code Review",
+                  trigger: "New PR opened on your repo",
+                  action: "Forge reviews the code, Scout checks for security issues, Sentinel approves or requests changes — all posted as PR comments",
+                  source: "GitHub",
+                  curl: `curl -X POST YOUR_CONVEX_URL/api/webhooks/github \\
+  -H "Content-Type: application/json" \\
+  -d '{"action":"opened","pull_request":{"title":"Add auth middleware","html_url":"..."}}'`,
+                },
+                {
+                  icon: MessageSquare,
+                  color: "text-purple-400",
+                  bg: "bg-purple-500/10",
+                  title: "Slack → Research Task",
+                  trigger: "Someone posts in #research-requests",
+                  action: "Scout picks up the message, researches the topic, writes a brief, and posts findings back to the Slack channel",
+                  source: "Slack",
+                  curl: `curl -X POST YOUR_CONVEX_URL/api/webhooks/slack \\
+  -H "Content-Type: application/json" \\
+  -d '{"event":{"type":"message","text":"Research competitor pricing for Q2","channel":"C0123456"}}'`,
+                },
+                {
+                  icon: ShoppingCart,
+                  color: "text-green-400",
+                  bg: "bg-green-500/10",
+                  title: "Stripe → Onboarding Flow",
+                  trigger: "New customer payment received",
+                  action: "Kaze creates an onboarding mission — Ghost sends welcome email, Forge provisions account, Scout researches the company",
+                  source: "Stripe",
+                  curl: `curl -X POST YOUR_CONVEX_URL/webhooks/stripe/USER_ID/payment \\
+  -H "Content-Type: application/json" \\
+  -d '{"type":"checkout.session.completed","data":{"customer_email":"alex@company.com"}}'`,
+                },
+                {
+                  icon: Bug,
+                  color: "text-red-400",
+                  bg: "bg-red-500/10",
+                  title: "Linear → Bug Triage",
+                  trigger: "New bug issue created in Linear",
+                  action: "Kaze triages the bug, assigns priority, Forge investigates the codebase and proposes a fix, Sentinel reviews the solution",
+                  source: "Linear",
+                  curl: `curl -X POST YOUR_CONVEX_URL/api/webhooks/linear \\
+  -H "Content-Type: application/json" \\
+  -d '{"action":"create","type":"Issue","data":{"title":"Login page 500 error","priority":1}}'`,
+                },
+                {
+                  icon: Mail,
+                  color: "text-blue-400",
+                  bg: "bg-blue-500/10",
+                  title: "HubSpot → Lead Follow-up",
+                  trigger: "New lead submits a form",
+                  action: "Scout enriches the lead (company size, tech stack), Ghost drafts a personalized follow-up email, Forge logs it in HubSpot CRM",
+                  source: "HubSpot",
+                  curl: `curl -X POST YOUR_CONVEX_URL/webhooks/hubspot/USER_ID/new-lead \\
+  -H "Content-Type: application/json" \\
+  -d '{"email":"lead@startup.com","company":"TechStartup Inc","source":"pricing_page"}'`,
+                },
+                {
+                  icon: Activity,
+                  color: "text-cyan-400",
+                  bg: "bg-cyan-500/10",
+                  title: "Any API → Custom Workflow",
+                  trigger: "Any POST request to your webhook URL",
+                  action: "Define custom automation rules — map any payload to agent tasks with conditions, filters, and routing logic",
+                  source: "Any",
+                  curl: `curl -X POST YOUR_CONVEX_URL/webhooks/custom/USER_ID/my-trigger \\
+  -H "Content-Type: application/json" \\
+  -d '{"event":"alert","severity":"high","message":"CPU usage above 90%"}'`,
+                },
+              ].map((example) => {
+                const Icon = example.icon;
+                return (
+                  <div
+                    key={example.title}
+                    className="rounded-xl border border-border/40 bg-card/50 p-4 hover:border-border/60 transition-all group"
+                  >
+                    <div className="flex items-center gap-2.5 mb-2.5">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${example.bg}`}>
+                        <Icon className={`w-4 h-4 ${example.color}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{example.title}</p>
+                        <p className="text-[10px] text-muted-foreground/50">Source: {example.source}</p>
+                      </div>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/60 mb-0.5">Trigger</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{example.trigger}</p>
+                    </div>
+                    <div className="mb-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-green-400/60 mb-0.5">What agents do</p>
+                      <p className="text-xs text-muted-foreground/70 leading-relaxed">{example.action}</p>
+                    </div>
+                    <details className="group/details">
+                      <summary className="text-[10px] text-muted-foreground/40 cursor-pointer hover:text-muted-foreground/60 transition-colors select-none flex items-center gap-1">
+                        <Copy className="w-3 h-3" />
+                        Show curl example
+                      </summary>
+                      <pre className="mt-2 p-2.5 rounded-lg bg-background/80 border border-border/30 text-[10px] font-mono text-muted-foreground/60 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
+                        {example.curl}
+                      </pre>
+                    </details>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

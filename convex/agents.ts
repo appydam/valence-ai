@@ -1,66 +1,40 @@
-// v2 - includes Sentinel agent
+// Dynamic agent system — agents are user-defined, seeded with 5 defaults
 import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 
-const AGENT_DEFAULTS: {
-  name: "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel";
-  emoji: string;
-  role: string;
-  description: string;
-  color: string;
-}[] = [
-  { name: "Kaze", emoji: "🌀", role: "Chief of Staff", description: "Coordinates the squad, delegates tasks, ensures alignment", color: "kaze" },
-  { name: "Scout", emoji: "🔭", role: "Market Intelligence", description: "Researches trends, finds opportunities, competitive analysis", color: "scout" },
-  { name: "Forge", emoji: "🔨", role: "Engineer", description: "Writes code, prototypes, builds automations", color: "forge" },
-  { name: "Ghost", emoji: "👻", role: "Content & Distribution", description: "Drafts tweets, LinkedIn posts, blog content", color: "ghost" },
-  { name: "Sentinel", emoji: "🔍", role: "Quality Reviewer", description: "Reviews every deliverable, enforces quality standards, approves or rejects work", color: "sentinel" },
+const AGENT_DEFAULTS = [
+  { name: "Kaze", emoji: "🌀", role: "Chief of Staff", description: "Coordinates the squad, delegates tasks, ensures alignment", color: "kaze", slug: "kaze", isOrchestrator: true, isReviewer: false, canBeThrottled: true, sortOrder: 0 },
+  { name: "Scout", emoji: "🔭", role: "Market Intelligence", description: "Researches trends, finds opportunities, competitive analysis", color: "scout", slug: "scout", isOrchestrator: false, isReviewer: false, canBeThrottled: true, sortOrder: 1 },
+  { name: "Forge", emoji: "🔨", role: "Engineer", description: "Writes code, prototypes, builds automations", color: "forge", slug: "forge", isOrchestrator: false, isReviewer: false, canBeThrottled: true, sortOrder: 2 },
+  { name: "Ghost", emoji: "👻", role: "Content & Distribution", description: "Drafts tweets, LinkedIn posts, blog content", color: "ghost", slug: "ghost", isOrchestrator: false, isReviewer: false, canBeThrottled: true, sortOrder: 3 },
+  { name: "Sentinel", emoji: "🔍", role: "Quality Reviewer", description: "Reviews every deliverable, enforces quality standards, approves or rejects work", color: "sentinel", slug: "sentinel", isOrchestrator: false, isReviewer: true, canBeThrottled: false, sortOrder: 4 },
 ];
+
+// ─── Queries ────────────────────────────────────────────────────────────────
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
     const dbAgents = await ctx.db.query("agents").collect();
-    // Always return all 4 agents — fill in defaults for missing ones
-    return AGENT_DEFAULTS.map((defaults) => {
-      const existing = dbAgents.find((a) => a.name === defaults.name);
-      if (existing) return existing;
-      return {
-        _id: `placeholder_${defaults.name}` as any,
-        _creationTime: 0,
-        ...defaults,
-        status: "offline" as const,
-        lastHeartbeat: 0,
-        tasksCompleted: 0,
-      };
-    });
+    // Sort by sortOrder (fallback to creation time)
+    return dbAgents.sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999));
   },
 });
 
-export const seed = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const existing = await ctx.db.query("agents").collect();
-    const existingNames = new Set(existing.map((a) => a.name));
-    for (const defaults of AGENT_DEFAULTS) {
-      if (!existingNames.has(defaults.name)) {
-        await ctx.db.insert("agents", {
-          ...defaults,
-          status: "offline",
-          lastHeartbeat: 0,
-          tasksCompleted: 0,
-        });
-      }
-    }
+export const getByName = query({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("agents")
+      .withIndex("by_name", (q) => q.eq("name", args.name))
+      .unique();
   },
 });
 
 /**
  * List agents with true last-active timestamp.
- * lastHeartbeat is only set when agents call /api/heartbeat — if they crash
- * before sending it, the timestamp is stale. This query enriches each agent
- * with the MAX of: lastHeartbeat, last comment createdAt, last activity timestamp.
- * That gives the real "last time this agent did anything."
+ * Enriches each agent with MAX of: lastHeartbeat, last comment, last activity.
  */
 export const listWithActivity = query({
   args: {},
@@ -87,31 +61,22 @@ export const listWithActivity = query({
       }
     }
 
-    return AGENT_DEFAULTS.map((defaults) => {
-      const existing = dbAgents.find((a) => a.name === defaults.name);
-      const base = existing ?? {
-        _id: `placeholder_${defaults.name}` as any,
-        _creationTime: 0,
-        ...defaults,
-        status: "offline" as const,
-        lastHeartbeat: 0,
-        tasksCompleted: 0,
-      };
-
-      const lastHeartbeat = base.lastHeartbeat ?? 0;
-      const lastComment = lastCommentByAgent[defaults.name] ?? 0;
-      const lastActivity = lastActivityByAgent[defaults.name] ?? 0;
-      const lastSeen = Math.max(lastHeartbeat, lastComment, lastActivity);
-
-      return { ...base, lastSeen, lastComment, lastActivity };
-    });
+    return dbAgents
+      .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999))
+      .map((agent) => {
+        const lastHeartbeat = agent.lastHeartbeat ?? 0;
+        const lastComment = lastCommentByAgent[agent.name] ?? 0;
+        const lastActivity = lastActivityByAgent[agent.name] ?? 0;
+        const lastSeen = Math.max(lastHeartbeat, lastComment, lastActivity);
+        return { ...agent, lastSeen, lastComment, lastActivity };
+      });
   },
 });
 
-export const getByName = query({
-  args: {
-    name: v.string(),
-  },
+// ─── Internal queries (for backend role-based lookups) ──────────────────────
+
+export const internalGetByName = internalQuery({
+  args: { name: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("agents")
@@ -120,21 +85,151 @@ export const getByName = query({
   },
 });
 
+export const getOrchestratorAgent = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const agents = await ctx.db.query("agents").collect();
+    return agents.find((a) => a.isOrchestrator === true) ?? null;
+  },
+});
+
+export const getReviewerAgents = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const agents = await ctx.db.query("agents").collect();
+    return agents.filter((a) => a.isReviewer === true);
+  },
+});
+
+export const getAllAgentNames = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const agents = await ctx.db.query("agents").collect();
+    return agents.map((a) => a.name);
+  },
+});
+
+// ─── Mutations ──────────────────────────────────────────────────────────────
+
+export const seed = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("agents").collect();
+    const existingNames = new Set(existing.map((a) => a.name));
+
+    for (const defaults of AGENT_DEFAULTS) {
+      if (!existingNames.has(defaults.name)) {
+        await ctx.db.insert("agents", {
+          ...defaults,
+          status: "offline",
+          lastHeartbeat: 0,
+          tasksCompleted: 0,
+        });
+      } else {
+        // Backfill new fields on existing agents
+        const agent = existing.find((a) => a.name === defaults.name);
+        if (agent && agent.slug === undefined) {
+          await ctx.db.patch(agent._id, {
+            slug: defaults.slug,
+            isOrchestrator: defaults.isOrchestrator,
+            isReviewer: defaults.isReviewer,
+            canBeThrottled: defaults.canBeThrottled,
+            sortOrder: defaults.sortOrder,
+          });
+        }
+      }
+    }
+  },
+});
+
+export const create = mutation({
+  args: {
+    name: v.string(),
+    emoji: v.string(),
+    role: v.string(),
+    description: v.string(),
+    color: v.string(),
+    slug: v.string(),
+    isOrchestrator: v.optional(v.boolean()),
+    isReviewer: v.optional(v.boolean()),
+    canBeThrottled: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    // Check for duplicate name
+    const existing = await ctx.db
+      .query("agents")
+      .withIndex("by_name", (q) => q.eq("name", args.name))
+      .unique();
+    if (existing) throw new Error(`Agent "${args.name}" already exists`);
+
+    // Determine sort order (append to end)
+    const allAgents = await ctx.db.query("agents").collect();
+    const maxOrder = Math.max(0, ...allAgents.map((a) => a.sortOrder ?? 0));
+
+    return await ctx.db.insert("agents", {
+      name: args.name,
+      emoji: args.emoji,
+      role: args.role,
+      description: args.description,
+      color: args.color,
+      slug: args.slug,
+      isOrchestrator: args.isOrchestrator ?? false,
+      isReviewer: args.isReviewer ?? false,
+      canBeThrottled: args.canBeThrottled ?? true,
+      sortOrder: maxOrder + 1,
+      status: "offline",
+      lastHeartbeat: 0,
+      tasksCompleted: 0,
+    });
+  },
+});
+
+export const update = mutation({
+  args: {
+    id: v.id("agents"),
+    name: v.optional(v.string()),
+    emoji: v.optional(v.string()),
+    role: v.optional(v.string()),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    slug: v.optional(v.string()),
+    isOrchestrator: v.optional(v.boolean()),
+    isReviewer: v.optional(v.boolean()),
+    canBeThrottled: v.optional(v.boolean()),
+    sortOrder: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args;
+    const agent = await ctx.db.get(id);
+    if (!agent) throw new Error("Agent not found");
+
+    // Filter out undefined values
+    const patch: Record<string, any> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) patch[key] = value;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(id, patch);
+    }
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("agents") },
+  handler: async (ctx, args) => {
+    const agent = await ctx.db.get(args.id);
+    if (!agent) throw new Error("Agent not found");
+    await ctx.db.delete(args.id);
+  },
+});
+
+// ─── Stale agent auto-reset (cron) ─────────────────────────────────────────
+
 /**
  * Stale agent auto-reset.
  * Runs every 5 minutes via cron.
- *
- * An agent is "stale" if its lastHeartbeat is older than 10 minutes AND
- * its status is anything other than "offline". This covers:
- *   - Session crashed without sending idle heartbeat
- *   - Server was restarted and agent never came back
- *   - Network partition causing missed heartbeats
- *
- * For each stale agent:
- *   1. Mark status → "offline"
- *   2. Log an activity entry so operators can see it happened
- *   3. If the agent had in_progress tasks, move them back to "assigned"
- *      so the assigned-task sweep will re-wake the agent automatically
+ * Resets agents whose heartbeat is >10min old to "offline".
  */
 export const resetStaleAgents = internalMutation({
   args: {},
@@ -149,7 +244,6 @@ export const resetStaleAgents = internalMutation({
       if (agent.status === "offline") continue;
       if (agent.lastHeartbeat > tenMinutesAgo) continue;
 
-      // This agent hasn't heartbeated in >10 min but status is still active — reset it
       await ctx.db.patch(agent._id, { status: "offline" });
 
       await ctx.db.insert("activity", {

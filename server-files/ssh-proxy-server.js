@@ -6,7 +6,7 @@
  * HTTP server that performs SSH operations on behalf of the frontend.
  * Connects to your Lightsail server via SSH and executes commands.
  *
- * Deploy this to Railway alongside agent-wakeup-server.
+ * Deploy this to your Lightsail/DigitalOcean/Hetzner server alongside your agents.
  *
  * Environment Variables:
  *   PORT - Server port (default: 3001)
@@ -282,9 +282,9 @@ const server = http.createServer(async (req, res) => {
       try {
         const { agent } = JSON.parse(body);
 
-        if (!agent || !["kaze", "scout", "forge", "ghost"].includes(agent.toLowerCase())) {
+        if (!agent || !agent.trim()) {
           res.writeHead(400, corsHeaders());
-          res.end(JSON.stringify({ error: "Invalid agent name. Must be one of: kaze, scout, forge, ghost" }));
+          res.end(JSON.stringify({ error: "Invalid agent name" }));
           return;
         }
 
@@ -344,6 +344,230 @@ const server = http.createServer(async (req, res) => {
         log(`Wake agent failed: ${error.message}`);
         res.writeHead(500, corsHeaders());
         res.end(JSON.stringify({ error: `Failed to wake agent: ${error.message}` }));
+      }
+    });
+    return;
+  }
+
+  // POST /ssh/register-agent - Register a new agent in openclaw.json + create workspace + starter SOUL
+  if (req.method === "POST" && req.url === "/ssh/register-agent") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const { agentName, description, model, skills, sessionMaxTurns, sessionTimeout, isOrchestrator, ...sshConfig } = JSON.parse(body);
+        const slug = agentName.toLowerCase();
+
+        // 1. Read current openclaw.json — real format uses agents.list array
+        let openclawConfig = {};
+        try {
+          const raw = await executeSSH(sshConfig, "cat ~/.openclaw/openclaw.json 2>/dev/null || echo '{}'");
+          openclawConfig = JSON.parse(raw.trim() || "{}");
+        } catch { /* use empty */ }
+
+        // Ensure agents.list array exists (preserves all other top-level keys)
+        if (!openclawConfig.agents) openclawConfig.agents = {};
+        if (!Array.isArray(openclawConfig.agents.list)) openclawConfig.agents.list = [];
+
+        // 2. Build agent entry matching openclaw's list-item schema
+        const soulPath = isOrchestrator
+          ? "~/.openclaw/workspace/SOUL.md"
+          : `~/.openclaw/workspace/agents/${slug}/SOUL.md`;
+
+        const newEntry = {
+          id: slug,
+          name: agentName,
+          ...(isOrchestrator && { default: true }),
+          description: description || `${agentName} agent`,
+          workspace: isOrchestrator ? "~/.openclaw/workspace" : `~/.openclaw/workspace/agents/${slug}`,
+          soul: soulPath,
+          skills: skills || [],
+          model: model || "claude-sonnet-4-6",
+          session: {
+            maxTurns: sessionMaxTurns || 20,
+            timeout: sessionTimeout || 300,
+          },
+        };
+
+        // 3. Upsert: replace existing entry with same id, or append
+        const existingIdx = openclawConfig.agents.list.findIndex((a) => a.id === slug || a.name === agentName);
+        if (existingIdx >= 0) {
+          // Preserve any extra fields the existing entry had
+          openclawConfig.agents.list[existingIdx] = { ...openclawConfig.agents.list[existingIdx], ...newEntry };
+        } else {
+          openclawConfig.agents.list.push(newEntry);
+        }
+
+        // 4. Write updated openclaw.json using base64 to avoid shell escaping issues
+        const configJson = JSON.stringify(openclawConfig, null, 2);
+        const b64Config = Buffer.from(configJson).toString("base64");
+        await executeSSH(sshConfig, `echo '${b64Config}' | base64 -d > ~/.openclaw/openclaw.json`);
+
+        // 5. Create workspace directory
+        if (!isOrchestrator) {
+          await executeSSH(sshConfig, `mkdir -p ~/.openclaw/workspace/agents/${slug}`);
+        }
+
+        // 6. Create starter SOUL.md only if it doesn't exist yet
+        const starterSoul = `# ${agentName}\n\n${description || `You are ${agentName}, an AI agent.`}\n\n## Your Role\n\nDescribe your role and responsibilities here. Edit this file from Settings → Agents → ⚙️ → SOUL tab.`;
+        const b64Soul = Buffer.from(starterSoul).toString("base64");
+        await executeSSH(sshConfig, `[ -f ${soulPath} ] || (echo '${b64Soul}' | base64 -d > ${soulPath})`);
+
+        log(`Agent ${agentName} registered successfully (list now has ${openclawConfig.agents.list.length} agents)`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: true, message: `Agent ${agentName} registered and workspace created` }));
+      } catch (error) {
+        log(`Register agent failed: ${error.message}`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /ssh/unregister-agent - Remove an agent from openclaw.json (does NOT delete SOUL files)
+  if (req.method === "POST" && req.url === "/ssh/unregister-agent") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const { agentName, ...sshConfig } = JSON.parse(body);
+        const slug = agentName.toLowerCase();
+
+        // Read current openclaw.json
+        let openclawConfig = {};
+        try {
+          const raw = await executeSSH(sshConfig, "cat ~/.openclaw/openclaw.json 2>/dev/null || echo '{}'");
+          openclawConfig = JSON.parse(raw.trim() || "{}");
+        } catch { /* use empty */ }
+
+        if (!openclawConfig.agents || !Array.isArray(openclawConfig.agents.list)) {
+          res.writeHead(200, corsHeaders());
+          res.end(JSON.stringify({ ok: true, message: `Agent ${agentName} not found in openclaw.json (nothing to remove)` }));
+          return;
+        }
+
+        const before = openclawConfig.agents.list.length;
+        openclawConfig.agents.list = openclawConfig.agents.list.filter(
+          (a) => a.id !== slug && a.name !== agentName
+        );
+        const removed = before - openclawConfig.agents.list.length;
+
+        // Write back
+        const configJson = JSON.stringify(openclawConfig, null, 2);
+        const b64Config = Buffer.from(configJson).toString("base64");
+        await executeSSH(sshConfig, `echo '${b64Config}' | base64 -d > ~/.openclaw/openclaw.json`);
+
+        log(`Agent ${agentName} unregistered (removed ${removed} entry, list now has ${openclawConfig.agents.list.length} agents)`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: true, message: `Agent ${agentName} removed from OpenClaw`, removed }));
+      } catch (error) {
+        log(`Unregister agent failed: ${error.message}`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /ssh/file-tree - List files in OpenClaw workspace
+  if (req.method === "POST" && req.url === "/ssh/file-tree") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const sshConfig = JSON.parse(body);
+        const raw = await executeSSH(sshConfig, "find ~/.openclaw/workspace -type f 2>/dev/null | head -300");
+        const paths = raw.trim().split("\n").filter(Boolean);
+        const files = paths.map((p) => ({
+          path: p,
+          relativePath: p.replace(/^\/home\/[^/]+\/\.openclaw\/workspace\//, ""),
+          name: p.split("/").pop(),
+        }));
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: true, files }));
+      } catch (error) {
+        log(`File tree failed: ${error.message}`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /ssh/file-read - Read a file
+  if (req.method === "POST" && req.url === "/ssh/file-read") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const { filePath, ...sshConfig } = JSON.parse(body);
+        const content = await executeSSH(sshConfig, `cat '${filePath.replace(/'/g, "'\\''")}'`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: true, content }));
+      } catch (error) {
+        log(`File read failed: ${error.message}`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /ssh/file-write - Write a file (base64-safe)
+  if (req.method === "POST" && req.url === "/ssh/file-write") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const { filePath, content, ...sshConfig } = JSON.parse(body);
+        const b64 = Buffer.from(content).toString("base64");
+        const safePath = filePath.replace(/'/g, "'\\''");
+        await executeSSH(sshConfig, `mkdir -p "$(dirname '${safePath}')" && echo '${b64}' | base64 -d > '${safePath}'`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: true }));
+      } catch (error) {
+        log(`File write failed: ${error.message}`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /ssh/file-mkdir - Create a directory
+  if (req.method === "POST" && req.url === "/ssh/file-mkdir") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const { dirPath, ...sshConfig } = JSON.parse(body);
+        await executeSSH(sshConfig, `mkdir -p '${dirPath.replace(/'/g, "'\\''")}'`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: true }));
+      } catch (error) {
+        log(`File mkdir failed: ${error.message}`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: false, error: error.message }));
+      }
+    });
+    return;
+  }
+
+  // POST /ssh/file-delete - Delete a file
+  if (req.method === "POST" && req.url === "/ssh/file-delete") {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const { filePath, ...sshConfig } = JSON.parse(body);
+        await executeSSH(sshConfig, `rm -f '${filePath.replace(/'/g, "'\\''")}'`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: true }));
+      } catch (error) {
+        log(`File delete failed: ${error.message}`);
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify({ ok: false, error: error.message }));
       }
     });
     return;

@@ -151,7 +151,7 @@ function ReferenceTab() {
           <LinkRow label="Vercel Dashboard" url="https://vercel.com/dashboard" description="Deployments, domains, env vars" />
           <LinkRow label="Clerk Dashboard" url="https://dashboard.clerk.com" description="Auth, users, organizations" />
           <LinkRow label="AWS Lightsail Console" url="https://lightsail.aws.amazon.com" description="Instances, snapshots, networking" />
-          <LinkRow label="GitHub Repo" url="https://github.com/arpitdhamija-ai" description="Agent repos, org settings" />
+          <LinkRow label="GitHub Repo" url="https://github.com/appydam/valence-ai" description="Agent repos, org settings" />
           <LinkRow label="Sentry Dashboard" url="https://sentry.io" description="Error tracking, performance" />
           <LinkRow label="Stripe Dashboard" url="https://dashboard.stripe.com" description="Billing, subscriptions, invoices" />
           <LinkRow label="Anthropic Console" url="https://console.anthropic.com" description="API keys, usage, billing" />

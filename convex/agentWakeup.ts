@@ -19,14 +19,6 @@ import { api, internal } from "./_generated/api";
 
 const MAX_CONCURRENT_AGENTS = 4;
 
-const AGENT_SLUGS: Record<string, string> = {
-  Kaze: "kaze",
-  Scout: "scout",
-  Forge: "forge",
-  Ghost: "ghost",
-  Sentinel: "sentinel",
-};
-
 export const triggerWakeup = internalAction({
   args: {
     agentName: v.string(),
@@ -35,15 +27,17 @@ export const triggerWakeup = internalAction({
     isRetry: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const slug = AGENT_SLUGS[args.agentName];
-    if (!slug) {
-      console.log(`[AgentWakeup] Unknown agent: ${args.agentName}, skipping`);
-      return;
+    // Look up agent from DB for slug and role info
+    const agent = await ctx.runQuery(internal.agents.internalGetByName, { name: args.agentName });
+    const slug = agent?.slug ?? args.agentName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+    if (!agent) {
+      console.log(`[AgentWakeup] Agent "${args.agentName}" not found in DB, using derived slug: ${slug}`);
     }
 
     // Concurrency cap: skip wakeup if server already has enough agents running.
-    // Sentinel is exempt — QA reviews must never be blocked by the cap.
-    if (args.agentName !== "Sentinel") {
+    // Agents with canBeThrottled=false (e.g. reviewers) bypass the cap.
+    if (agent?.canBeThrottled !== false) {
       const { count, activeNames } = await ctx.runQuery(
         internal.agents.countActiveAgents
       );

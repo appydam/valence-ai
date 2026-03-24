@@ -1,11 +1,12 @@
-export type AgentName = "Kaze" | "Scout" | "Forge" | "Ghost" | "Sentinel";
+// AgentName is now dynamic — any string (agents are user-defined)
+export type AgentName = string;
 export type AgentStatus = "online" | "working" | "idle" | "offline";
 export type TaskStatus = "inbox" | "assigned" | "in_progress" | "in_review" | "done" | "cancelled";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 
 export interface Agent {
   id: string;
-  name: AgentName;
+  name: string;
   emoji: string;
   role: string;
   description: string;
@@ -14,6 +15,11 @@ export interface Agent {
   currentTaskId?: string;
   tasksCompleted: number;
   color: string;
+  slug?: string;
+  isOrchestrator?: boolean;
+  isReviewer?: boolean;
+  canBeThrottled?: boolean;
+  sortOrder?: number;
 }
 
 export interface Task {
@@ -22,7 +28,7 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assignee?: AgentName;
+  assignee?: string;
   creator: string;
   createdAt: number;
   updatedAt: number;
@@ -43,13 +49,15 @@ export interface Comment {
 export interface ActivityEntry {
   id: string;
   timestamp: number;
-  agentName: AgentName;
+  agentName: string;
   action: string;
   details: string;
   taskId?: string;
 }
 
-export const AGENT_CONFIG: Record<AgentName, { emoji: string; color: string; role: string; description: string }> = {
+// Static fallback config for landing pages and non-reactive contexts.
+// For dynamic agent data in the app, use the useAgents() hook instead.
+export const AGENT_CONFIG: Record<string, { emoji: string; color: string; role: string; description: string }> = {
   Kaze: { emoji: "🌀", color: "kaze", role: "Chief of Staff", description: "Coordinates the squad, delegates tasks, ensures alignment" },
   Scout: { emoji: "🔭", color: "scout", role: "Market Intelligence", description: "Researches trends, finds opportunities, competitive analysis" },
   Forge: { emoji: "🔨", color: "forge", role: "Software Engineer", description: "Writes code, prototypes, builds automations" },
@@ -65,8 +73,14 @@ export const AGENT_COLORS: Record<string, string> = {
   sentinel: "agent-sentinel",
 };
 
-export function getAgentColorClass(name: AgentName, type: "text" | "bg" | "border" | "glow" = "text"): string {
-  const color = AGENT_CONFIG[name].color;
+export function getAgentColorClass(name: string, type: "text" | "bg" | "border" | "glow" = "text"): string {
+  const config = AGENT_CONFIG[name];
+  if (!config) {
+    // Dynamic agent — use a generic style
+    if (type === "glow") return "glow-primary";
+    return `${type}-primary`;
+  }
+  const color = config.color;
   if (type === "glow") return `glow-${color}`;
   return `${type}-agent-${color}`;
 }

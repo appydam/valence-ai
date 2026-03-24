@@ -88,7 +88,7 @@ export const startOAuth = action({
     });
 
     // Build callback URL - use CONVEX_SITE_URL env var
-    const convexSiteUrl = process.env.CONVEX_SITE_URL || "https://beloved-squirrel-599.convex.site";
+    const convexSiteUrl = process.env.CONVEX_SITE_URL || "https://<YOUR_DEPLOYMENT>.convex.site";
     const redirectUri = `${convexSiteUrl}/api/integrations/oauth/callback`;
 
     // Resolve {placeholders} in authorizeUrl (e.g. {shop} for Shopify)
@@ -187,7 +187,7 @@ export const handleOAuthCallback = action({
     }
 
     // Build callback URL (must match the one used in startOAuth)
-    const convexSiteUrl = process.env.CONVEX_SITE_URL || "https://beloved-squirrel-599.convex.site";
+    const convexSiteUrl = process.env.CONVEX_SITE_URL || "https://<YOUR_DEPLOYMENT>.convex.site";
     const redirectUri = `${convexSiteUrl}/api/integrations/oauth/callback`;
 
     // Resolve client secret from environment variable if it's a reference

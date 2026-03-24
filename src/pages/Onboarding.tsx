@@ -304,7 +304,6 @@ const OnboardingPage = () => {
   const handleNext = async () => {
     const nextStep = step + 1;
 
-    // Save progress at each step
     if (step === 1 && companyName.trim()) {
       await upsertBrand({ companyName: companyName.trim() });
       await updateStep({ userId, currentStep: nextStep, companyName: companyName.trim() });
@@ -331,7 +330,7 @@ const OnboardingPage = () => {
       await updateStep({ userId, currentStep: nextStep, teamInvitesSent: sent });
     }
 
-    if (nextStep <= 5) {
+    if (nextStep <= STEPS.length) {
       setStep(nextStep);
     }
   };
@@ -405,7 +404,7 @@ const OnboardingPage = () => {
           </button>
 
           <div className="flex items-center gap-2">
-            {step < 5 && step > 1 && (
+            {step < STEPS.length && step > 1 && (
               <button
                 onClick={() => { setStep(step + 1); }}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -414,7 +413,7 @@ const OnboardingPage = () => {
               </button>
             )}
 
-            {step < 5 ? (
+            {step < STEPS.length ? (
               <button
                 onClick={handleNext}
                 disabled={!canProceed()}

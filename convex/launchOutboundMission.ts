@@ -23,9 +23,9 @@ export default mutation({
     const missionId = await ctx.db.insert("missions", {
       title: "Outbound Sales Pipeline — Series A–C SaaS Companies",
       description:
-        "End-to-end outbound sales campaign for Valence AI. Target: Series A–C B2B SaaS companies, 50–500 employees. " +
+        "End-to-end outbound sales campaign. Target: Series A–C B2B SaaS companies, 50–500 employees. " +
         "Flow: Apollo (find contacts) → Clay (enrich) → HubSpot (CRM + email sequences). " +
-        "Selling Valence AI — autonomous multi-agent platform with 100+ integrations that automates enterprise workflows.",
+        "Automate outbound with an autonomous multi-agent platform with 100+ integrations.",
       status: "active",
       createdBy: "Human",
       createdAt: now,
@@ -34,24 +34,22 @@ export default mutation({
     });
 
     // ── Product context (shared across tasks) ─────────────────────────────
+    // NOTE: Customize this product context to describe what your company sells.
     const productContext =
       `PRODUCT CONTEXT — What we are selling:\n` +
-      `Valence AI is an autonomous multi-agent platform. Instead of one chatbot, you get a squad of specialized AI agents:\n` +
+      `[YOUR PRODUCT NAME] is an autonomous multi-agent platform. Instead of one chatbot, you get a squad of specialized AI agents:\n` +
       `• Scout — market research, competitive intel, lead enrichment\n` +
       `• Ghost — content creation, email drafts, social distribution\n` +
       `• Forge — engineering, automations, integrations\n` +
       `• Sentinel — QA review on every deliverable\n` +
       `• Kaze — orchestration, delegation, final approval\n\n` +
-      `Connected to 100+ integrations (HubSpot, Salesforce, Slack, Gong, Google Workspace, Atlassian, Figma, Notion, Shopify, Clay, etc.). ` +
+      `Connected to 100+ integrations (HubSpot, Salesforce, Slack, Google Workspace, Notion, etc.). ` +
       `It automates complex, multi-step workflows that normally require multiple hires.\n\n` +
       `Key value props:\n` +
-      `• "Close pipeline 3x faster" — autonomous SDR researches, writes, and sends\n` +
-      `• "50 personalized emails in 48 hours, not 2 weeks"\n` +
-      `• "One platform replaces your SDR + content writer + ops coordinator"\n` +
-      `• Connected to tools they already use (HubSpot, Slack, Google Workspace, etc.)\n` +
-      `• Replaces $2.5K/mo integration tools like Paragon with native connections\n\n` +
-      `Target buyer: Head of Ops, VP RevOps, COO, Chief of Staff, VP Marketing at Series A–C SaaS companies (50–500 employees).\n` +
-      `Wedge use case: AI SDR that closes pipeline 3x faster.`;
+      `• Autonomous agents research, write, and send — close pipeline faster\n` +
+      `• One platform replaces multiple specialist hires\n` +
+      `• Connected to tools they already use\n\n` +
+      `Target buyer: Head of Ops, VP RevOps, COO, Chief of Staff, VP Marketing at Series A–C SaaS companies (50–500 employees).`;
 
     // ── Helper to create a task ───────────────────────────────────────────
     async function createTask(params: {
@@ -192,7 +190,7 @@ export default mutation({
         `• Sign off as: Arpit Dhamija (NO company name in signature, just his name)\n` +
         `• Include personalization tokens: {{first_name}}, {{company}}, {{title}}\n` +
         `• CTA: book a 15-min demo (link placeholder: {{demo_link}})\n` +
-        `• Do NOT mention "QuantXData" anywhere\n\n` +
+        `` +
         `DELIVER all 4 emails as structured JSON with subject lines.`,
       priority: "high",
       assignee: "Ghost",
@@ -214,7 +212,7 @@ export default mutation({
         `4. CTA — Is there one clear call-to-action per email?\n` +
         `5. Personalization — Are {{first_name}}, {{company}}, {{title}} tokens used naturally?\n` +
         `6. Tone — Founder-to-operator, not salesy? Would a VP of Ops actually read this?\n` +
-        `7. Identity — Signed as "Arpit Dhamija" only. NO company name, NO "QuantXData", NO "Valence AI" in the signature.\n` +
+        `7. Identity — Signed as "Arpit Dhamija" only. No company name in the signature.\n` +
         `8. Accuracy — Do the claims about the product match reality? (100+ integrations, multi-agent orchestration, connected to HubSpot/Salesforce/Slack etc.)\n\n` +
         `APPROVE or REJECT with specific line-by-line feedback.`,
       priority: "high",
