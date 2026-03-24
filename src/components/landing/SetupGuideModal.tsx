@@ -393,9 +393,42 @@ sudo systemctl restart agent-wakeup`} />
     ),
   },
   {
+    id: "seed-integrations",
+    icon: Plug,
+    title: "9. Seed Integration Blueprints",
+    content: (
+      <>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+          Valence comes with 50+ pre-built integration blueprints (HubSpot, Slack, GitHub, Google Ads, etc.). Seed them into your Convex database:
+        </p>
+        <CodeBlock language="bash" code={`# From the project root, seed the most common integrations:
+npx convex run seedGitHubBlueprint
+npx convex run seedSlackBlueprint
+npx convex run seedNotionBlueprint
+npx convex run seedHubSpotBlueprint
+npx convex run seedGoogleAdsBlueprint
+npx convex run seedJiraBlueprint
+npx convex run seedGmailBlueprint
+
+# Or seed ALL available blueprints at once:
+for f in convex/seed*Blueprint.ts; do
+  name=$(basename "$f" .ts)
+  echo "Seeding $name..."
+  npx convex run "$name" 2>/dev/null || true
+done`} />
+        <p className="text-sm text-muted-foreground leading-relaxed mt-3 mb-3">
+          After seeding, go to <strong>Settings → Integrations</strong> in the dashboard. You'll see all available integrations. Click any to connect with OAuth or API key.
+        </p>
+        <div className="mt-3 p-3 rounded-lg border border-blue-500/20 bg-blue-500/[0.03] text-xs text-muted-foreground">
+          <strong className="text-blue-400">Custom integrations:</strong> You can also add any API by going to Integrations → New Blueprint and pasting the API docs URL. Claude will auto-generate the tool definitions.
+        </div>
+      </>
+    ),
+  },
+  {
     id: "firewall",
     icon: Shield,
-    title: "9. Firewall & Security",
+    title: "10. Firewall & Security",
     content: (
       <>
         <p className="text-sm text-muted-foreground leading-relaxed mb-3">
