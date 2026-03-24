@@ -92,17 +92,6 @@ crons.interval(
 );
 
 /**
- * Monthly usage counter rotation.
- * Runs on the 1st of each month at 00:05 UTC.
- * Creates a fresh usage counter for the new billing period.
- */
-crons.monthly(
-  "usage-counter-rotation",
-  { day: 1, hourUTC: 0, minuteUTC: 5 },
-  internal.billing.rotateUsageCounters
-);
-
-/**
  * Webhook retry: reprocess failed webhook events with exponential backoff.
  * Max 3 retries per event (30s, 2min, 8min delays).
  * Events that exhaust retries are moved to dead letter queue.
