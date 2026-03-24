@@ -216,7 +216,7 @@ Twilio
 2. **Issue a mission**: Describe what you need in natural language (e.g., "Research our top 50 churning accounts and draft personalized win-back emails for each").
 3. **Agents execute**: Kaze decomposes the mission, delegates subtasks to Scout, Forge, Ghost as needed. Agents work autonomously across your connected tools.
 4. **Quality review**: Sentinel reviews every deliverable against quality criteria before it reaches you.
-5. **Human approval**: Review final outputs in the Mission Control dashboard. Approve, edit, or request revisions.
+5. **Human approval**: Review final outputs in the Valence AI dashboard. Approve, edit, or request revisions.
 
 ---
 

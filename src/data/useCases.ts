@@ -3047,7 +3047,7 @@ export const USE_CASES: UseCase[] = [
         tools: [
           { label: "Slack", color: "#4A154B" },
           { label: "Webhook", color: "#6366F1" },
-          { label: "Mission Control", color: "#8B5CF6" },
+          { label: "Valence AI", color: "#8B5CF6" },
         ],
         detail: "Flash sale triggered at 9:14am · Goal: 20% off sitewide, Shopify only · 4 parallel tasks dispatched · completion target: 10:00am",
       },

@@ -1,7 +1,7 @@
-# Mission Control - Agent Orchestrator
+# Valence AI - Agent Orchestrator
 
 ## Project Vision
-Mission Control is a dashboard for orchestrating AI agents (Kaze, Scout, Forge, Ghost) running on OpenClaw. It provides task management, agent configuration, integration management, and real-time monitoring — all from a single web UI.
+Valence AI is a dashboard for orchestrating AI agents (Kaze, Scout, Forge, Ghost) running on OpenClaw. It provides task management, agent configuration, integration management, and real-time monitoring — all from a single web UI.
 
 ## Tech Stack
 - **Frontend**: React + Vite + TypeScript + Tailwind CSS + shadcn/ui

@@ -117,7 +117,7 @@ export const classifyIntent = action({
     context: v.optional(v.string()),
   },
   handler: async (_ctx, args) => {
-    const systemPrompt = `You are an intent classifier for Mission Control, an AI agent orchestration platform with 5 agents: Kaze (coordinator), Scout (research), Forge (engineering), Ghost (content), Sentinel (QA).
+    const systemPrompt = `You are an intent classifier for Valence AI, an AI agent orchestration platform with 5 agents: Kaze (coordinator), Scout (research), Forge (engineering), Ghost (content), Sentinel (QA).
 
 Classify the user's message into exactly one intent category. Return ONLY valid JSON.
 

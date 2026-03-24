@@ -64,7 +64,7 @@ function AuthRoutes() {
       <AuthLoading>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
-            <img src="/logo.svg" alt="Mission Control" className="w-16 h-16 mx-auto mb-4 animate-pulse" />
+            <img src="/logo.svg" alt="Valence AI" className="w-16 h-16 mx-auto mb-4 animate-pulse" />
             <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
         </div>

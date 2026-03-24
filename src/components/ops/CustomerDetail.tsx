@@ -376,11 +376,11 @@ function StepInstructions({
               Send an email to <strong className="text-foreground">{customer.adminEmail}</strong> with:
             </p>
             <CommandBlock label="Email template" command={[
-              `Subject: Your Mission Control is live!`,
+              `Subject: Your Valence AI is live!`,
               ``,
               `Hey ${customer.contactName || "there"},`,
               ``,
-              `Your Mission Control instance is ready:`,
+              `Your Valence AI instance is ready:`,
               ``,
               `  Dashboard: https://${d}`,
               `  Sign up with: ${customer.adminEmail}`,

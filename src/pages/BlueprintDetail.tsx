@@ -323,13 +323,13 @@ export default function BlueprintDetail() {
           tool: "create_page", label: "Create Test Page", args: {
             cloudId: "__cloudId__",
             spaceId: "__spaceId__",
-            title: `Mission Control Test — ${new Date().toISOString()}`,
+            title: `Valence AI Test — ${new Date().toISOString()}`,
             status: "current",
-            body: { representation: "storage", value: "<p>This is an automated test page created by Mission Control. Safe to delete.</p>" },
+            body: { representation: "storage", value: "<p>This is an automated test page created by Valence AI. Safe to delete.</p>" },
           }, extractForNext: "pageId",
         },
         { tool: "get_page", label: "Read Test Page", args: { cloudId: "__cloudId__", pageId: "__pageId__", "body-format": "storage" } },
-        { tool: "search_pages", label: "Search Pages", args: { cloudId: "__cloudId__", title: "Mission Control", limit: 5 } },
+        { tool: "search_pages", label: "Search Pages", args: { cloudId: "__cloudId__", title: "Valence AI", limit: 5 } },
       ],
       jira: [
         { tool: "get_accessible_resources", label: "Get Cloud ID", args: {}, extractForNext: "cloudId" },

@@ -515,11 +515,11 @@ export function OnboardingGuide() {
           </p>
 
           <Cmd label="Email template (customize and send)" command={[
-            `Subject: Your Mission Control is live!`,
+            `Subject: Your Valence AI is live!`,
             ``,
             `Hey <NAME>,`,
             ``,
-            `Your Mission Control instance is ready:`,
+            `Your Valence AI instance is ready:`,
             ``,
             `  Dashboard: https://<CUSTOMER_DOMAIN>`,
             `  Sign up with: <ADMIN_EMAIL>`,

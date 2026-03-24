@@ -2447,7 +2447,7 @@ export default function Landing() {
           <FeatureBlock
             label="LIVE OPS COMMAND CENTER"
             title="Real-time visibility into every agent, every action."
-            description="Mission Control isn't a chat window — it's a live operations dashboard. Watch agents work in real time, inspect every tool call they make, approve or reject deliverables before they flow downstream, and replay any session in full."
+            description="Valence AI isn't a chat window — it's a live operations dashboard. Watch agents work in real time, inspect every tool call they make, approve or reject deliverables before they flow downstream, and replay any session in full."
             bullets={[
               "Live activity feed: every agent action, tool call, and decision streamed in real time",
               "Deliverable review gates: Sentinel flags outputs for human approval before proceeding",

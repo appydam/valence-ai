@@ -28,7 +28,7 @@ Valence AI is a self-hosted AI workforce platform and orchestration dashboard fo
 - **Review deliverables** before they ship, with configurable approval gates
 - **Analyze performance** through mission reports, task throughput charts, and agent analytics
 
-> **Agents run on your server.** Mission Control is purely a dashboard — it talks to OpenClaw agents running on your Linux VPS via webhook.
+> **Agents run on your server.** Valence AI is purely a dashboard — it talks to OpenClaw agents running on your Linux VPS via webhook.
 
 ---
 
@@ -53,7 +53,7 @@ Valence AI is a self-hosted AI workforce platform and orchestration dashboard fo
 
 ```
 ┌─────────────────────────────────────────────┐
-│           Mission Control (this repo)        │
+│           Valence AI (this repo)        │
 │                                             │
 │  React + Vite + Tailwind   ←→   Convex      │
 │  (Frontend dashboard)           (Backend DB) │
@@ -77,7 +77,7 @@ Valence AI is a self-hosted AI workforce platform and orchestration dashboard fo
 
 **Auth** — [Clerk](https://clerk.com) handles authentication. 10,000 MAU free.
 
-**Agents** — [OpenClaw](https://openclaw.dev) AI agent framework, running on your Linux VPS. Agents wake up via webhook when Mission Control assigns a task.
+**Agents** — [OpenClaw](https://openclaw.dev) AI agent framework, running on your Linux VPS. Agents wake up via webhook when Valence AI assigns a task.
 
 **SSH Proxy** — Small Node.js service (`server-files/ssh-proxy-server.js`) running on your VPS that enables SOUL file sync and agent registration from the dashboard.
 
@@ -155,7 +155,7 @@ Install OpenClaw and the SSH proxy on your Linux server:
 npm install -g @openclaw/cli
 openclaw init
 
-# Start the agent wakeup server (Mission Control calls this to wake agents)
+# Start the agent wakeup server (Valence AI calls this to wake agents)
 nohup node ~/agent-wakeup-server.js > ~/agent-wakeup.log 2>&1 &
 
 # Start the SSH proxy (enables SOUL file sync from the dashboard)
@@ -163,7 +163,7 @@ npm install ssh2
 nohup node ~/ssh-proxy-service/server.js > ~/ssh-proxy.log 2>&1 &
 ```
 
-In Mission Control → Settings → Server, paste your SSH credentials. The dashboard will test the connection and sync automatically.
+In Valence AI → Settings → Server, paste your SSH credentials. The dashboard will test the connection and sync automatically.
 
 ---
 
@@ -239,7 +239,7 @@ agent-orchestrator/
 
 ## Agent API (for OpenClaw SOUL files)
 
-Mission Control exposes a REST API that agents call directly. All endpoints accept an `Authorization: Bearer <api-key>` header.
+Valence AI exposes a REST API that agents call directly. All endpoints accept an `Authorization: Bearer <api-key>` header.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -258,7 +258,7 @@ Generate an API key in Settings → API Keys. Use the `heartbeat` permission for
 
 ## Integrations
 
-Mission Control includes 50+ pre-built integration blueprints. Connect them in Settings → Integrations.
+Valence AI includes 50+ pre-built integration blueprints. Connect them in Settings → Integrations.
 
 **Productivity:** Notion, Confluence, Google Drive, Dropbox
 **Communication:** Slack, Gmail, Outlook

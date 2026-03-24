@@ -42,7 +42,7 @@ const sections = [
     title: "Webhooks",
     icon: Webhook,
     items: [
-      { q: "What are webhooks?", a: "Webhooks let external services push events into Mission Control. For example, a GitHub push or a Slack message can automatically create tasks." },
+      { q: "What are webhooks?", a: "Webhooks let external services push events into Valence AI. For example, a GitHub push or a Slack message can automatically create tasks." },
       { q: "How do I set up a webhook?", a: "Go to Webhooks, create a new endpoint, copy the URL, and paste it into your external service's webhook settings." },
     ],
   },

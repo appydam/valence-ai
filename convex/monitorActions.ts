@@ -4,7 +4,7 @@
 /**
  * Monitor Action Handlers
  * Executes actions when monitor conditions are met:
- * - create_task: Create a task in Mission Control
+ * - create_task: Create a task in Valence AI
  * - send_notification: Send Slack message via integration engine
  * - trigger_agent: Wake an agent via agentWakeup
  * - log_alert: Log to activity feed
@@ -46,7 +46,7 @@ export const executeMonitorAction = internalAction({
 });
 
 /**
- * Create a task in Mission Control
+ * Create a task in Valence AI
  */
 async function executeCreateTask(ctx: any, args: any, config: any) {
   // Config shape: { title, description, priority, assignee, tags }

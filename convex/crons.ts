@@ -2,7 +2,7 @@ import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
 
 /**
- * Scheduled jobs for Mission Control
+ * Scheduled jobs for Valence AI
  */
 
 const crons = cronJobs();

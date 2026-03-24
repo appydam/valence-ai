@@ -65,7 +65,7 @@ function WelcomeStep({ companyName, setCompanyName }: { companyName: string; set
       <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
         <Sparkles className="w-8 h-8 text-primary" />
       </div>
-      <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to Mission Control</h2>
+      <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to Valence AI</h2>
       <p className="text-sm text-muted-foreground mb-8">
         Let's set up your AI-powered workspace in a few quick steps.
       </p>
@@ -171,7 +171,7 @@ function InviteStep({ emails, setEmails, invitesSent }: { emails: string; setEma
         <Users className="w-8 h-8 text-primary mx-auto mb-3" />
         <h2 className="text-xl font-bold text-foreground mb-1">Invite Your Team</h2>
         <p className="text-sm text-muted-foreground">
-          Add colleagues who will use Mission Control with you.
+          Add colleagues who will use Valence AI with you.
         </p>
       </div>
       <div>
@@ -207,7 +207,7 @@ function LaunchStep({ companyName, connected, invitesSent }: { companyName: stri
       </div>
       <h2 className="text-2xl font-bold text-foreground mb-2">You're All Set!</h2>
       <p className="text-sm text-muted-foreground mb-8">
-        {companyName ? `${companyName}'s` : "Your"} Mission Control workspace is ready.
+        {companyName ? `${companyName}'s` : "Your"} Valence AI workspace is ready.
       </p>
       <div className="rounded-xl border bg-card p-4 text-left space-y-3 mb-6">
         <div className="flex items-center gap-3">
@@ -370,7 +370,7 @@ const OnboardingPage = () => {
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src="/logo.svg" alt="" className="w-6 h-6" />
-            <span className="text-sm font-semibold text-foreground">Mission Control</span>
+            <span className="text-sm font-semibold text-foreground">Valence AI</span>
           </div>
           <p className="text-xs text-muted-foreground">
             Step {step} of {STEPS.length}: {STEPS[step - 1].title}

@@ -995,7 +995,7 @@ function Playbook() {
                     </h4>
                     <p>
                       A single script that SSHes into a fresh device and
-                      installs everything: OpenClaw, Mission Control agent
+                      installs everything: OpenClaw, Valence AI agent
                       runtime, SOUL files, integration configs, wakeup server,
                       monitoring agent.
                     </p>
@@ -1378,7 +1378,7 @@ function Playbook() {
                   period: "Month 2-3: First Physical Nodes",
                   color: "purple",
                   items: [
-                    "Order first NVIDIA Jetson Orin Nano, get Mission Control running on it",
+                    "Order first NVIDIA Jetson Orin Nano, get Valence AI running on it",
                     "Build the custom enclosure with e-ink display",
                     "Deploy first physical Node to an India-based client",
                     "Build multi-tenant support (tenantId, per-client SSH, fleet dashboard)",

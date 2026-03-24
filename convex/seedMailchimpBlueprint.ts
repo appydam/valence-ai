@@ -156,7 +156,7 @@ export default mutation({
         exampleArgs: JSON.stringify({
           type: "regular",
           recipients: { list_id: "abc123" },
-          settings: { subject_line: "Monthly Newsletter", from_name: "Mission Control", reply_to: "hello@example.com" },
+          settings: { subject_line: "Monthly Newsletter", from_name: "Valence AI", reply_to: "hello@example.com" },
         }),
       },
     ];

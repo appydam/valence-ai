@@ -16,7 +16,7 @@ const routeConfig: Record<string, { title: string; icon: any }> = {
 
 export function Navbar() {
   const location = useLocation();
-  const config = routeConfig[location.pathname] || { title: "Mission Control", icon: Activity };
+  const config = routeConfig[location.pathname] || { title: "Valence AI", icon: Activity };
   const Icon = config.icon;
 
   return (

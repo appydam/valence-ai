@@ -7,7 +7,7 @@ import { parseOpenAPISpec } from "./lib/openApiParser";
 
 /**
  * Start a doc scraping job
- * Fetches docs, detects OpenAPI vs HTML, creates Mission Control task for AI analysis
+ * Fetches docs, detects OpenAPI vs HTML, creates Valence AI task for AI analysis
  */
 export const startScrape = action({
   args: {
@@ -114,7 +114,7 @@ export const startScrape = action({
       rawContentLength: truncated.length,
     });
 
-    // 6. Create Mission Control task for agent analysis
+    // 6. Create Valence AI task for agent analysis
     try {
       const taskId = await ctx.runMutation(api.tasks.create, {
         title: `Analyze API Documentation: ${args.suggestedName || "Unknown API"}`,

@@ -109,7 +109,7 @@ const Login = () => {
           <div className="lg:hidden mb-8 text-center">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-blue-500 p-2 flex items-center justify-center">
-                <img src="/logo.svg" alt="Mission Control" className="w-8 h-8" />
+                <img src="/logo.svg" alt="Valence AI" className="w-8 h-8" />
               </div>
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">Valence</h1>

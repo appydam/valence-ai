@@ -27,7 +27,7 @@ const AVAILABLE_MODELS = [
 ];
 
 const AVAILABLE_SKILLS = [
-  { id: "mission-control", name: "Mission Control", description: "Task management, comments, activity tracking" },
+  { id: "mission-control", name: "Valence AI", description: "Task management, comments, activity tracking" },
   { id: "web-search", name: "Web Search", description: "Search the web using Perplexity, Tavily, or Serper APIs" },
   { id: "github", name: "GitHub", description: "Repos, PRs, issues, actions via GitHub API" },
   { id: "slack", name: "Slack", description: "Send messages, read channels, manage workspace" },

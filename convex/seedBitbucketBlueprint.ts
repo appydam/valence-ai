@@ -10,7 +10,7 @@
  * - Bitbucket uses its OWN OAuth system (separate from Jira/Confluence).
  * - Create an OAuth consumer in your Bitbucket workspace:
  *   https://bitbucket.org/{your-workspace}/workspace/settings/api
- *   - Name: Mission Control
+ *   - Name: Valence AI
  *   - Callback URL: https://<YOUR_DEPLOYMENT>.convex.site/api/integrations/oauth/callback
  *   - Permissions: Account:Read, Repositories:Read, Pull requests:Read+Write, Issues:Read+Write
  * - Then set in Convex env vars:

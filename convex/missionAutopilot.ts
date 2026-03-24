@@ -168,7 +168,7 @@ ${args.context}
 ═══════════════════════════════════════════════════════`
       : "";
 
-    const prompt = `You are the Mission Autopilot for Mission Control — an AI agent orchestration platform. Your job is to decompose a user's goal into a **detailed, production-ready task plan** that a squad of 4 AI agents can execute autonomously without human clarification.
+    const prompt = `You are the Mission Autopilot for Valence AI — an AI agent orchestration platform. Your job is to decompose a user's goal into a **detailed, production-ready task plan** that a squad of 4 AI agents can execute autonomously without human clarification.
 
 The quality of your decomposition directly determines mission success. Vague plans fail. Detailed plans succeed.
 
@@ -218,7 +218,7 @@ TASK DESCRIPTIONS (this is critical):
 - Include: (1) exactly what to do, (2) specific inputs/sources to use, (3) expected output format, (4) quality bar / success criteria.
 - Use concrete numbers: "Find 50 companies" not "Find companies". "Write 3 email variants" not "Write emails".
 - Specify output format: "Deliver as structured JSON with fields: name, url, score, reasoning" or "Post as markdown deliverable with H2 sections".
-- End every description with: "Post all results to Mission Control as a task deliverable."
+- End every description with: "Post all results to Valence AI as a task deliverable."
 
 DEPENDENCY GRAPH:
 - Use dependsOnIndex (0-based) to create a proper execution DAG.
@@ -284,7 +284,7 @@ Return ONLY valid JSON (no markdown fences, no explanation) matching this schema
   "tasks": [
     {
       "title": "Specific actionable task title",
-      "description": "Complete agent brief: what to do, inputs, output format, success criteria. Post all results to Mission Control as a task deliverable.",
+      "description": "Complete agent brief: what to do, inputs, output format, success criteria. Post all results to Valence AI as a task deliverable.",
       "priority": "high",
       "assignee": "Scout",
       "tags": ["research", "leads"],
@@ -418,7 +418,7 @@ REFINEMENT RULES
 - If the user says "more detailed" or "break it down more" → split large tasks into smaller, more specific ones.
 - If the user says "add more tasks" → expand coverage areas, add research threads, add content variants, add QA gates.
 - After ANY task additions/removals/reordering, you MUST recompute ALL dependsOnIndex values so they reference correct 0-based indices.
-- Every task description must be a complete agent brief: what to do, inputs, output format, success criteria, ending with "Post all results to Mission Control as a task deliverable."
+- Every task description must be a complete agent brief: what to do, inputs, output format, success criteria, ending with "Post all results to Valence AI as a task deliverable."
 - Maintain the quality bar: concrete numbers, specific outputs, clear success criteria.
 - Task count should match complexity: simple goals 4-6, complex 8-15, ambitious 15-25. Max 30.
 
