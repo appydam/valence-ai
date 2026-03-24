@@ -20,6 +20,7 @@ import { EngagementChart } from "../components/EngagementChart";
 import { TrendingTopics } from "../components/TrendingTopics";
 import { useContentMetrics } from "../hooks/useContentMetrics";
 import { useIntegrationCall } from "../../framework/useIntegrationCall";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const PLATFORM_ICONS: Record<string, { icon: string; color: string }> = {
   twitter: { icon: "\u{1D54F}", color: "hsl(203, 89%, 53%)" },
@@ -35,7 +36,7 @@ export function ContentDashboard() {
   const { execute, isConnected } = useIntegrationCall();
   const [twitterProfile, setTwitterProfile] = useState<{ followers_count?: number } | null>(null);
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const contentTasks = (tasks ?? []).filter((t: { tags?: string[] }) =>
     t.tags?.includes("niche:content")
   );

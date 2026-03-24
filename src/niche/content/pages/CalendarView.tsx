@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Plus, Loader2, Calendar } from "lucide-react
 import { Link } from "react-router-dom";
 import { useNiche } from "../../framework/NicheContext";
 import { CalendarGrid } from "../components/CalendarGrid";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 type ViewMode = "month" | "week" | "day";
 
@@ -48,7 +49,7 @@ export function CalendarView() {
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const contentTasks = (tasks ?? []).filter((t: { tags?: string[] }) =>
     t.tags?.includes("niche:content")
   );

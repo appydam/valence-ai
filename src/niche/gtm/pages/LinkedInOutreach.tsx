@@ -18,6 +18,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
 import { useIntegrationCall } from "../../framework/useIntegrationCall";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 type MessageTemplate = "connection_request" | "inmail" | "followup_dm" | "referral_ask";
 type OutreachStatus = "pending" | "sent" | "replied" | "draft";
@@ -62,7 +63,7 @@ export function LinkedInOutreach() {
   const isApolloConnected = isConnected("apollo");
 
   // Pull leads from task deliverables
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const leadTasks = (tasks ?? []).filter(
     (t: { tags?: string[]; status: string }) =>
       t.tags?.includes("niche:gtm") &&

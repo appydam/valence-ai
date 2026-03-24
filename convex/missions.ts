@@ -23,15 +23,33 @@ export const create = mutation({
 });
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (args.userId) {
+      return await ctx.db
+        .query("missions")
+        .withIndex("by_createdBy", (q) => q.eq("createdBy", args.userId!))
+        .order("desc")
+        .collect();
+    }
     return await ctx.db.query("missions").order("desc").collect();
   },
 });
 
 export const getActive = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (args.userId) {
+      const missions = await ctx.db
+        .query("missions")
+        .withIndex("by_createdBy", (q) => q.eq("createdBy", args.userId!))
+        .collect();
+      return missions.find((m) => m.status === "active") ?? null;
+    }
     return await ctx.db
       .query("missions")
       .withIndex("by_status", (q) => q.eq("status", "active"))

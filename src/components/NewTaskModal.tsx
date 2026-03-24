@@ -6,6 +6,7 @@ import { TaskPriority } from "@/types/mission";
 import { useAgents } from "@/hooks/useAgents";
 import { X, Search, Link2 } from "lucide-react";
 import { FileAttachButton } from "@/components/FileAttachButton";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 interface Mission {
   _id: string;
@@ -58,7 +59,7 @@ export function NewTaskModal({ onClose, onCreate, missions }: NewTaskModalProps)
   const [depSearchQuery, setDepSearchQuery] = useState("");
 
   // Fetch all tasks for dependency picker
-  const allTasks = useQuery(api.tasks.list, {}) ?? [];
+  const allTasks = useUserTasks();
   const searchResults = depSearchQuery.trim()
     ? allTasks.filter(t =>
         !selectedDeps.includes(t._id as Id<"tasks">) &&

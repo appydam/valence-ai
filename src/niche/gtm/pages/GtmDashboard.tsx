@@ -23,6 +23,7 @@ import { AgentActivityPanel } from "../../framework/AgentActivityPanel";
 import { PipelineFunnel } from "../components/PipelineFunnel";
 import { useIntegrationCall } from "../../framework/useIntegrationCall";
 import { useCrmSync } from "../hooks/useCrmSync";
+import { useUserTasks } from "@/hooks/useUserScoped";
 import {
   AreaChart,
   Area,
@@ -67,7 +68,7 @@ export function GtmDashboard() {
   const isSlackConnected = isConnected("slack");
   const isGaConnected = isConnected("google-analytics");
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const gtmTasks = (tasks ?? []).filter((t: { tags?: string[] }) =>
     t.tags?.includes("niche:gtm")
   );

@@ -20,6 +20,7 @@ import {
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
 import { useIntegrationCall } from "../../framework/useIntegrationCall";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 type SignalType = "hiring" | "funding" | "tech" | "content" | "engagement";
 
@@ -105,7 +106,7 @@ export function SignalBoard() {
   const apolloConnected = isConnected("apollo");
 
   // Query signal tasks from Convex
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const signalTasks = (tasks ?? []).filter(
     (t: { tags?: string[]; status: string }) =>
       t.tags?.includes("niche:gtm") &&

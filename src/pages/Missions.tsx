@@ -6,9 +6,10 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { Link } from "react-router-dom";
 import { CheckCircle2, Clock, Archive, ExternalLink, FolderPlus, FileText, Swords } from "lucide-react";
+import { useUserMissions } from "@/hooks/useUserScoped";
 
 const Missions = () => {
-  const missions = useQuery(api.missions.list, {}) ?? [];
+  const missions = useUserMissions();
   const completeMission = useMutation(api.missions.complete);
   const archiveMission = useMutation(api.missions.archive);
   const [showNewMission, setShowNewMission] = useState(false);

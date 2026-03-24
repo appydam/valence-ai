@@ -3,6 +3,7 @@ import { api } from "../../convex/_generated/api";
 import { AGENT_CONFIG, AgentName } from "@/types/mission";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const STATUS_DOT: Record<string, string> = {
   online: "bg-green-500",
@@ -13,7 +14,7 @@ const STATUS_DOT: Record<string, string> = {
 
 export function AgentStatusBar() {
   const agents = useQuery(api.agents.list) ?? [];
-  const allTasks = useQuery(api.tasks.list, {}) ?? [];
+  const allTasks = useUserTasks();
 
   if (agents.length === 0) return null;
 

@@ -22,6 +22,7 @@ import { useIntegrationCall } from "../../framework/useIntegrationCall";
 import { LeadScoreBreakdown } from "../components/LeadScoreBreakdown";
 import { ContactTimeline } from "../components/ContactTimeline";
 import type { ReplyClassification } from "../hooks/useReplyDetection";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 type LeadStatus = "New" | "Contacted" | "Replied" | "Meeting";
 
@@ -80,7 +81,7 @@ export function LeadSourcer() {
   const isHunterConnected = isConnected("hunter");
 
   // Query completed lead-sourcing tasks from Convex
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const leadTasks = (tasks ?? []).filter(
     (t: { tags?: string[]; status: string }) =>
       t.tags?.includes("niche:gtm") &&

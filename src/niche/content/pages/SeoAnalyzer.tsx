@@ -5,6 +5,7 @@ import { Search, Wand2, AlertTriangle, CheckCircle2, XCircle, Loader2 } from "lu
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
 import { SeoScorecard } from "../components/SeoScorecard";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 interface SeoCheck {
   id: string;
@@ -70,7 +71,7 @@ export function SeoAnalyzer() {
   const [taskId, setTaskId] = useState<string | undefined>(undefined);
 
   // Query completed SEO analysis tasks
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const seoTasks = (tasks ?? []).filter(
     (t: { tags?: string[]; status: string }) =>
       t.tags?.includes("niche:content") &&

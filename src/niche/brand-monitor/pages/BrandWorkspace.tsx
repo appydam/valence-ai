@@ -12,6 +12,7 @@ import {
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
 import { ExecutionStream } from "../../ads/components/ExecutionStream";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const SUGGESTION_CHIPS = [
   "Monitor my brand mentions",
@@ -30,7 +31,7 @@ export function BrandWorkspace() {
   const [prompt, setPrompt] = useState("");
 
   // Auto-detect active brand-monitor tasks on mount
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const brandTasks = (tasks ?? []).filter(
     (t: { tags?: string[] }) => t.tags?.includes("niche:brand-monitor")
   );

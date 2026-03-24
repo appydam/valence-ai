@@ -15,6 +15,7 @@ import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
 import { usePublish } from "../hooks/usePublish";
 import { AgentActivityPanel } from "../../framework/AgentActivityPanel";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 type OutputTab = "twitter" | "linkedin" | "newsletter" | "instagram";
 
@@ -76,7 +77,7 @@ export function RepurposeEngine() {
   const [taskId, setTaskId] = useState<string | undefined>(undefined);
 
   // Query repurpose task results
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const repurposeTasks = (tasks ?? []).filter(
     (t: { tags?: string[]; status: string }) =>
       t.tags?.includes("niche:content") &&

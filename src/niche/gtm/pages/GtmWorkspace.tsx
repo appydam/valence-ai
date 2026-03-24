@@ -20,6 +20,7 @@ import { useCrmSync } from "../hooks/useCrmSync";
 import { ExecutionStream } from "../../framework/components/ExecutionStream";
 import { GtmDataPanel } from "../components/GtmDataPanel";
 import { InsightCard } from "../../framework/components/InsightCard";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const SUGGESTION_CHIPS = [
   "Source 50 leads matching our ICP",
@@ -40,7 +41,7 @@ export function GtmWorkspace() {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const gtmTasks = (tasks ?? []).filter(
     (t: { tags?: string[] }) => t.tags?.includes("niche:gtm")
   );

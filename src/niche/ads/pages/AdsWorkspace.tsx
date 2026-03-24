@@ -23,6 +23,7 @@ import { InsightCard } from "../components/InsightCard";
 import { useSimulation } from "../simulation/SimulationContext";
 import { SimulatedExecutionStream } from "../simulation/SimulatedExecutionStream";
 import { useAutoTypePrompt } from "../simulation/useAutoTypePrompt";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const SUGGESTION_CHIPS = [
   "Create a search campaign for my product",
@@ -45,7 +46,7 @@ export function AdsWorkspace() {
   const [prompt, setPrompt] = useState("");
 
   // Auto-detect active ads tasks on mount
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const adsTasks = (tasks ?? []).filter(
     (t: { tags?: string[] }) => t.tags?.includes("niche:ads")
   );

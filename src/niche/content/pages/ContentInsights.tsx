@@ -13,12 +13,13 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useNiche } from "../../framework/NicheContext";
 import { useContentMetrics } from "../hooks/useContentMetrics";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 export function ContentInsights() {
   const { config } = useNiche();
   const { metrics, loading, isLive, refresh } = useContentMetrics();
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const contentTasks = (tasks ?? []).filter(
     (t: { tags?: string[] }) => t.tags?.includes("niche:content")
   );

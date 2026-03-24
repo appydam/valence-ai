@@ -72,7 +72,9 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
     taskCount: v.number(),
     completedTaskCount: v.number(),
-  }).index("by_status", ["status"]),
+  })
+    .index("by_status", ["status"])
+    .index("by_createdBy", ["createdBy"]),
 
   tasks: defineTable({
     title: v.string(),
@@ -111,7 +113,8 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_assignee", ["assignee"])
     .index("by_assignee_status", ["assignee", "status"])
-    .index("by_mission", ["missionId"]),
+    .index("by_mission", ["missionId"])
+    .index("by_requiredUserId", ["requiredUserId"]),
 
   comments: defineTable({
     taskId: v.id("tasks"),

@@ -12,10 +12,11 @@ import {
   Plus, Trash2, Edit2, Server as ServerIcon,
 } from "lucide-react";
 import { AGENT_COLOR_PRESETS, getServerRecommendation } from "@/hooks/useAgents";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const AgentsPage = () => {
   const agents = useQuery(api.agents.list) ?? [];
-  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const tasks = useUserTasks();
   const activity = useQuery(api.activityFns.list, {}) ?? [];
   const usageData = useQuery(api.usage.listAll) ?? [];
   const agentConfigs = useQuery(api.agentConfigs.list) ?? [];

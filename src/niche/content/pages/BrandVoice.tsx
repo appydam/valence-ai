@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 interface VoiceProfile {
   tone: string;
@@ -93,7 +94,7 @@ export function BrandVoice() {
   }, []);
 
   // Query completed brand voice tasks
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const brandVoiceTasks = (tasks ?? []).filter(
     (t: { tags?: string[]; status: string }) =>
       t.tags?.includes("niche:content") &&

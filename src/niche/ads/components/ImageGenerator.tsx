@@ -4,6 +4,7 @@ import { api } from "../../../../convex/_generated/api";
 import { Image, Wand2, Loader2, Download, ExternalLink } from "lucide-react";
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const STYLE_OPTIONS = [
   { id: "photorealistic", label: "Photorealistic" },
@@ -33,7 +34,7 @@ export function ImageGenerator() {
   const [style, setStyle] = useState<string>("photorealistic");
   const [format, setFormat] = useState<string>("1:1");
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const imageTasks: GeneratedImage[] = (tasks ?? [])
     .filter(
       (t: { tags?: string[]; title: string }) =>

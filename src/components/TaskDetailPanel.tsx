@@ -9,6 +9,7 @@ import { X, Check, Inbox, Trash2, MessageSquare, Package, ChevronDown, ChevronRi
 import { ReasoningStream } from "@/components/ReasoningStream";
 
 import { tenant } from "@/tenant";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const CONVEX_SITE_URL = tenant.convexSiteUrl;
 
@@ -77,7 +78,7 @@ export function TaskDetailPanel({ task, onClose }: TaskDetailPanelProps) {
   const integrationLogs = useQuery(api.integrationActivity.listByTask, { taskId: task._id as string, limit: 50 }) ?? [];
 
   // All tasks for dependency picker
-  const allTasks = useQuery(api.tasks.list, {}) ?? [];
+  const allTasks = useUserTasks();
   const searchResults = depSearchQuery.trim()
     ? allTasks.filter(t =>
         t._id !== task._id &&

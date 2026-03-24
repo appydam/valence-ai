@@ -23,6 +23,7 @@ import {
   Plug,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useUserTasks } from "@/hooks/useUserScoped";
 import {
   AreaChart,
   Area,
@@ -59,7 +60,7 @@ export function AdsDashboard() {
 
   const [prompt, setPrompt] = useState("");
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const adsTasks = (tasks ?? []).filter((t: { tags?: string[] }) =>
     t.tags?.includes("niche:ads")
   );

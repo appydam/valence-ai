@@ -6,6 +6,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useCurrentUserId } from "@/hooks/useCurrentUserId";
 import {
+import { useUserTasks } from "@/hooks/useUserScoped";
   Activity,
   Zap,
   CheckCircle2,
@@ -77,7 +78,7 @@ function IntegrationChip({ slug, connected }: { slug: string; connected: boolean
 export default function AgentHealth() {
   const userId = useCurrentUserId();
   const agents = useQuery(api.agents.listWithActivity) ?? [];
-  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const tasks = useUserTasks();
   const connections = useQuery(api.connections.listByUser, { userId }) ?? [];
   const blueprints = useQuery(api.blueprints.list, { status: "active" }) ?? [];
   const integrationLogs = useQuery(api.integrationActivity.list, { limit: 200 }) ?? [];

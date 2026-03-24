@@ -7,6 +7,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Loader, CheckCircle, Clock, Users } from "lucide-react";
 import { GettingStartedChecklist } from "@/components/GettingStartedChecklist";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const Index = () => {
   const agents = useQuery(api.agents.list) ?? [];
@@ -19,7 +20,7 @@ const Index = () => {
       seedAgents();
     }
   }, [seedAgents]);
-  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const tasks = useUserTasks();
 
   const stats = {
     inProgress: tasks.filter(t => t.status === "in_progress").length,

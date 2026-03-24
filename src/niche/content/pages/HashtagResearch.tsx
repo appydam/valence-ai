@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 interface HashtagResult {
   hashtag: string;
@@ -112,7 +113,7 @@ export function HashtagResearch() {
   }, []);
 
   // Query completed hashtag research tasks
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const hashtagTasks = (tasks ?? []).filter(
     (t: { tags?: string[]; status: string }) =>
       t.tags?.includes("niche:content") &&

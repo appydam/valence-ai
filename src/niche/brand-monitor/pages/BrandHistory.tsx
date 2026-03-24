@@ -10,6 +10,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useNiche } from "../../framework/NicheContext";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
   done: { icon: CheckCircle2, color: "text-green-500", label: "Completed" },
@@ -22,7 +23,7 @@ const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; 
 
 export function BrandHistory() {
   const { config } = useNiche();
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const brandTasks = (tasks ?? [])
     .filter((t: { tags?: string[] }) => t.tags?.includes("niche:brand-monitor"))
     .sort((a: { _creationTime: number }, b: { _creationTime: number }) => b._creationTime - a._creationTime);

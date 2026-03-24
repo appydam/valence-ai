@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useNiche } from "./NicheContext";
 import { useAgentTrigger } from "./useAgentTrigger";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -109,7 +110,7 @@ export function CrossNicheAutopilot({ isOpen, onClose }: CrossNicheAutopilotProp
   const [launched, setLaunched] = useState(false);
 
   // Watch the planning task for completion
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const planningTask = useMemo(
     () =>
       planningTaskId

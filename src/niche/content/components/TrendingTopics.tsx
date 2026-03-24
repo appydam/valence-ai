@@ -4,6 +4,7 @@ import { api } from "../../../../convex/_generated/api";
 import { TrendingUp, TrendingDown, Minus, Loader2, Search } from "lucide-react";
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 interface TrendingTopic {
   id: string;
@@ -57,7 +58,7 @@ export function TrendingTopics() {
   const { triggerAgent, loading: agentLoading } = useAgentTrigger();
   const [triggered, setTriggered] = useState(false);
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const trendingTasks = (tasks ?? []).filter(
     (t: { tags?: string[]; status: string }) =>
       t.tags?.includes("niche:content") &&

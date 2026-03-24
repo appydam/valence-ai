@@ -13,6 +13,7 @@ import { api } from "../../../../convex/_generated/api";
 import { useNiche } from "../../framework/NicheContext";
 import { useIntegrationCall } from "../../framework/useIntegrationCall";
 import { useContentMetrics } from "../hooks/useContentMetrics";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const PLATFORMS = [
   { slug: "twitter-x", label: "Twitter/X", color: "#1DA1F2" },
@@ -35,7 +36,7 @@ export function ContentDataPanel() {
   const hasConnections = PLATFORMS.some((p) => isConnected(p.slug));
 
   // Recent content tasks
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const recentContent = (tasks ?? [])
     .filter((t: { tags?: string[]; status: string }) => t.tags?.includes("niche:content") && t.status === "done")
     .sort((a: { _creationTime: number }, b: { _creationTime: number }) => b._creationTime - a._creationTime)

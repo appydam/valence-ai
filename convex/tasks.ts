@@ -8,9 +8,25 @@ export const list = query({
   args: {
     status: v.optional(v.string()),
     assignee: v.optional(v.string()),
+    userId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     let results;
+    // If userId is provided, scope results to that user's tasks
+    if (args.userId) {
+      results = await ctx.db
+        .query("tasks")
+        .withIndex("by_requiredUserId", (q) => q.eq("requiredUserId", args.userId))
+        .collect();
+      if (args.status) {
+        results = results.filter((t) => t.status === args.status);
+      }
+      if (args.assignee) {
+        results = results.filter((t) => t.assignee === args.assignee);
+      }
+      return results;
+    }
+    // Fallback: unscoped (for agents, internal calls)
     if (args.status) {
       results = await ctx.db
         .query("tasks")

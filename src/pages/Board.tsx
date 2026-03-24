@@ -15,6 +15,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { tenant } from "@/tenant";
 import { useToast } from "@/hooks/use-toast";
+import { useUserMissions } from "@/hooks/useUserScoped";
 
 const columns: { key: TaskStatus; label: string }[] = [
   { key: "inbox", label: "Inbox" },
@@ -30,7 +31,7 @@ const Board = () => {
   const [searchParams] = useSearchParams();
   const missionFromUrl = searchParams.get("mission");
   const [selectedMissionId, setSelectedMissionId] = useState<Id<"missions"> | null>(null);
-  const missions = useQuery(api.missions.list, {}) ?? [];
+  const missions = useUserMissions();
   const [wakingAgents, setWakingAgents] = useState(false);
   const [view, setView] = useState<"board" | "squad" | "plan">("board");
 

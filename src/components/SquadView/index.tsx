@@ -9,6 +9,7 @@ import { AgentInfoPanel } from "./AgentInfoPanel";
 import { MissionProgressBar } from "./MissionProgressBar";
 import { LiveTicker } from "./LiveTicker";
 import { NeuralView } from "../NeuralView/NeuralView";
+import { useUserTasks, useUserMissions } from "@/hooks/useUserScoped";
 
 interface SquadViewProps {
   onTaskSelect: (taskId: string) => void;
@@ -21,8 +22,8 @@ export function SquadView({ onTaskSelect }: SquadViewProps) {
 
   // Convex real-time data
   const agents = useQuery(api.agents.list) ?? [];
-  const tasks = useQuery(api.tasks.list, {}) ?? [];
-  const missions = useQuery(api.missions.list, {}) ?? [];
+  const tasks = useUserTasks();
+  const missions = useUserMissions();
   const activity = useQuery(api.activityFns.list, { limit: 20 }) ?? [];
 
   // Movement state machine (kept to maintain hook call order)

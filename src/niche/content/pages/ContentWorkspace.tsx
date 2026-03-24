@@ -20,6 +20,7 @@ import { useContentMetrics } from "../hooks/useContentMetrics";
 import { ExecutionStream } from "../../framework/components/ExecutionStream";
 import { ContentDataPanel } from "../components/ContentDataPanel";
 import { InsightCard } from "../../framework/components/InsightCard";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const SUGGESTION_CHIPS = [
   "Write a Twitter thread about our product launch",
@@ -40,7 +41,7 @@ export function ContentWorkspace() {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const contentTasks = (tasks ?? []).filter(
     (t: { tags?: string[] }) => t.tags?.includes("niche:content")
   );

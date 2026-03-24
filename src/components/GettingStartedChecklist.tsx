@@ -6,6 +6,7 @@ import {
   CheckCircle2, Circle, Plug, FileText, Bot, Users, Webhook,
   ArrowRight, X, Rocket,
 } from "lucide-react";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 interface CheckItem {
   id: string;
@@ -18,7 +19,7 @@ interface CheckItem {
 
 export function GettingStartedChecklist() {
   const onboardingState = useQuery(api.onboarding.getCurrent);
-  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const tasks = useUserTasks();
   const agents = useQuery(api.agents.list) ?? [];
   const teamMembers = useQuery(api.users.listTeamMembers) ?? [];
 

@@ -5,10 +5,11 @@ import { TaskDetailPanel } from "@/components/TaskDetailPanel";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 const Squad = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const tasks = useQuery(api.tasks.list, {}) ?? [];
+  const tasks = useUserTasks();
 
   const selectedTask = selectedTaskId
     ? tasks.find((t) => t._id === selectedTaskId) ?? null

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useNiche } from "../../framework/NicheContext";
 import { useAgentTrigger } from "../../framework/useAgentTrigger";
+import { useUserTasks } from "@/hooks/useUserScoped";
 
 type FlywheelStage = "Research" | "Draft" | "Review" | "Published" | "Analyzing";
 
@@ -87,7 +88,7 @@ export function ContentFlywheel() {
   const { config } = useNiche();
   const { triggerAgent, loading: agentLoading } = useAgentTrigger();
 
-  const tasks = useQuery(api.tasks.list, {});
+  const tasks = useUserTasks();
   const contentTasks = useMemo(
     () =>
       (tasks ?? []).filter((t: { tags?: string[] }) =>
