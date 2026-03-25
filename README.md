@@ -26,6 +26,9 @@ It's not a chatbot wrapper. It's a full operating system for AI workers: task ma
 
 ## System Architecture
 
+<details>
+<summary><b>Platform Architecture Diagram</b> (click to expand)</summary>
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
 │                              VALENCE AI PLATFORM                                    │
@@ -74,6 +77,11 @@ It's not a chatbot wrapper. It's a full operating system for AI workers: task ma
 │  └─────────────────────────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+</details>
+
+<details>
+<summary><b>Mission Flow — How agents coordinate</b> (click to expand)</summary>
 
 ### How a mission flows through the system
 
@@ -125,11 +133,15 @@ Human: "Research our top 10 competitors and draft outreach emails"
                    Mission Complete: 7/7 tasks, 4 agents, 6 API integrations
 ```
 
+</details>
+
 ---
 
 ## Core Systems — Deep Dive
 
-### 1. Agent Orchestration Engine
+<details>
+<summary><b>1. Agent Orchestration Engine</b></summary>
+
 
 The orchestration layer manages the full lifecycle of AI agents — from waking them up to coordinating multi-step missions with task dependencies.
 
@@ -170,7 +182,10 @@ convex/
 - Every task goes through a quality review gate before completion.
 - Rejection sends the task back with feedback — agents iterate up to N times.
 
-### 2. Universal Integration Engine
+</details>
+
+<details>
+<summary><b>2. Universal Integration Engine</b></summary>
 
 Replaces expensive integration platforms (Paragon, Merge, Tray.io). User pastes an API docs URL → Claude reads the docs → generates tool definitions → agents call real APIs.
 
@@ -211,7 +226,10 @@ convex/
 - Per-user credential scoping — agents use the task creator's credentials.
 - Rate limit handling with exponential backoff.
 
-### 3. Agent Intelligence Layer
+</details>
+
+<details>
+<summary><b>3. Agent Intelligence Layer</b></summary>
 
 Agents aren't stateless function calls. They have persistent memory, evolving personalities, and session continuity.
 
@@ -243,7 +261,10 @@ convex/
                             # 30-day cleanup cron prevents unbounded growth
 ```
 
-### 4. Event-Driven Automation
+</details>
+
+<details>
+<summary><b>4. Event-Driven Automation</b></summary>
 
 External events flow in via webhooks. Internal conditions trigger via monitors. Both wake agents to do real work.
 
@@ -269,7 +290,10 @@ convex/
                             # → checks condition → fires action if matched
 ```
 
-### 5. Niche Sub-Products
+</details>
+
+<details>
+<summary><b>5. Niche Sub-Products</b></summary>
 
 Full vertical applications built on top of the agent platform. Each has its own workspace, sidebar, and domain.
 
@@ -299,6 +323,8 @@ src/niche/
     ├── useAgentTrigger.ts   # Hook: prompt → Kaze task → agent execution
     └── registry.ts          # Niche config registry (sidebar items, integrations)
 ```
+
+</details>
 
 ---
 
