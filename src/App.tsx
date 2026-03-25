@@ -32,28 +32,13 @@ import SoulReview from "./pages/SoulReview";
 import MissionReport from "./pages/MissionReport";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import Landing from "./pages/Landing";
-import UseCasePage from "./pages/UseCase";
 import Autopilot from "./pages/Autopilot";
-import Pricing from "./pages/Pricing";
-import OpenSource from "./pages/OpenSource";
 import Onboarding from "./pages/Onboarding";
 import OperationsHub from "./pages/OperationsHub";
 import MorningBrief from "./pages/MorningBrief";
 import Docs from "./pages/Docs";
 import WarRoom from "./pages/WarRoom";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import BlogIndex from "./pages/BlogIndex";
-import BlogPost from "./pages/BlogPost";
-import ComparisonPage from "./pages/ComparisonPage";
-import CompareIndex from "./pages/CompareIndex";
-import IntegrationPage from "./pages/IntegrationPage";
-import GlossaryIndex from "./pages/GlossaryIndex";
-import GlossaryTerm from "./pages/GlossaryTerm";
 import FileManager from "./pages/FileManager";
-import NewPlan from "./pages/NewPlan";
-import Vision from "./pages/Vision";
 
 const queryClient = new QueryClient();
 
@@ -70,7 +55,7 @@ function AuthRoutes() {
         </div>
       </AuthLoading>
       <Unauthenticated>
-        <Navigate to="/landing" replace />
+        <Navigate to="/login" replace />
       </Unauthenticated>
       <Authenticated>
         <AuthenticatedRoutes />
@@ -171,26 +156,6 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Public pages — render instantly, no auth required */}
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/open-source" element={<OpenSource />} />
-          <Route path="/use-cases/:slug" element={<UseCasePage />} />
-          {/* Blog */}
-          <Route path="/blog" element={<BlogIndex />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          {/* Comparisons */}
-          <Route path="/compare" element={<CompareIndex />} />
-          <Route path="/compare/:slug" element={<ComparisonPage />} />
-          {/* Integrations (public SEO pages — separate from authenticated /integrations) */}
-          <Route path="/integrations/i/:slug" element={<IntegrationPage />} />
-          {/* Glossary */}
-          <Route path="/glossary" element={<GlossaryIndex />} />
-          <Route path="/glossary/:term" element={<GlossaryTerm />} />
-          <Route path="/vision" element={<Vision />} />
-          <Route path="/newplan" element={<NewPlan />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dev/login" element={<Login />} />
           {/* Everything else goes through auth */}
