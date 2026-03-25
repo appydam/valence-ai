@@ -144,7 +144,12 @@ npx convex env set AGENT_WAKEUP_WEBHOOK_SECRET your-hmac-secret
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) and complete the onboarding flow.
+The app will open at [http://localhost:5173](http://localhost:5173) — this is the public landing page.
+
+**To log in and access the dashboard:**
+1. Go to [http://localhost:5173/dev/login](http://localhost:5173/dev/login)
+2. Sign up / log in with your Clerk account
+3. You'll be redirected to the main dashboard where you can create tasks, manage agents, and configure integrations
 
 ### 5. Set up your VPS
 
