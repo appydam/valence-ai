@@ -28,3 +28,20 @@ convex/_generated
 emailsender/
 external data/
 important docs/
+
+# Internal docs & strategy (keep local only)
+project_context_for_AI.md
+GTM_PITCH_PLAYBOOK.md
+PROJECT_BIBLE.md
+
+# Non-source directories (keep local only)
+tasks/
+content/
+screenshots/
+video/
+twitterContent/
+deployment-scripts/
+skills/
+
+# Lock files
+bun.lockb

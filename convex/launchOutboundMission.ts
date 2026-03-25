@@ -5,7 +5,7 @@
  * Agents are auto-woken by the task creation handler.
  *
  * Usage:
- *   npx convex run launchOutboundMission '{"userId":"user_39f60iciK4nX4Q0efRxrfyuHqj2"}' --url https://beloved-squirrel-599.convex.cloud
+ *   npx convex run launchOutboundMission '{"userId":"YOUR_CLERK_USER_ID"}' --url https://<YOUR_DEPLOYMENT>.convex.cloud
  */
 
 import { mutation } from "./_generated/server";
