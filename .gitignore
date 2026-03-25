@@ -43,5 +43,8 @@ twitterContent/
 deployment-scripts/
 skills/
 
+# Real server files (your personal agent configs — keep local only)
+server-files/
+
 # Lock files
 bun.lockb
