@@ -365,7 +365,7 @@ src/niche/
 
 ```bash
 git clone https://github.com/appydam/valence-ai.git
-cd valence-ai/agent-orchestrator
+cd valence-ai
 npm install
 ```
 
@@ -411,6 +411,8 @@ done
 ```
 
 ### 5. Start the frontend
+
+> **Important:** Make sure `npx convex dev` (step 3) is still running in another terminal. It generates the `convex/_generated/` types that the frontend needs. The frontend won't build without it.
 
 ```bash
 npm run dev
