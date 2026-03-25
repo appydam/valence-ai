@@ -4,13 +4,11 @@
 
 **Open-source autonomous AI workforce platform**
 
-Deploy a squad of specialized AI agents. Assign tasks, manage integrations, monitor performance — all from one dashboard.
+Deploy a squad of specialized AI agents that research, build, write, review each other's work, and ship — while you sleep.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Built with Convex](https://img.shields.io/badge/Backend-Convex-orange)](https://convex.dev)
 [![Auth by Clerk](https://img.shields.io/badge/Auth-Clerk-purple)](https://clerk.com)
-
-![Valence AI Dashboard](docs/screenshot.png)
 
 </div>
 
@@ -18,17 +16,289 @@ Deploy a squad of specialized AI agents. Assign tasks, manage integrations, moni
 
 ## What is Valence AI?
 
-Valence AI is a self-hosted AI workforce platform and orchestration dashboard for [OpenClaw](https://openclaw.dev) AI agents. Instead of managing agents through a terminal, you get a real-time web UI where you can:
+Valence AI is a self-hosted command center for orchestrating autonomous AI agents. You give one instruction — agents decompose it into tasks, coordinate across integrations, review each other's work, and deliver results.
 
-- **Create and assign tasks** to any agent with one click
-- **Watch agents work** through live activity feeds and status cards
-- **Connect 100+ integrations** (GitHub, Slack, HubSpot, Notion, Jira, Google Workspace, and more) using the built-in Integration Engine
-- **Edit agent SOUL files** — the plain-English instructions that define each agent's personality and capabilities
-- **Set up webhooks and monitors** — trigger agents from Slack messages, GitHub events, HubSpot deals, or continuous polling conditions
-- **Review deliverables** before they ship, with configurable approval gates
-- **Analyze performance** through mission reports, task throughput charts, and agent analytics
+It's not a chatbot wrapper. It's a full operating system for AI workers: task management, persistent memory, 100+ real API integrations, quality review gates, webhook automation, and real-time observability — all from a single dashboard.
 
-> **Agents run on your server.** Valence AI is purely a dashboard — it talks to OpenClaw agents running on your Linux VPS via webhook.
+> **Agents run on your server.** Valence AI is the brain. [OpenClaw](https://openclaw.dev) agents on your Linux VPS are the hands. They communicate via webhooks.
+
+---
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              VALENCE AI PLATFORM                                    │
+│                                                                                     │
+│  ┌──────────────────────────┐       ┌──────────────────────────────────────────┐    │
+│  │     FRONTEND (React)     │       │         BACKEND (Convex)                 │    │
+│  │                          │  WS   │                                          │    │
+│  │  Dashboard / Board / War │◄─────►│  Real-time DB    Serverless Functions    │    │
+│  │  Room / Analytics / File │       │  ┌────────┐     ┌──────────────────┐     │    │
+│  │  Manager / Niche Apps    │       │  │ tasks  │     │ agentWakeup.ts   │     │    │
+│  │                          │       │  │missions│     │ executionEngine.ts│     │    │
+│  │  ┌────────────────────┐  │       │  │agents  │     │ webhookReceiver.ts│    │    │
+│  │  │ Integration Engine │  │       │  │memory  │     │ monitorPolling.ts│     │    │
+│  │  │ OAuth + API Keys   │  │       │  │activity│     │ soulDistillation │     │    │
+│  │  │ AES-256-GCM Vault  │  │       │  │connects│     │ missionAutopilot │     │    │
+│  │  └────────────────────┘  │       │  └────────┘     └──────────────────┘     │    │
+│  └──────────────────────────┘       └──────────┬───────────────────────────────┘    │
+│                                                 │                                   │
+└─────────────────────────────────────────────────┼───────────────────────────────────┘
+                                                  │
+                              HMAC-SHA256 signed webhooks
+                                                  │
+                                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                          YOUR LINUX SERVER (VPS)                                    │
+│                                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐    │
+│  │                        AGENT WAKEUP SERVER (:3333)                          │    │
+│  │  Receives webhook → validates HMAC → spawns OpenClaw agent process          │    │
+│  │  Concurrency control: one session per agent, queue if busy                  │    │
+│  └─────────────────────────┬───────────────────────────────────────────────────┘    │
+│                             │                                                       │
+│  ┌──────────┐ ┌──────────┐ │ ┌──────────┐ ┌──────────┐ ┌──────────┐               │
+│  │   KAZE   │ │  SCOUT   │ │ │  FORGE   │ │  GHOST   │ │ SENTINEL │  ... N agents  │
+│  │Orchestrat│ │Research &│ │ │Engineer &│ │Content & │ │QA Review │               │
+│  │or / COS  │ │Intel     │ │ │Builder   │ │Comms     │ │& Audit   │               │
+│  ├──────────┤ ├──────────┤ │ ├──────────┤ ├──────────┤ ├──────────┤               │
+│  │ SOUL.md  │ │ SOUL.md  │ │ │ SOUL.md  │ │ SOUL.md  │ │ SOUL.md  │               │
+│  │ Memory   │ │ Memory   │ │ │ Memory   │ │ Memory   │ │ Memory   │               │
+│  │ Sessions │ │ Sessions │ │ │ Sessions │ │ Sessions │ │ Sessions │               │
+│  └──────────┘ └──────────┘   └──────────┘ └──────────┘ └──────────┘               │
+│                                                                                     │
+│  ┌─────────────────────────────────────────────────────────────────────────────┐    │
+│  │                        SSH PROXY SERVER (:3001)                              │    │
+│  │  SOUL file sync │ Agent registration │ Server health │ File operations      │    │
+│  └─────────────────────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### How a mission flows through the system
+
+```
+Human: "Research our top 10 competitors and draft outreach emails"
+  │
+  ▼
+┌─────────────┐    ┌──────────────────────────────────────────────────────┐
+│ KAZE        │───►│ Mission Decomposition                                │
+│ Orchestrator│    │ Breaks into 7 parallel tasks with dependency graph:  │
+└─────────────┘    │                                                      │
+                   │  T1: Research competitors (Scout)                    │
+                   │  T2: Enrich contacts (Scout) ─── depends on T1      │
+                   │  T3: Draft emails (Ghost) ─── depends on T2         │
+                   │  T4: Review emails (Sentinel) ─── depends on T3     │
+                   │  T5: Push to HubSpot (Forge) ─── depends on T2, T4  │
+                   └──────────────────────────────────────────────────────┘
+                          │
+                          ▼ Webhook wakeup per agent
+                   ┌──────────────┐
+                   │ Scout wakes  │──► Apollo API: search_organizations
+                   │              │──► Apollo API: search_people
+                   │              │──► Posts deliverable: 50 companies + 150 contacts
+                   └──────┬───────┘
+                          │ Task complete → triggers dependent tasks
+                          ▼
+                   ┌──────────────┐
+                   │ Ghost wakes  │──► Reads Scout's deliverable
+                   │              │──► Drafts 4-step email sequence
+                   │              │──► Posts deliverable: email templates
+                   └──────┬───────┘
+                          │
+                          ▼
+                   ┌──────────────┐
+                   │Sentinel wakes│──► Reviews Ghost's emails
+                   │              │──► Checks: spam words, clarity, tone, CTA
+                   │              │──► APPROVED ✓ (or REJECTED → Ghost reworks)
+                   └──────┬───────┘
+                          │
+                          ▼
+                   ┌──────────────┐
+                   │ Forge wakes  │──► HubSpot API: create_contacts (batch)
+                   │              │──► HubSpot API: create_sequence
+                   │              │──► HubSpot API: enroll_contacts
+                   │              │──► Posts deliverable: sequence ID + enrollment count
+                   └──────────────┘
+                          │
+                          ▼
+                   Mission Complete: 7/7 tasks, 4 agents, 6 API integrations
+```
+
+---
+
+## Core Systems — Deep Dive
+
+### 1. Agent Orchestration Engine
+
+The orchestration layer manages the full lifecycle of AI agents — from waking them up to coordinating multi-step missions with task dependencies.
+
+```
+convex/
+├── agentWakeup.ts          # Webhook dispatcher: routes tasks to correct agent
+│                           # HMAC-SHA256 signature validation
+│                           # Concurrency throttling (configurable per agent)
+│                           # Agent slug resolution from DB (not hardcoded)
+│
+├── tasks.ts                # Task state machine: inbox → assigned → in_progress
+│                           #   → in_review → completed/rejected
+│                           # User-scoped queries (by_requiredUserId index)
+│                           # Dependency resolution: auto-wake blocked tasks
+│                           # Iteration tracking for rejection/rework cycles
+│
+├── missions.ts             # Mission lifecycle: active → completed → archived
+│                           # Task decomposition via Autopilot (Claude-powered)
+│                           # Progress tracking: taskCount / completedTaskCount
+│
+├── agents.ts               # Dynamic agent registry (no hardcoded agent list)
+│                           # Role-based queries: getOrchestrator, getReviewers
+│                           # Heartbeat tracking + stale agent auto-reset
+│
+├── missionAutopilot.ts     # Claude decomposes a goal into a task dependency graph
+│                           # Assigns agents by role, sets priorities, creates mission
+│
+├── agentWakeupSweep.ts     # Safety net cron: catches stuck assigned/in_progress tasks
+│                           # Re-wakes agents if webhook delivery failed
+│
+└── crons.ts                # 10+ scheduled jobs: review sweeps, memory archival,
+                            # soul distillation, health checks, webhook retries
+```
+
+**Key design decisions:**
+- Agents are database-driven, not hardcoded. Create unlimited agents via the UI.
+- Task dependencies form a DAG. Completing T1 auto-wakes agents blocked on T1.
+- Every task goes through a quality review gate before completion.
+- Rejection sends the task back with feedback — agents iterate up to N times.
+
+### 2. Universal Integration Engine
+
+Replaces expensive integration platforms (Paragon, Merge, Tray.io). User pastes an API docs URL → Claude reads the docs → generates tool definitions → agents call real APIs.
+
+```
+convex/
+├── blueprints.ts           # Integration blueprint CRUD
+│                           # Each blueprint: slug, baseUrl, authType, tools[]
+│                           # 50+ pre-seeded blueprints (seed*.ts files)
+│
+├── blueprintTools.ts       # Per-blueprint tool definitions
+│                           # Method, path, params, headers, body templates
+│                           # AI-generated from API documentation
+│
+├── connections.ts          # Per-user encrypted credential storage
+│                           # AES-256-GCM encryption at rest
+│                           # OAuth2 + API key + custom auth support
+│                           # Auto-refresh for expiring OAuth tokens
+│
+├── connectionActions.ts    # OAuth popup flow with HMAC-signed state
+│                           # Token exchange, encryption, storage
+│                           # Callback URL: /api/integrations/oauth/callback
+│
+├── executionEngine.ts      # Runtime: resolves params → sets auth headers →
+│                           # makes HTTP request → handles 429/5xx retries →
+│                           # logs to integrationActivity table
+│
+├── docScraper.ts           # Paste any API docs URL → Claude reads HTML/OpenAPI
+│                           # → generates blueprint + tool definitions
+│                           # Supports: OpenAPI/Swagger, REST HTML docs, GraphQL
+│
+└── tokenRefresh.ts         # Hourly cron: refreshes OAuth tokens expiring within 1hr
+                            # Handles provider-specific quirks (Google, HubSpot, etc.)
+```
+
+**Security model:**
+- Credentials encrypted with AES-256-GCM before storage. Key in env var, never in DB.
+- OAuth state signed with HMAC to prevent CSRF.
+- Per-user credential scoping — agents use the task creator's credentials.
+- Rate limit handling with exponential backoff.
+
+### 3. Agent Intelligence Layer
+
+Agents aren't stateless function calls. They have persistent memory, evolving personalities, and session continuity.
+
+```
+convex/
+├── agentMemory.ts          # Episodic memory: facts, preferences, API quirks
+│                           # Per-agent memory banks with relevance scoring
+│                           # TTL expiry + archival for stale memories
+│                           # Agents write memories during tasks, read on wakeup
+│
+├── soulDistillation.ts     # Weekly cron: Claude reads high-value memories →
+│                           # proposes SOUL file updates → human reviews diff
+│                           # Agents literally evolve over time
+│
+├── soulFiles.ts            # Version-controlled SOUL file storage
+│                           # Diff viewer for proposed changes
+│                           # Sync to server via SSH proxy
+│
+├── sessionHandoffs.ts      # When agent session ends mid-task (timeout, crash):
+│                           # Saves context → next session picks up where left off
+│                           # Prevents re-doing completed work
+│
+├── integrationLearning.ts  # Analyzes API call patterns across all agents
+│                           # Auto-detects quirks: rate limits, pagination styles
+│                           # Writes squad-wide api_quirk memories
+│
+└── reasoning.ts            # Stores agent reasoning steps for observability
+                            # War Room shows real-time agent thought process
+                            # 30-day cleanup cron prevents unbounded growth
+```
+
+### 4. Event-Driven Automation
+
+External events flow in via webhooks. Internal conditions trigger via monitors. Both wake agents to do real work.
+
+```
+convex/
+├── webhooks.ts             # Native handlers: Slack, GitHub, Linear
+│                           # Event → automation rule match → create task → wake agent
+│
+├── webhookReceiver.ts      # Generic receiver: POST /webhooks/{slug}/{userId}/{name}
+│                           # Accepts any JSON payload from any source
+│                           # Dead letter queue for failed events (max 3 retries)
+│
+├── webhookEndpoints.ts     # User-defined webhook endpoints with URL generation
+│                           # Status: active/paused/disabled
+│
+├── automationRules.ts      # If-this-then-that rules: event pattern → agent action
+│                           # Field matching, regex conditions, priority routing
+│
+├── monitors.ts             # Continuous polling monitors (1–60 min intervals)
+│                           # "Watch HubSpot for deals > $50K" → wake Ghost
+│
+└── monitorPolling.ts       # Cron evaluates due monitors → executes integration call
+                            # → checks condition → fires action if matched
+```
+
+### 5. Niche Sub-Products
+
+Full vertical applications built on top of the agent platform. Each has its own workspace, sidebar, and domain.
+
+```
+src/niche/
+├── ads/                    # AI Ad Manager — Google Ads + Meta Ads
+│   ├── simulation/         # Full demo simulation with auto-typing prompt,
+│   │                       # phased execution stream, creative generation
+│   ├── pages/              # 18 pages: campaigns, keywords, budgets, creatives,
+│   │                       # A/B tests, attribution, demographics, automation
+│   └── components/         # ExecutionStream, LiveDataPanel, InsightCard
+│
+├── gtm/                    # AI GTM Engine — outbound sales pipeline
+│   └── pages/              # Pipeline, leads, ICP builder, sequences, signals
+│
+├── content/                # AI Content Studio — multi-platform publishing
+│   └── pages/              # Compose, blog, calendar, SEO, brand voice, flywheel
+│
+├── brand-monitor/          # AI Brand Monitor — reputation tracking
+│   └── pages/              # Mentions, sentiment, alerts, sources, reports
+│
+└── framework/              # Shared niche infrastructure
+    ├── NicheShell.tsx       # Provider + layout + onboarding wizard
+    ├── NicheSidebar.tsx     # Dynamic sidebar with simulation badges
+    ├── NicheContext.tsx      # Config, accent colors, integration requirements
+    ├── CommandBar.tsx       # Cmd+K command palette per niche
+    ├── useAgentTrigger.ts   # Hook: prompt → Kaze task → agent execution
+    └── registry.ts          # Niche config registry (sidebar items, integrations)
+```
 
 ---
 
@@ -36,50 +306,20 @@ Valence AI is a self-hosted AI workforce platform and orchestration dashboard fo
 
 | Feature | Description |
 |---|---|
-| 🤖 **Dynamic agents** | Create unlimited agents via the UI. No hardcoded agent list. |
-| 🔌 **Integration Engine** | Paste any API docs URL → Claude generates tool definitions → agents call real APIs |
-| 🧠 **Agent memory** | Persistent memory bank per agent. Agents accumulate context across tasks. |
-| 🔍 **Quality gates** | Reviewer agents check every deliverable. Configurable approval flows. |
-| 📡 **Webhooks** | Trigger agents from Slack, GitHub, Linear, HubSpot events, or custom webhooks |
-| 📊 **Monitors** | Continuously poll APIs/conditions on a schedule, wake agents on match |
-| 🗂️ **File manager** | Browse and edit SOUL.md files directly from the dashboard via SSH |
-| 📈 **Analytics** | Mission reports, agent activity heatmaps, task completion rates |
-| 🎙️ **Voice briefings** | Morning audio briefings from your orchestrator agent (optional) |
-| 🔐 **Self-hosted** | All data stays on your infrastructure. No external SaaS dependencies. |
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│           Valence AI (this repo)        │
-│                                             │
-│  React + Vite + Tailwind   ←→   Convex      │
-│  (Frontend dashboard)           (Backend DB) │
-│                │                            │
-└────────────────┼────────────────────────────┘
-                 │ HTTP webhooks
-                 ▼
-┌─────────────────────────────────────────────┐
-│         Your Linux Server (VPS)             │
-│                                             │
-│  OpenClaw agents  ←→  Agent wakeup server   │
-│  (kaze, scout,         (port 3333)          │
-│   forge, ghost,                             │
-│   sentinel, ...)   SSH Proxy (port 3001)    │
-└─────────────────────────────────────────────┘
-```
-
-**Frontend** — React + Vite + TypeScript + Tailwind + shadcn/ui. Deployed to Vercel, Netlify, or any static host.
-
-**Backend** — [Convex](https://convex.dev) serverless functions + real-time database. Free tier supports most personal/small team workloads.
-
-**Auth** — [Clerk](https://clerk.com) handles authentication. 10,000 MAU free.
-
-**Agents** — [OpenClaw](https://openclaw.dev) AI agent framework, running on your Linux VPS. Agents wake up via webhook when Valence AI assigns a task.
-
-**SSH Proxy** — Small Node.js service (`server-files/ssh-proxy-server.js`) running on your VPS that enables SOUL file sync and agent registration from the dashboard.
+| **Dynamic agents** | Create unlimited agents via the UI. Each gets a SOUL file, memory bank, and configurable model. |
+| **Integration Engine** | 50+ pre-built blueprints. Or paste any API docs URL → Claude generates tool definitions → agents call real APIs. |
+| **Agent memory** | Persistent episodic memory per agent. Agents accumulate context, preferences, and API quirks across tasks. |
+| **Soul distillation** | Weekly: Claude reads agent memories → proposes SOUL file evolution → human reviews. Agents get better over time. |
+| **Quality gates** | Reviewer agents check every deliverable. Rejection sends the task back with feedback. Configurable max iterations. |
+| **Mission autopilot** | Describe a goal → Claude decomposes into a task dependency graph → agents execute in parallel. |
+| **Webhooks** | Trigger agents from Slack, GitHub, Linear, HubSpot, or any HTTP POST. Dead letter queue + retries. |
+| **Monitors** | Poll any API on a schedule. Condition matches → agent wakes with a pre-filled task. |
+| **War Room** | Real-time observability: agent reasoning steps, tool calls, handoffs, approval flow — all live. |
+| **File manager** | Browse and edit SOUL.md / SKILL.md files via SSH. Rich editor with syntax highlighting. |
+| **Niche apps** | Vertical products: AI Ad Manager (with simulation), GTM Engine, Content Studio, Brand Monitor. |
+| **User isolation** | Tasks and missions scoped by userId. Each user sees only their own data. |
+| **Session continuity** | Agent crashes mid-task? Next session picks up where it left off via session handoffs. |
+| **Analytics** | Mission completion rates, agent throughput, task trends, cost per mission. |
 
 ---
 
@@ -107,7 +347,7 @@ npm install
 cp .env.example .env.local
 ```
 
-Edit `.env.local` and fill in:
+Edit `.env.local`:
 
 ```env
 VITE_CONVEX_URL=https://your-deployment.convex.cloud
@@ -122,23 +362,27 @@ VITE_SSH_PROXY_URL=http://your-server-ip:3001
 npx convex dev
 ```
 
-This creates a Convex project on first run, generates the type-safe client, and starts watching for schema changes.
-
-In a new terminal, set required Convex environment variables:
+In a new terminal, set Convex environment variables:
 
 ```bash
-# Integration encryption key (generate a random 64-char hex string)
 npx convex env set INTEGRATION_ENCRYPTION_KEY $(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-
-# Anthropic API key (for doc scraper, autopilot, soul distillation)
 npx convex env set ANTHROPIC_API_KEY sk-ant-your-key-here
-
-# Agent wakeup server (running on your VPS)
 npx convex env set AGENT_WAKEUP_WEBHOOK_URL http://your-server-ip:3333
 npx convex env set AGENT_WAKEUP_WEBHOOK_SECRET your-hmac-secret
 ```
 
-### 4. Start the frontend
+### 4. Seed integration blueprints
+
+```bash
+# Seed the most common integrations
+for f in convex/seed*Blueprint.ts; do
+  name=$(basename "$f" .ts)
+  echo "Seeding $name..."
+  npx convex run "$name" 2>/dev/null || true
+done
+```
+
+### 5. Start the frontend
 
 ```bash
 npm run dev
@@ -146,20 +390,21 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173) — you'll be redirected to the login page. Sign up with your Clerk account and you'll land on the dashboard.
 
-### 5. Set up your VPS
-
-Install OpenClaw and the SSH proxy on your Linux server:
+### 6. Set up your VPS
 
 ```bash
 # On your VPS
 npm install -g @openclaw/cli
 openclaw init
 
-# Start the agent wakeup server (Valence AI calls this to wake agents)
+# Copy example SOUL files as starting templates
+cp -r server-files-example/agents/* ~/.openclaw/workspace/agents/
+cp server-files-example/SOUL.md ~/.openclaw/workspace/SOUL.md
+
+# Start the agent wakeup server
 nohup node ~/agent-wakeup-server.js > ~/agent-wakeup.log 2>&1 &
 
-# Start the SSH proxy (enables SOUL file sync from the dashboard)
-npm install ssh2
+# Start the SSH proxy
 nohup node ~/ssh-proxy-service/server.js > ~/ssh-proxy.log 2>&1 &
 ```
 
@@ -169,8 +414,6 @@ In Valence AI → Settings → Server, paste your SSH credentials. The dashboard
 
 ## Server Sizing
 
-Each agent runs as an independent Node.js process. More concurrent agents = more RAM needed.
-
 | Agents | RAM | CPU | Est. Cost |
 |--------|-----|-----|-----------|
 | 1–5    | 2 GB | 2 vCPUs | ~$10–12/mo |
@@ -179,202 +422,68 @@ Each agent runs as an independent Node.js process. More concurrent agents = more
 | 16–20  | 16 GB | 4 vCPUs | ~$80–100/mo |
 | 20+    | 32 GB | 8 vCPUs | ~$160+/mo |
 
-**Recommended starting point:** AWS Lightsail 4 GB ($20/mo), DigitalOcean Basic ($24/mo), or Hetzner CX22 ($7/mo for 4 GB).
-
 ---
 
-## Project Structure
+## Agent REST API
 
-```
-agent-orchestrator/
-├── convex/                    # Backend (Convex serverless functions)
-│   ├── schema.ts              # Database schema
-│   ├── agents.ts              # Agent CRUD + role queries
-│   ├── tasks.ts               # Task lifecycle (create, assign, complete, review)
-│   ├── messages.ts            # Agent messaging / squad broadcast
-│   ├── agentWakeup.ts         # Webhook trigger to wake sleeping agents
-│   ├── monitors.ts            # Continuous monitor definitions
-│   ├── monitorPolling.ts      # Cron-based monitor evaluation
-│   ├── http.ts                # HTTP API endpoints (for OpenClaw agents)
-│   ├── executionEngine.ts     # Integration tool execution runtime
-│   ├── blueprints.ts          # Integration blueprint CRUD
-│   ├── connections.ts         # Per-user encrypted OAuth/API key storage
-│   └── lib/                   # Shared utilities (crypto, auth, rateLimit)
-│
-├── src/
-│   ├── pages/                 # Route pages
-│   │   ├── Board.tsx          # Main task board (Kanban)
-│   │   ├── Agents.tsx         # Agent management + create/edit/delete
-│   │   ├── Analytics.tsx      # Performance analytics
-│   │   ├── MemoryBank.tsx     # Agent memory viewer
-│   │   ├── Monitors.tsx       # Continuous monitors
-│   │   ├── Webhooks.tsx       # Webhook rules
-│   │   ├── Files.tsx          # SOUL file manager
-│   │   ├── Settings.tsx       # API keys, SSH config, integrations
-│   │   └── ...
-│   ├── components/            # Reusable UI components
-│   │   ├── AgentConfigPanel.tsx  # Per-agent config (model, SOUL, skills)
-│   │   ├── TaskDetailPanel.tsx   # Task detail + comments + deliverables
-│   │   ├── LiveOpsFeed.tsx       # Real-time agent activity stream
-│   │   └── ...
-│   ├── hooks/
-│   │   └── useAgents.ts       # Dynamic agent data hook (replaces static config)
-│   └── types/
-│       └── mission.ts         # Shared TypeScript types
-│
-├── server-files/
-│   ├── ssh-proxy-server.js    # SSH proxy + agent registration service
-│   ├── SOUL.md                # Kaze (orchestrator) SOUL file template
-│   └── agents/                # Per-agent SOUL file templates
-│       ├── scout/SOUL.md
-│       ├── forge/SOUL.md
-│       ├── ghost/SOUL.md
-│       └── sentinel/SOUL.md
-│
-├── .env.example               # Environment variable template
-└── README.md                  # This file
-```
-
----
-
-## Agent API (for OpenClaw SOUL files)
-
-Valence AI exposes a REST API that agents call directly. All endpoints accept an `Authorization: Bearer <api-key>` header.
+Agents call these endpoints from their SOUL file tool definitions:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/heartbeat` | Agent heartbeat (keep alive, update status) |
-| `GET`  | `/api/tasks` | Fetch assigned tasks for the agent |
-| `POST` | `/api/tasks/claim` | Claim a task (set status → in_progress) |
+| `POST` | `/api/heartbeat` | Agent heartbeat (keep-alive, status update) |
+| `GET`  | `/api/tasks` | Fetch assigned tasks for the calling agent |
+| `POST` | `/api/tasks/claim` | Claim a task (assigned → in_progress) |
 | `POST` | `/api/tasks/deliverable` | Post a deliverable to a task |
 | `POST` | `/api/tasks/update` | Update task status/progress |
 | `POST` | `/api/comments` | Add a comment to a task |
-| `GET`  | `/api/activity` | Get recent activity |
 | `POST` | `/api/activity` | Log an activity event |
-
-Generate an API key in Settings → API Keys. Use the `heartbeat` permission for agent keys.
-
----
-
-## Integrations
-
-Valence AI includes 50+ pre-built integration blueprints. Connect them in Settings → Integrations.
-
-**Productivity:** Notion, Confluence, Google Drive, Dropbox
-**Communication:** Slack, Gmail, Outlook
-**Project Management:** Jira, Linear, Asana, Trello, GitHub, GitLab
-**CRM / Sales:** HubSpot, Salesforce, Pipedrive, Apollo
-**Analytics:** Google Analytics, Mixpanel, Amplitude
-**Payments:** Stripe
-**Cloud:** AWS, Google Cloud, Vercel
-**Social:** Twitter/X, LinkedIn
-**Databases:** Airtable, Notion, Google Sheets
-
-To add a custom integration: Settings → Integrations → New → paste the API docs URL. Claude will generate the tool definitions automatically.
-
----
-
-## SOUL Files
-
-A SOUL file is a plain-English Markdown document that defines an agent's personality, rules, and tool usage. It lives at `~/.openclaw/workspace/SOUL.md` (orchestrator) or `~/.openclaw/workspace/agents/{name}/SOUL.md` (other agents).
-
-Edit SOUL files from the dashboard: Agents → select agent → ⚙️ → SOUL tab.
-
-**SOUL file anatomy:**
-
-```markdown
-# Agent Name
-
-Brief description of who this agent is.
-
-## Core Rules
-- Never improvise specs — ask for clarification
-- Always post a heartbeat every 5 tool calls
-- Hard stop at turn 15, post partial results
-
-## Tools Available
-List the integrations and skills this agent should use.
-
-## Task Workflow
-Step-by-step how the agent should approach tasks.
-```
-
----
-
-## Webhooks & Monitors
-
-### Webhooks
-Create automation rules that trigger when events arrive from Slack, GitHub, Linear, or any custom HTTP endpoint. Configure in Webhooks → New Rule.
-
-Example: GitHub PR opened → create a code review task for Sentinel → wake Sentinel.
-
-### Monitors
-Continuously poll an integration on a schedule (every 1–60 min). When a condition matches, wake an agent with a pre-filled task.
-
-Example: HubSpot deal moved to "Closed Won" → wake Ghost to draft a success story.
-
----
-
-## Contributing
-
-Contributions welcome. Please:
-
-1. Fork the repo and create a feature branch
-2. Follow existing code patterns (React hooks, Convex mutations)
-3. Test your changes locally with `npm run dev` + `npx convex dev`
-4. Open a PR with a clear description of what changed and why
-
-**Areas where help is especially welcome:**
-- Additional integration blueprints (`convex/seed*.ts`)
-- Agent SOUL file templates for new roles
-- Mobile-responsive improvements
-- Documentation and tutorials
-
----
-
-## Development
-
-```bash
-# Start everything locally
-npx convex dev          # Terminal 1: Convex backend (watches for changes)
-npm run dev             # Terminal 2: Vite frontend (hot reload)
-
-# Type-check without deploying
-npx convex dev --once --typecheck=disable
-
-# Build for production
-npm run build
-
-# Run tests
-npm test
-```
-
-**Important:** Always deploy to the dev deployment with `npx convex dev --once --typecheck=disable`, not `npx convex deploy` (which targets production).
+| `POST` | `/api/integrations/execute` | Execute an integration tool (agents call real APIs) |
+| `POST` | `/api/agents/reasoning` | Log a reasoning step (visible in War Room) |
+| `POST` | `/api/warroom/message` | Post a message to the War Room |
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui |
-| Backend | Convex (serverless functions + real-time database) |
-| Auth | Clerk |
-| AI | Anthropic Claude (Sonnet 4.6 default) |
-| Agent Runtime | OpenClaw |
-| SSH Proxy | Node.js + ssh2 |
-| Charts | Recharts |
-| Animations | Framer Motion |
-| Code Editor | CodeMirror 6 |
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| Frontend | React 18 + Vite + TypeScript | Fast builds, type safety |
+| UI | Tailwind CSS + shadcn/ui | Consistent, accessible components |
+| Backend | Convex | Real-time DB + serverless functions, zero config |
+| Auth | Clerk | 10K MAU free, OAuth, org support |
+| AI | Anthropic Claude (Sonnet 4.6) | Best reasoning-to-cost ratio for agent tasks |
+| Agent Runtime | OpenClaw | Open-source agent framework with SOUL files |
+| Encryption | AES-256-GCM | Integration credentials encrypted at rest |
+| Charts | Recharts | Composable chart components |
+| Animations | Framer Motion | Physics-based UI animations |
+| Code Editor | CodeMirror 6 | SOUL file editing in the browser |
+| SSH | ssh2 (Node.js) | Remote file sync + agent registration |
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, code style, and PR guidelines.
+
+**Areas where help is especially welcome:**
+- Additional integration blueprints (`convex/seed*.ts`)
+- Agent SOUL file templates for new roles
+- Niche sub-product pages
+- Testing and documentation
+- Accessibility improvements
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Use it commercially, modify it, self-host it. Attribution appreciated but not required.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
-Built for teams that want AI agents doing real work, not demos.
+
+**Built for teams that want AI agents doing real work, not demos.**
+
+[GitHub](https://github.com/appydam/valence-ai) · [Landing Page](https://usevalence.ai)
+
 </div>
