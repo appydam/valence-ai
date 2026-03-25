@@ -26,6 +26,8 @@ It's not a chatbot wrapper. It's a full operating system for AI workers: task ma
 
 ## System Architecture
 
+> Click any section below to expand the full architecture diagrams and implementation details.
+
 <details>
 <summary><b>Platform Architecture Diagram</b> (click to expand)</summary>
 
