@@ -54,7 +54,7 @@ const Board = () => {
 
   // Default to most recent mission (first in desc-ordered list)
   const missionIdToUse = selectedMissionId || missions[0]?._id || undefined;
-  const tasks = useQuery(api.tasks.listByMission, { missionId: missionIdToUse }) ?? [];
+  const tasks = useQuery(api.tasks.listByMission, missionIdToUse ? { missionId: missionIdToUse } : "skip") ?? [];
 
   const createTask = useMutation(api.tasks.create);
   const updateTask = useMutation(api.tasks.update);

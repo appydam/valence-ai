@@ -288,8 +288,8 @@ export const listByMission = query({
         .withIndex("by_mission", (q) => q.eq("missionId", args.missionId))
         .collect();
     }
-    // Return all tasks if no missionId
-    return await ctx.db.query("tasks").collect();
+    // No missionId — return empty (tasks must belong to a mission)
+    return [];
   },
 });
 
