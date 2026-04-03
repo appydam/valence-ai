@@ -4,6 +4,7 @@ const NICHE_SUBDOMAINS: Record<string, NicheId> = {
   ads: "ads",
   gtm: "gtm",
   content: "content",
+  outbound: "outbound",
 };
 
 /**

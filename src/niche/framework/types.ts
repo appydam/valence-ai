@@ -1,6 +1,6 @@
 import { type LucideIcon } from "lucide-react";
 
-export type NicheId = "ads" | "gtm" | "content";
+export type NicheId = "ads" | "gtm" | "content" | "outbound";
 
 export interface NicheSidebarItem {
   label: string;

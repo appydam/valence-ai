@@ -1,0 +1,42 @@
+export const OUTBOUND_TEMPLATES = [
+  {
+    id: "full-pipeline",
+    name: "Full Outbound Pipeline",
+    description: "End-to-end: source companies, find contacts, enrich, push to CRM, draft sequences",
+    prompt: "Launch a full outbound pipeline targeting {industry} companies with {employee_count} employees. Find {title} contacts, enrich with Clay, push to HubSpot, and draft a 4-step email + LinkedIn sequence.",
+    tags: ["mission:full-pipeline"],
+    estimatedMinutes: 30,
+  },
+  {
+    id: "quick-linkedin",
+    name: "Quick LinkedIn Campaign",
+    description: "Find contacts and set up LinkedIn outreach via LaGrowthMachine",
+    prompt: "Find 30 {title} contacts at {industry} companies and draft LinkedIn connection request + 2 follow-up messages for LaGrowthMachine.",
+    tags: ["channel:linkedin"],
+    estimatedMinutes: 15,
+  },
+  {
+    id: "re-engagement",
+    name: "Re-engagement Sequence",
+    description: "Draft sequences to re-engage stale leads already in your CRM",
+    prompt: "Write a 3-step re-engagement email sequence for leads that went cold after initial outreach. Friendly, value-driven, with a clear CTA.",
+    tags: ["channel:email"],
+    estimatedMinutes: 10,
+  },
+  {
+    id: "abm-sprint",
+    name: "Account-Based Outreach Sprint",
+    description: "Target specific named accounts with hyper-personalized outreach",
+    prompt: "Run an account-based outreach sprint targeting these companies: {company_list}. Find 3 contacts per company, research each company deeply, and draft personalized email + LinkedIn messages for each.",
+    tags: ["mission:abm"],
+    estimatedMinutes: 45,
+  },
+  {
+    id: "competitor-poach",
+    name: "Competitor Displacement Campaign",
+    description: "Target users of a competitor product with switching-focused messaging",
+    prompt: "Find companies using {competitor} and draft an outreach campaign highlighting why they should switch. Find VP/Director-level contacts and create email + LinkedIn sequences.",
+    tags: ["mission:competitive"],
+    estimatedMinutes: 25,
+  },
+];

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -13,12 +13,27 @@ export function NicheOnboardingWizard({ onComplete }: NicheOnboardingWizardProps
   const { config } = useNiche();
   const [step, setStep] = useState(0);
   const connections = useQuery(api.connections.listAll);
+  const blueprints = useQuery(api.blueprints.list, {});
 
-  const connectedSlugs = new Set(
-    (connections ?? [])
-      .filter((c: { status: string }) => c.status === "active")
-      .map((c: { blueprintSlug: string }) => c.blueprintSlug)
-  );
+  // Build blueprintId -> slug map to resolve connection slugs
+  const blueprintIdToSlug = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const bp of blueprints ?? []) {
+      map.set(bp._id, bp.slug);
+    }
+    return map;
+  }, [blueprints]);
+
+  const connectedSlugs = useMemo(() => {
+    const slugs = new Set<string>();
+    for (const c of connections ?? []) {
+      if ((c as { status: string }).status === "active") {
+        const slug = (c as any).blueprintSlug || blueprintIdToSlug.get((c as any).blueprintId);
+        if (slug) slugs.add(slug);
+      }
+    }
+    return slugs;
+  }, [connections, blueprintIdToSlug]);
 
   const steps = [
     {

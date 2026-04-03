@@ -30,6 +30,11 @@ import {
   Bell,
   Globe,
   TrendingUp,
+  Rocket,
+  Building2,
+  Database,
+  Send,
+  Swords,
 } from "lucide-react";
 import type { NicheConfig } from "./types";
 
@@ -147,6 +152,29 @@ export const NICHE_REGISTRY: Record<string, NicheConfig> = {
       { label: "Sources", path: "/sources", icon: Globe },
       { label: "Reports", path: "/reports", icon: BarChart3 },
       { label: "History", path: "/history", icon: History },
+    ],
+  },
+  outbound: {
+    id: "outbound",
+    name: "AI Outbound Engine",
+    tagline: "Autonomous outbound sales pipeline",
+    domain: "outbound.usevalence.ai",
+    basePath: "/niche/outbound",
+    icon: Send,
+    emoji: "⚡",
+    accentColor: "hsl(220, 90%, 56%)",
+    accentHsl: "220 90% 56%",
+    requiredIntegrations: ["hubspot", "apollo"],
+    optionalIntegrations: ["clay", "lagrowthmachine", "hunter", "gmail", "slack", "google-sheets"],
+    sidebarItems: [
+      { label: "Home", path: "", icon: LayoutDashboard },
+      { label: "Journey", path: "/journey", icon: Target },
+      { label: "Displace", path: "/displace", icon: Swords, badge: "hot" },
+      { label: "Pipeline", path: "/pipeline", icon: GitBranch },
+      { label: "Campaigns", path: "/campaigns", icon: UserSearch },
+      { label: "Sequences", path: "/sequences", icon: Mail },
+      { label: "Signals", path: "/signals", icon: Signal },
+      { label: "Insights", path: "/insights", icon: BarChart3 },
     ],
   },
 };

@@ -15,6 +15,7 @@ const AdsApp = lazy(() => import("./niche/ads/AdsApp"));
 const GtmApp = lazy(() => import("./niche/gtm/GtmApp"));
 const ContentApp = lazy(() => import("./niche/content/ContentApp"));
 const BrandMonitorApp = lazy(() => import("./niche/brand-monitor/BrandMonitorApp"));
+const OutboundApp = lazy(() => import("./niche/outbound/OutboundApp"));
 import Index from "./pages/Index";
 import Board from "./pages/Board";
 import Missions from "./pages/Missions";
@@ -132,6 +133,7 @@ function AuthenticatedRoutes() {
         <Route path="/niche/gtm/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="gtm"><GtmApp /></NicheShell></Suspense>} />
         <Route path="/niche/content/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="content"><ContentApp /></NicheShell></Suspense>} />
         <Route path="/niche/brand-monitor/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="brand-monitor"><BrandMonitorApp /></NicheShell></Suspense>} />
+        <Route path="/niche/outbound/*" element={<Suspense fallback={<NicheLoadingSpinner />}><NicheShell nicheId="outbound"><OutboundApp /></NicheShell></Suspense>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </ErrorBoundary>
