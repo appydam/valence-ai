@@ -74,6 +74,13 @@ export const complete = mutation({
   },
 });
 
+export const patchCreatedBy = mutation({
+  args: { missionId: v.id("missions"), createdBy: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.missionId, { createdBy: args.createdBy });
+  },
+});
+
 export const archive = mutation({
   args: { missionId: v.id("missions") },
   handler: async (ctx, args) => {

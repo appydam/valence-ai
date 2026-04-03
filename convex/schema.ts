@@ -1117,4 +1117,37 @@ export default defineSchema({
     .index("by_path", ["path"])
     .index("by_parent", ["parentPath"])
     .index("by_sync_status", ["syncStatus"]),
+
+  // ============================================================
+  // PLAN GATING & USAGE
+  // ============================================================
+
+  planLimits: defineTable({
+    plan: v.string(),
+    maxUsers: v.number(),
+    maxAgents: v.number(),
+    maxIntegrations: v.number(),
+    maxTasksPerMonth: v.number(),
+    maxApiCallsPerMonth: v.number(),
+    features: v.array(v.string()),
+  })
+    .index("by_plan", ["plan"]),
+
+  subscriptions: defineTable({
+    plan: v.string(),
+    status: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
+  }),
+
+  usageCounters: defineTable({
+    periodStart: v.number(),
+    periodEnd: v.number(),
+    tasksCreated: v.number(),
+    apiCallsMade: v.number(),
+    integrationExecutions: v.number(),
+    agentSessions: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_period", ["periodStart"]),
 });
