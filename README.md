@@ -1,3 +1,5 @@
+
+
 <div align="center">
 
 # Valence AI
@@ -481,7 +483,7 @@ Agents call these endpoints from their SOUL file tool definitions:
 | UI | Tailwind CSS + shadcn/ui | Consistent, accessible components |
 | Backend | Convex | Real-time DB + serverless functions, zero config |
 | Auth | Clerk | 10K MAU free, OAuth, org support |
-| AI | Anthropic Claude (Sonnet 4.6) | Best reasoning-to-cost ratio for agent tasks |
+| AI | Anthropic Claude 3.5 Sonnet | Best reasoning-to-cost ratio for agent tasks |
 | Agent Runtime | OpenClaw | Open-source agent framework with SOUL files |
 | Encryption | AES-256-GCM | Integration credentials encrypted at rest |
 | Charts | Recharts | Composable chart components |
